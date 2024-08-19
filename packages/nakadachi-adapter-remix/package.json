@@ -1,0 +1,44 @@
+{
+  "name": "@rym-lib/nakadachi-adapter-remix",
+  "version": "0.0.0",
+  "private": false,
+  "main": "build/index.js",
+  "types": "build/index.d.ts",
+  "author": {
+    "name": "mizuki_r",
+    "email": "ry.mizuki@gmail.com"
+  },
+  "license": "MIT",
+  "description": "",
+  "publishConfig": {
+    "access": "public"
+  },
+  "files": [
+    "build/index.js",
+    "build/index.js.map",
+    "build/index.d.ts"
+  ],
+  "scripts": {
+    "build": "tsup --dts --outDir build --splitting false --sourcemap --clean ./src/index.ts",
+    "test": "vitest run",
+    "lint": "eslint --max-warnings 0 .",
+    "format": "prettier -w './**/*.{ts,tsx,js,json,css}' --check",
+    "ncu": "npm-check-updates"
+  },
+  "devDependencies": {
+    "@remix-run/node": "^2.11.2",
+    "@rym-lib/dev-config": "*",
+    "@rym-lib/nakadachi": "*",
+    "@types/node": "^22.4.1",
+    "@types/qs": "^6.9.15",
+    "npm-check-updates": "^17.0.6",
+    "tsup": "^8.2.4",
+    "vitest": "^2.0.5"
+  },
+  "dependencies": {
+    "qs": "^6.13.0"
+  },
+  "peerDependencies": {
+    "@remix-run/node": "^2.11"
+  }
+}
