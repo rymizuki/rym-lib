@@ -18,9 +18,13 @@
     "lint": "turbo run lint",
     "format": "turbo run format",
     "test": "turbo run test",
-    "ncu": "npm-check-updates && turbo run ncu"
+    "ncu": "npm-check-updates && turbo run ncu",
+    "changeset": "changeset",
+    "version": "npm run format && npm run lin && changeset version",
+    "publish": "changeset publish"
   },
   "devDependencies": {
+    "@changesets/cli": "^2.27.7",
     "@rym-lib/dev-config": "*",
     "npm-check-updates": "^17.0.6",
     "turbo": "^2.0.14"
