@@ -1,0 +1,4 @@
+{
+  "include": [],
+  "extends": ["@rym-lib/dev-config/tsconfig/base"]
+}
