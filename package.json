@@ -1,0 +1,31 @@
+{
+  "name": "rym-lib",
+  "version": "0.0.0",
+  "private": true,
+  "main": "",
+  "author": {
+    "name": "mizuki_r",
+    "email": "ry.mizuki@gmail.com"
+  },
+  "license": "MIT",
+  "description": "",
+  "packageManager": "npm@10.8.2",
+  "workspaces": [
+    "packages/*"
+  ],
+  "scripts": {
+    "build": "turbo run build",
+    "lint": "turbo run lint",
+    "format": "turbo run format",
+    "test": "turbo run test",
+    "ncu": "npm-check-updates && turbo run ncu"
+  },
+  "devDependencies": {
+    "@rym-lib/dev-config": "*",
+    "npm-check-updates": "^17.0.6",
+    "turbo": "^2.0.14"
+  },
+  "optionalDependencies": {
+    "@rollup/rollup-linux-x64-gnu": "^4.21.0"
+  }
+}
