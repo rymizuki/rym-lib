@@ -8,10 +8,10 @@ type QueryFilterOperator =
   | 'not_contains'
   | 'eq' // =
   | 'ne' // !=
-  | 'lte' // <=
-  | 'lt' // <
-  | 'gte' // >
-  | 'gt' // >=
+  | 'lte' // >=
+  | 'lt' // >
+  | 'gte' // <=
+  | 'gt' // <
   | 'in'
 export type QueryFilter<Data extends QueryResultData> = Partial<
   Record<

@@ -1,5 +1,7 @@
 # 媒 - Nakadachi
 
+A interaction connector bypass any WAFs.
+
 ## installation
 
 ```
@@ -30,3 +32,7 @@ const onError: ErrorHandler = (error, input, context, response) => {
   throw error
 }
 ```
+
+## Adapters
+
+- [Remix](https://www.npmjs.com/package/@rym-lib/nakadachi-adapter-remix)
