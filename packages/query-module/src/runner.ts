@@ -39,7 +39,10 @@ export class QueryRunner<
       if (!preprocess) continue
       preprocess(params)
     }
-    const criteria = new QueryCriteria<Data>(this.spec.rules, params)
+    const criteria = new QueryCriteria<Data>(
+      this.spec.rules,
+      this.spec.criteria ? this.spec.criteria(params) : params,
+    )
 
     const items = await this.driver.source(this.spec.source).execute(criteria)
     const result = {
