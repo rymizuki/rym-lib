@@ -90,6 +90,7 @@ export interface QuerySpecification<
 > {
   source: QuerySourceInterface<Data, Driver>
   rules: Partial<Record<keyof Data, string>>
+  criteria?: (params: Partial<Params>) => Partial<Params>
   middlewares?: QueryRunnerMiddleware<Data, List, Params>[]
 }
 
