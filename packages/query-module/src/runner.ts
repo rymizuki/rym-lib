@@ -37,7 +37,7 @@ export class QueryRunner<
   async many(params: Partial<Params> = {}): Promise<List> {
     for (const { preprocess } of this.spec.middlewares ?? []) {
       if (!preprocess) continue
-      preprocess(params)
+      await preprocess(params)
     }
     const criteria = new QueryCriteria<Data>(
       this.spec.rules,
@@ -51,7 +51,7 @@ export class QueryRunner<
 
     for (const { postprocess } of this.spec.middlewares ?? []) {
       if (!postprocess) continue
-      postprocess(result, params)
+      await postprocess(result, params)
     }
 
     return result

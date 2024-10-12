@@ -78,8 +78,11 @@ export interface QueryRunnerMiddleware<
   List extends QueryResultList<Data> = QueryResultList<Data>,
   Params extends QueryRunnerCriteria<Data> = QueryRunnerCriteria<Data>,
 > {
-  preprocess?: (criteria: Partial<Params>) => void
-  postprocess?: (result: List, criteria: Partial<Params>) => void
+  preprocess?: (criteria: Partial<Params>) => void | Promise<void>
+  postprocess?: (
+    result: List,
+    criteria: Partial<Params>,
+  ) => void | Promise<void>
 }
 
 export interface QuerySpecification<
