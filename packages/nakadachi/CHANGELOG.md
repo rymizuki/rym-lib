@@ -1,5 +1,11 @@
 # @rym-lib/nakadachi
 
+## 0.0.5
+
+### Patch Changes
+
+- fix(query-module): minimum fixes
+
 ## 0.0.4
 
 ### Patch Changes
