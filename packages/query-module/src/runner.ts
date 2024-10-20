@@ -1,3 +1,5 @@
+import crypto from 'crypto'
+
 import { QueryCriteria } from './criteria'
 import {
   QueryDriverInterface,
@@ -35,9 +37,10 @@ export class QueryRunner<
   }
 
   async many(params: Partial<Params> = {}): Promise<List> {
+    const pid = crypto.randomUUID()
     for (const { preprocess } of this.spec.middlewares ?? []) {
       if (!preprocess) continue
-      await preprocess(params)
+      await preprocess(params, { ...this.context, pid, runner: this })
     }
     const criteria = new QueryCriteria<Data>(
       this.spec.rules,
@@ -51,7 +54,7 @@ export class QueryRunner<
 
     for (const { postprocess } of this.spec.middlewares ?? []) {
       if (!postprocess) continue
-      await postprocess(result, params)
+      await postprocess(result, params, { ...this.context, pid, runner: this })
     }
 
     return result
