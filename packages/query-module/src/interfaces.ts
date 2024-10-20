@@ -73,15 +73,27 @@ interface QuerySourceInterface<
   (...args: Parameters<SourceFn>): ReturnType<SourceFn>
 }
 
+export interface QueryRunnerMiddlewareContext<
+  Data,
+  List extends QueryResultList<Data> = QueryResultList<Data>,
+  Params extends QueryRunnerCriteria<Data> = QueryRunnerCriteria<Data>,
+> extends QueryRunnerContext {
+  pid: string
+  runner: QueryRunnerInterface<Data, List, Params>
+}
 export interface QueryRunnerMiddleware<
   Data,
   List extends QueryResultList<Data> = QueryResultList<Data>,
   Params extends QueryRunnerCriteria<Data> = QueryRunnerCriteria<Data>,
 > {
-  preprocess?: (criteria: Partial<Params>) => void | Promise<void>
+  preprocess?: (
+    criteria: Partial<Params>,
+    context: QueryRunnerMiddlewareContext<Data, List, Params>,
+  ) => void | Promise<void>
   postprocess?: (
     result: List,
     criteria: Partial<Params>,
+    context: QueryRunnerMiddlewareContext<Data, List, Params>,
   ) => void | Promise<void>
 }
 
