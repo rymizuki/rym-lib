@@ -52,7 +52,7 @@ export class QueryRunner<
       items: items as Data[],
     } as any
 
-    for (const { postprocess } of this.spec.middlewares ?? []) {
+    for (const { postprocess } of (this.spec.middlewares ?? []).reverse()) {
       if (!postprocess) continue
       await postprocess(result, params, { ...this.context, pid, runner: this })
     }
