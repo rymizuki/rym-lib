@@ -1,0 +1,67 @@
+{
+  "name": "@rym-lib/utilities",
+  "type": "module",
+  "version": "0.0.0",
+  "private": false,
+  "author": {
+    "name": "mizuki_r",
+    "email": "rymizuki.lib@gmail.com"
+  },
+  "license": "MIT",
+  "description": "",
+  "publishConfig": {
+    "access": "public"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/rymizuki/rym-lib.git"
+  },
+  "bugs": {
+    "url": "https://github.com/rymizuki/rym-lib/issues"
+  },
+  "main": "build/index.js",
+  "types": "build/index.d.ts",
+  "exports": {
+    ".": {
+      "import": "./build/index.js",
+      "require": "./build/index.cjs"
+    },
+    "./array": {
+      "import": {
+        "types": "./build/array.d.ts",
+        "default": "./build/array.js"
+      },
+      "require": {
+        "types": "./build/array.d.cts",
+        "default": "./build/array.cjs"
+      }
+    }
+  },
+  "files": [
+    "build/index.js",
+    "build/index.js.map",
+    "build/index.mjs",
+    "build/index.mjs.map",
+    "build/index.d.ts",
+    "build/array.js",
+    "build/array.js.map",
+    "build/array.mjs",
+    "build/array.mjs.map",
+    "build/array.d.ts"
+  ],
+  "scripts": {
+    "build": "npm run build:tsup",
+    "build:tsup": "tsup",
+    "test": "vitest run",
+    "lint": "eslint --max-warnings 0 .",
+    "format": "prettier -w './**/*.{ts,tsx,js,json,css}' --check",
+    "ncu": "npm-check-updates"
+  },
+  "devDependencies": {
+    "@rym-lib/dev-config": "*",
+    "npm-check-updates": "^17.1.11",
+    "tsup": "^8.3.5",
+    "vite-tsconfig-paths": "^5.1.2",
+    "vitest": "^2.1.5"
+  }
+}
