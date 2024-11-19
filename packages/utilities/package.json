@@ -38,16 +38,7 @@
     }
   },
   "files": [
-    "build/index.js",
-    "build/index.js.map",
-    "build/index.mjs",
-    "build/index.mjs.map",
-    "build/index.d.ts",
-    "build/array.js",
-    "build/array.js.map",
-    "build/array.mjs",
-    "build/array.mjs.map",
-    "build/array.d.ts"
+    "build/*"
   ],
   "scripts": {
     "build": "npm run build:tsup",

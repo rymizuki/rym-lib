@@ -12,19 +12,20 @@
     "access": "public"
   },
   "files": [
-    "build/index.js",
-    "build/index.js.map",
-    "build/index.mjs",
-    "build/index.mjs.map",
-    "build/index.d.ts",
-    "build/index.d.mts"
+    "build/*"
   ],
   "main": "build/index.js",
   "types": "build/index.d.ts",
   "exports": {
     ".": {
-      "import": "./build/index.mjs",
-      "require": "./build/index.js"
+      "import": {
+        "types": "./build/index.d.mts",
+        "default": "./build/index.mjs"
+      },
+      "require": {
+        "types": "./build/index.d.ts",
+        "default": "./build/index.js"
+      }
     }
   },
   "scripts": {

@@ -28,11 +28,7 @@
     }
   },
   "files": [
-    "build/index.js",
-    "build/index.js.map",
-    "build/index.cjs",
-    "build/index.cjs.map",
-    "build/index.d.ts"
+    "build/*"
   ],
   "scripts": {
     "build": "npm run build:tsup",

@@ -22,20 +22,7 @@
     "url": "https://github.com/rymizuki/rym-lib/issues"
   },
   "files": [
-    "build/index.css",
-    "build/index.css.map",
-    "build/index.js",
-    "build/index.js.map",
-    "build/index.d.ts",
-    "build/index.cjs",
-    "build/index.cjs.map",
-    "build/index.d.cts",
-    "build/theme.js",
-    "build/theme.js.map",
-    "build/theme.d.ts",
-    "build/theme.cjs",
-    "build/theme.cjs.map",
-    "build/theme.d.cts",
+    "build/*",
     "@types/index.css.d.ts"
   ],
   "exports": {
