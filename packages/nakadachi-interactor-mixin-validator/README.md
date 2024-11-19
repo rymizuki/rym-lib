@@ -1,0 +1,1 @@
+# nakadachi-interactor-mixin-validator
