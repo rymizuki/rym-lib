@@ -1,0 +1,119 @@
+{
+  "name": "@rym-lib/ui",
+  "type": "module",
+  "version": "0.0.0",
+  "private": false,
+  "main": "build/index.js",
+  "types": "build/index.d.ts",
+  "author": {
+    "name": "mizuki_r",
+    "email": "rymizuki.lib@gmail.com"
+  },
+  "license": "MIT",
+  "description": "",
+  "publishConfig": {
+    "access": "public"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/rymizuki/rym-lib.git"
+  },
+  "bugs": {
+    "url": "https://github.com/rymizuki/rym-lib/issues"
+  },
+  "files": [
+    "build/index.css",
+    "build/index.css.map",
+    "build/index.js",
+    "build/index.js.map",
+    "build/index.d.ts",
+    "build/index.cjs",
+    "build/index.cjs.map",
+    "build/index.d.cts",
+    "build/theme.js",
+    "build/theme.js.map",
+    "build/theme.d.ts",
+    "build/theme.cjs",
+    "build/theme.cjs.map",
+    "build/theme.d.cts",
+    "@types/index.css.d.ts"
+  ],
+  "exports": {
+    ".": {
+      "import": {
+        "types": "./build/index.d.ts",
+        "default": "./build/index.js"
+      },
+      "require": {
+        "types": "./build/index.d.cts",
+        "default": "./build/index.cjs"
+      }
+    },
+    "./theme": {
+      "import": {
+        "types": "./build/theme.d.ts",
+        "default": "./build/theme.js"
+      },
+      "require": {
+        "types": "./build/theme.d.cts",
+        "default": "./build/theme.cjs"
+      }
+    },
+    "./index.css": {
+      "import": {
+        "types": "./@types/index.css.d.ts",
+        "default": "./build/index.css"
+      },
+      "require": {
+        "types": "./@types/index.css.d.ts",
+        "default": "./build/index.css"
+      }
+    }
+  },
+  "scripts": {
+    "prepare": "panda codegen",
+    "build": "npm run build:panda && npm run build:tsup",
+    "build:tsup": "tsup",
+    "build:panda": "panda codegen",
+    "dev": "storybook dev -p 6006 --quiet",
+    "dev:panda": "panda --watch",
+    "test": "vitest run",
+    "lint": "eslint --max-warnings 0 .",
+    "format": "prettier -w './**/*.{ts,tsx,js,json,css}' --check",
+    "ncu": "npm-check-updates",
+    "storybook": "storybook dev -p 6006",
+    "build-storybook": "storybook build"
+  },
+  "devDependencies": {
+    "@chromatic-com/storybook": "^3.2.2",
+    "@pandacss/dev": "^0.48.0",
+    "@remix-run/react": "^2.14.0",
+    "@rym-lib/dev-config": "*",
+    "@storybook/addon-essentials": "^8.4.4",
+    "@storybook/addon-interactions": "^8.4.4",
+    "@storybook/addon-onboarding": "^8.4.4",
+    "@storybook/blocks": "^8.4.4",
+    "@storybook/cli": "^8.4.4",
+    "@storybook/react": "^8.4.4",
+    "@storybook/react-vite": "^8.4.4",
+    "@storybook/test": "^8.4.4",
+    "@types/react": "^18.3.1",
+    "@types/react-dom": "^18.3.1",
+    "dayjs": "^1.11.13",
+    "esbuild-plugin-alias": "^0.2.1",
+    "fontawesome-free": "^1.0.4",
+    "npm-check-updates": "^17.1.11",
+    "prop-types": "^15.8.1",
+    "react": "^18.3.1",
+    "react-dom": "^18.3.1",
+    "storybook": "^8.4.4",
+    "tsup": "^8.3.5",
+    "vite-tsconfig-paths": "^5.1.2",
+    "vitest": "^2.1.5"
+  },
+  "peerDependencies": {
+    "@remix-run/react": ">=2.0.0",
+    "react": ">=18.0.0",
+    "react-dom": ">=18.0.0"
+  }
+}

@@ -2,6 +2,7 @@
   "name": "rym-lib",
   "version": "0.0.0",
   "private": true,
+  "type": "module",
   "main": "",
   "author": {
     "name": "mizuki_r",
@@ -11,10 +12,12 @@
   "description": "",
   "packageManager": "npm@10.8.2",
   "workspaces": [
+    "apps/*",
     "packages/*"
   ],
   "scripts": {
     "build": "turbo run build",
+    "dev": "turbo run dev",
     "lint": "turbo run lint",
     "format": "turbo run format",
     "test": "turbo run test",

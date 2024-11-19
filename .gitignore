@@ -5,3 +5,9 @@ node_modules
 .cache
 dist
 build
+
+*storybook.log
+
+## Panda
+styled-system
+styled-system-studio

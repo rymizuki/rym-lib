@@ -1,0 +1,14 @@
+{
+  "include": ["./src", "./styled-system"],
+  "extends": ["@rym-lib/dev-config/tsconfig/base.json"],
+  "compilerOptions": {
+    "jsx": "react-jsx",
+    "module": "CommonJS",
+    "moduleResolution": "Node",
+    "baseUrl": ".",
+    "paths": {
+      "~/*": ["./src/*"],
+      "@styled-system/*": ["./styled-system/*"]
+    }
+  }
+}
