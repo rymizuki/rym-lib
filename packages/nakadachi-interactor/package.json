@@ -1,6 +1,6 @@
 {
   "name": "@rym-lib/nakadachi-interactor",
-  "version": "0.0.7",
+  "version": "0.0.8",
   "private": false,
   "author": {
     "name": "mizuki_r",
@@ -35,15 +35,15 @@
   },
   "devDependencies": {
     "@rym-lib/dev-config": "*",
-    "@rym-lib/inversify-bundler": ">=0.0.7",
-    "@rym-lib/nakadachi": ">=0.0.7",
+    "@rym-lib/inversify-bundler": ">=0.0.8",
+    "@rym-lib/nakadachi": ">=0.0.8",
     "@types/node": "^22.9.0",
     "npm-check-updates": "^17.0.6",
     "tsup": "^8.2.4",
     "vitest": "^2.0.5"
   },
   "peerDependencies": {
-    "@rym-lib/inversify-bundler": ">=0.0.7",
-    "@rym-lib/nakadachi": ">=0.0.7"
+    "@rym-lib/inversify-bundler": ">=0.0.8",
+    "@rym-lib/nakadachi": ">=0.0.8"
   }
 }

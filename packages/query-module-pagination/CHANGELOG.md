@@ -1,5 +1,11 @@
 # @rym-lib/query-module-pagination
 
+## 0.0.8
+
+### Patch Changes
+
+- fix bungs
+
 ## 0.0.7
 
 ### Patch Changes
