@@ -1,0 +1,54 @@
+{
+  "name": "@rym-lib/nakadachi-interactor-mixin-validator",
+  "version": "0.0.0",
+  "private": false,
+  "author": {
+    "name": "mizuki_r",
+    "email": "rymizuki.lib@gmail.com"
+  },
+  "license": "MIT",
+  "description": "",
+  "publishConfig": {
+    "access": "public"
+  },
+  "files": [
+    "build/index.js",
+    "build/index.js.map",
+    "build/index.mjs",
+    "build/index.mjs.map",
+    "build/index.d.ts",
+    "build/index.d.mts"
+  ],
+  "main": "build/index.js",
+  "types": "build/index.d.ts",
+  "exports": {
+    ".": {
+      "import": "./build/index.mjs",
+      "require": "./build/index.js"
+    }
+  },
+  "scripts": {
+    "build": "tsup",
+    "test": "vitest run",
+    "lint": "eslint --max-warnings 0 .",
+    "format": "prettier -w './**/*.{ts,tsx,js,json,css}' --check",
+    "ncu": "npm-check-updates"
+  },
+  "devDependencies": {
+    "@rym-lib/dev-config": "*",
+    "@rym-lib/exception": "*",
+    "@rym-lib/inversify-bundler": ">=0.0.5",
+    "@rym-lib/nakadachi": ">=0.0.5",
+    "@types/node": "^22.9.0",
+    "npm-check-updates": "^17.0.6",
+    "tsup": "^8.2.4",
+    "vitest": "^2.0.5",
+    "zod": "^3.23.8"
+  },
+  "peerDependencies": {
+    "zod": ">=3.0.0",
+    "@rym-lib/exception": "*",
+    "@rym-lib/inversify-bundler": ">=0.0.5",
+    "@rym-lib/nakadachi": ">=0.0.5"
+  }
+}
