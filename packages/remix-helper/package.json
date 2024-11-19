@@ -1,0 +1,67 @@
+{
+  "name": "@rym-lib/remix-helper",
+  "type": "module",
+  "version": "0.0.0",
+  "private": false,
+  "author": {
+    "name": "mizuki_r",
+    "email": "rymizuki.lib@gmail.com"
+  },
+  "license": "MIT",
+  "description": "",
+  "publishConfig": {
+    "access": "public"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/rymizuki/rym-lib.git"
+  },
+  "bugs": {
+    "url": "https://github.com/rymizuki/rym-lib/issues"
+  },
+  "main": "build/index.js",
+  "types": "build/index.d.ts",
+  "exports": {
+    ".": {
+      "import": "./build/index.js",
+      "require": "./build/index.cjs"
+    }
+  },
+  "files": [
+    "build/index.js",
+    "build/index.js.map",
+    "build/index.cjs",
+    "build/index.cjs.map",
+    "build/index.d.ts"
+  ],
+  "scripts": {
+    "build": "npm run build:tsup",
+    "build:tsup": "tsup",
+    "test": "vitest run",
+    "lint": "eslint --max-warnings 0 .",
+    "format": "prettier -w './**/*.{ts,tsx,js,json,css}' --check",
+    "ncu": "npm-check-updates"
+  },
+  "dependencies": {
+    "@rym-lib/utilities": "^0.0.1"
+  },
+  "devDependencies": {
+    "@remix-run/react": "^2.14.0",
+    "@rym-lib/dev-config": "*",
+    "@types/react": "^18.3.1",
+    "@types/react-dom": "^18.3.1",
+    "npm-check-updates": "^17.1.11",
+    "qs": "^6.13.1",
+    "react": "^18.3.1",
+    "react-dom": "^18.3.1",
+    "tsup": "^8.3.5",
+    "vite-tsconfig-paths": "^5.1.2",
+    "vitest": "^2.1.5"
+  },
+  "peerDependencies": {
+    "@remix-run/react": ">=2.0.0",
+    "qs": ">=6.0.0",
+    "react": ">=18.0.0",
+    "react-dom": ">=18.0.0"
+  }
+}
