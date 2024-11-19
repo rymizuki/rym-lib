@@ -4,6 +4,12 @@
   "private": false,
   "main": "build/index.js",
   "types": "build/index.d.ts",
+  "exports": {
+    ".": {
+      "import": "./build/index.mjs",
+      "require": "./build/index.js"
+    }
+  },
   "author": {
     "name": "mizuki_r",
     "email": "ry.mizuki@gmail.com"
@@ -16,10 +22,12 @@
   "files": [
     "build/index.js",
     "build/index.js.map",
+    "build/index.mjs",
+    "build/index.mjs.map",
     "build/index.d.ts"
   ],
   "scripts": {
-    "build": "tsup --dts --outDir build --splitting false --sourcemap --clean ./src/index.ts",
+    "build": "tsup",
     "test": "vitest run",
     "lint": "eslint --max-warnings 0 .",
     "format": "prettier -w './**/*.{ts,tsx,js,json,css}' --check",

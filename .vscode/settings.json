@@ -1,5 +1,14 @@
 {
   "editor.formatOnSave": true,
   "editor.defaultFormatter": "esbenp.prettier-vscode",
-  "cSpell.ignoreWords": ["", "Nakadachi", "inversify", "logone", "tsup"]
+  "cSpell.ignoreWords": [
+    "",
+    "Nakadachi",
+    "interactor",
+    "inversify",
+    "isbot",
+    "keyframes",
+    "logone",
+    "tsup"
+  ]
 }
