@@ -56,11 +56,16 @@ export interface NakadachiResponse extends Omit<ResponseInit, 'headers'> {
   headers: Headers
 }
 
+export interface NakadachiMiddleware {
+  prepare(input: InputPort, context: NakadachiContext): Promise<void>
+}
+
 export interface NakadachiInterface<OutputPort, E extends Events = {}> {
   on<Name extends keyof E, Prop extends E[Name]>(
     name: Name,
     fn: (prop: Prop) => Promise<void>,
   ): void
+  use(middleware: NakadachiMiddleware): this
   interact(handler: NakadachiRequestHandler): Promise<OutputPort>
 }
 

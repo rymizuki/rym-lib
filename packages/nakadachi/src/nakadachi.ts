@@ -5,6 +5,7 @@ import {
   NakadachiAdapterInterface,
   NakadachiContext,
   NakadachiInterface,
+  NakadachiMiddleware,
   NakadachiOption,
   NakadachiRequestHandler,
   NakadachiResponse,
@@ -32,6 +33,7 @@ export class Nakadachi<OutputPort = any>
 {
   private options: NakadachiOption
   private events: EventEmitter<Events>
+  private middlewares: NakadachiMiddleware[] = []
 
   constructor(
     private adapter: NakadachiAdapterInterface<OutputPort>,
@@ -51,6 +53,11 @@ export class Nakadachi<OutputPort = any>
     this.events.on(name, fn)
   }
 
+  use(middleware: NakadachiMiddleware) {
+    this.middlewares.push(middleware)
+    return this
+  }
+
   async interact<Data = any>(handler: NakadachiRequestHandler) {
     const responseInit: NakadachiResponse = {
       headers: new Headers(),
@@ -61,6 +68,12 @@ export class Nakadachi<OutputPort = any>
     const input = await this.createInput()
 
     try {
+      for (const middleware of this.middlewares) {
+        this.on('prepare', async ({ input, context }) => {
+          await middleware.prepare(input, context)
+        })
+      }
+
       await this.events.emit('prepare', {
         context,
         input,
