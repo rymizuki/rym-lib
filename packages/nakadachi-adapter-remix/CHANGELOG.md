@@ -1,5 +1,13 @@
 # @rym-lib/nakadachi-adapter-remix
 
+## 0.0.7
+
+### Patch Changes
+
+- bump up v0.0.7
+- Updated dependencies
+  - @rym-lib/nakadachi@0.0.7
+
 ## 0.0.6
 
 ### Patch Changes

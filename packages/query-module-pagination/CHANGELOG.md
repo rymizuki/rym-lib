@@ -1,5 +1,11 @@
 # @rym-lib/query-module-pagination
 
+## 0.0.7
+
+### Patch Changes
+
+- bump up v0.0.7
+
 ## 0.0.6
 
 ### Patch Changes
