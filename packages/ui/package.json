@@ -87,6 +87,7 @@
   "devDependencies": {
     "@chromatic-com/storybook": "^3.2.2",
     "@pandacss/dev": "^0.48.0",
+    "@remix-run/react": "^2.14.0",
     "@rym-lib/dev-config": "*",
     "@storybook/addon-essentials": "^8.4.4",
     "@storybook/addon-interactions": "^8.4.4",
@@ -111,7 +112,8 @@
     "vitest": "^2.1.5"
   },
   "peerDependencies": {
-    "react": "^18.3.1",
-    "react-dom": "^18.3.1"
+    "@remix-run/react": ">=2.0.0",
+    "react": ">=18.0.0",
+    "react-dom": ">=18.0.0"
   }
 }
