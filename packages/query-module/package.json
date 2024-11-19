@@ -1,6 +1,6 @@
 {
   "name": "@rym-lib/query-module",
-  "version": "0.0.5",
+  "version": "0.0.6",
   "private": false,
   "main": "build/index.js",
   "types": "build/index.d.ts",

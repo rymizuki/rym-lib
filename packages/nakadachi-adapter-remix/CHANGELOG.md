@@ -1,5 +1,13 @@
 # @rym-lib/nakadachi-adapter-remix
 
+## 0.0.6
+
+### Patch Changes
+
+- update minimum fix
+- Updated dependencies
+  - @rym-lib/nakadachi@0.0.6
+
 ## 0.0.5
 
 ### Patch Changes
