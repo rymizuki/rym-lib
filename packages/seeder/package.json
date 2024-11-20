@@ -1,0 +1,49 @@
+{
+  "name": "@rym-lib/seeder",
+  "version": "0.0.0",
+  "private": false,
+  "author": {
+    "name": "mizuki_r",
+    "email": "rymizuki.lib@gmail.com"
+  },
+  "license": "MIT",
+  "description": "",
+  "publishConfig": {
+    "access": "public"
+  },
+  "files": [
+    "build/*"
+  ],
+  "main": "build/index.js",
+  "types": "build/index.d.ts",
+  "exports": {
+    ".": {
+      "import": {
+        "types": "./build/index.d.mts",
+        "default": "./build/index.mjs"
+      },
+      "require": {
+        "types": "./build/index.d.ts",
+        "default": "./build/index.js"
+      }
+    }
+  },
+  "scripts": {
+    "build": "tsup",
+    "test": "vitest run",
+    "lint": "eslint --max-warnings 0 .",
+    "format": "prettier -w './**/*.{ts,tsx,js,json,css}' --check",
+    "ncu": "npm-check-updates"
+  },
+  "devDependencies": {
+    "@prisma/client": "^5.22.0",
+    "@rym-lib/dev-config": "*",
+    "@types/node": "^22.9.0",
+    "npm-check-updates": "^17.0.6",
+    "tsup": "^8.2.4",
+    "vitest": "^2.0.5"
+  },
+  "peerDependencies": {
+    "@prisma/client": ">=5.0.0"
+  }
+}
