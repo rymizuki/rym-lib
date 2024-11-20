@@ -1,5 +1,11 @@
 # @rym-lib/utilities
 
+## 0.0.9
+
+### Patch Changes
+
+- bump up
+
 ## 0.0.8
 
 ### Patch Changes

@@ -1,5 +1,11 @@
 # @rym-lib/nakadachi-interactor-mixin-validator
 
+## 0.0.9
+
+### Patch Changes
+
+- bump up
+
 ## 0.0.7
 
 ### Patch Changes
