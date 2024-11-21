@@ -1,5 +1,15 @@
 # @rym-lib/nakadachi-interactor-mixin-validator
 
+## 0.0.12
+
+### Patch Changes
+
+- bump up
+- Updated dependencies
+  - @rym-lib/exception@0.0.12
+  - @rym-lib/inversify-bundler@0.0.12
+  - @rym-lib/nakadachi@0.0.12
+
 ## 0.0.11
 
 ### Patch Changes
