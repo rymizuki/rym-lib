@@ -7,11 +7,11 @@
   "exports": {
     ".": {
       "import": {
-        "type": "./build/index.d.mts",
+        "types": "./build/index.d.mts",
         "default": "./build/index.mjs"
       },
       "require": {
-        "type": "./build/index.d.ts",
+        "types": "./build/index.d.ts",
         "default": "./build/index.js"
       }
     }
@@ -26,11 +26,7 @@
     "access": "public"
   },
   "files": [
-    "build/index.js",
-    "build/index.js.map",
-    "build/index.mjs",
-    "build/index.mjs.map",
-    "build/index.d.ts"
+    "build/*"
   ],
   "scripts": {
     "build": "tsup",
