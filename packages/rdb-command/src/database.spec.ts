@@ -1,12 +1,4 @@
-import {
-  afterEach,
-  beforeEach,
-  describe,
-  expect,
-  it,
-  MockInstance,
-  vi,
-} from 'vitest'
+import { beforeEach, describe, expect, it, MockInstance, vi } from 'vitest'
 
 import { DataBase } from './database'
 import {
@@ -24,12 +16,6 @@ class DummyDataBaseLogger implements DataBaseLogger {
 }
 
 describe('db', () => {
-  let logger: DataBaseLogger
-  let finish: () => void
-
-  beforeEach(() => {})
-  afterEach(() => {})
-
   let conn: DataBaseConnectorPort
   let db: DataBasePort
   beforeEach(() => {

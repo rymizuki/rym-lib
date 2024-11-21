@@ -14,8 +14,6 @@
   "files": [
     "build/*"
   ],
-  "main": "build/index.js",
-  "types": "build/index.d.ts",
   "exports": {
     ".": {
       "import": {
@@ -25,6 +23,16 @@
       "require": {
         "types": "./build/index.d.ts",
         "default": "./build/index.js"
+      }
+    },
+    "./connector/*": {
+      "import": {
+        "types": "./build/connector/*.d.mts",
+        "default": "./build/connector/*.mjs"
+      },
+      "require": {
+        "types": "./build/connector/*.d.ts",
+        "default": "./build/connector/*.js"
       }
     }
   },
@@ -38,8 +46,12 @@
   "devDependencies": {
     "@rym-lib/dev-config": "*",
     "@types/node": "^22.4.1",
+    "coral-sql": "^0.0.3-3",
     "npm-check-updates": "^17.0.6",
     "tsup": "^8.2.4",
     "vitest": "^2.0.5"
+  },
+  "peerDependencies": {
+    "coral-sql": ">=0.0.3"
   }
 }
