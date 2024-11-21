@@ -1,0 +1,54 @@
+{
+  "name": "@rym-lib/query-module-driver-prisma",
+  "version": "0.0.0",
+  "private": false,
+  "author": {
+    "name": "mizuki_r",
+    "email": "ry.mizuki@gmail.com"
+  },
+  "license": "MIT",
+  "description": "",
+  "publishConfig": {
+    "access": "public"
+  },
+  "files": [
+    "build/*"
+  ],
+  "main": "build/index.js",
+  "types": "build/index.d.ts",
+  "exports": {
+    ".": {
+      "import": {
+        "types": "./build/index.d.mts",
+        "default": "./build/index.mjs"
+      },
+      "require": {
+        "types": "./build/index.d.ts",
+        "default": "./build/index.js"
+      }
+    }
+  },
+  "scripts": {
+    "build": "tsup",
+    "test": "vitest run",
+    "lint": "eslint --max-warnings 0 .",
+    "format": "prettier -w './**/*.{ts,tsx,js,json,css}' --check",
+    "ncu": "npm-check-updates"
+  },
+  "devDependencies": {
+    "@rym-lib/dev-config": "*",
+    "@rym-lib/query-module": "*",
+    "@types/node": "^22.4.1",
+    "npm-check-updates": "^17.0.6",
+    "prisma": "^5.22.0",
+    "@prisma/client": "^5.22.0",
+    "tsup": "^8.2.4",
+    "vitest": "^2.0.5"
+  },
+  "dependencies": {
+    "coral-sql": "^0.0.3-3"
+  },
+  "peerDependencies": {
+    "@prisma/client": ">=5.0.0"
+  }
+}
