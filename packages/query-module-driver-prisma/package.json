@@ -48,6 +48,6 @@
   },
   "peerDependencies": {
     "@prisma/client": ">=5.0.0",
-    "coral-sql": ">=0.0.0"
+    "coral-sql": "*"
   }
 }
