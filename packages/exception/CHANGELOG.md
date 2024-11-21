@@ -1,5 +1,11 @@
 # @rym-lib/exception
 
+## 0.0.16
+
+### Patch Changes
+
+- bump
+
 ## 0.0.15
 
 ### Patch Changes

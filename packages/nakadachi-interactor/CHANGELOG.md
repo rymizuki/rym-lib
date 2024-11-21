@@ -1,5 +1,14 @@
 # @rym-lib/nakadachi-interactor
 
+## 0.0.16
+
+### Patch Changes
+
+- bump
+- Updated dependencies
+  - @rym-lib/inversify-bundler@0.0.16
+  - @rym-lib/nakadachi@0.0.16
+
 ## 0.0.15
 
 ### Patch Changes
