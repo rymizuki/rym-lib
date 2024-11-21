@@ -1,6 +1,6 @@
 {
   "name": "@rym-lib/inversify-bundler-express",
-  "version": "0.0.14",
+  "version": "0.0.15",
   "private": false,
   "main": "build/index.js",
   "types": "build/index.d.ts",
@@ -42,7 +42,7 @@
     "vitest": "^2.1.5"
   },
   "peerDependencies": {
-    "@rym-lib/inversify-bundler": ">=0.0.14",
+    "@rym-lib/inversify-bundler": ">=0.0.15",
     "express": ">=4.0.0"
   }
 }

@@ -1,6 +1,6 @@
 {
   "name": "@rym-lib/nakadachi",
-  "version": "0.0.14",
+  "version": "0.0.15",
   "private": false,
   "main": "build/index.js",
   "types": "build/index.d.ts",

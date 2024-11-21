@@ -1,5 +1,13 @@
 # @rym-lib/remix-helper
 
+## 0.0.15
+
+### Patch Changes
+
+- bump up
+- Updated dependencies
+  - @rym-lib/utilities@0.0.15
+
 ## 0.0.14
 
 ### Patch Changes
