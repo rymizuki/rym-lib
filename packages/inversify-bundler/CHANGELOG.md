@@ -1,5 +1,11 @@
 # @rym-lib/inversify-bundler
 
+## 0.0.13
+
+### Patch Changes
+
+- bump up
+
 ## 0.0.12
 
 ### Patch Changes
