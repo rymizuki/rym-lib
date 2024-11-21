@@ -19,6 +19,7 @@ export {
 }
 
 export type {
+  interfaces,
   ContainerInterface,
   ContainerModuleInterface,
   ModuleInput,
