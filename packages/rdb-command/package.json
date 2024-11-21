@@ -52,6 +52,6 @@
     "vitest": "^2.0.5"
   },
   "peerDependencies": {
-    "coral-sql": ">=0.0.3"
+    "coral-sql": ">=0.0.0"
   }
 }
