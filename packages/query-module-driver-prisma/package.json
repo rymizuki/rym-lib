@@ -1,6 +1,6 @@
 {
   "name": "@rym-lib/query-module-driver-prisma",
-  "version": "0.0.0",
+  "version": "0.0.14",
   "private": false,
   "author": {
     "name": "mizuki_r",

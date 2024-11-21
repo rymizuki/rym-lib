@@ -1,5 +1,11 @@
 # @rym-lib/query-module-driver-sequelize
 
+## 0.0.14
+
+### Patch Changes
+
+- bump up
+
 ## 0.0.13
 
 ### Patch Changes
