@@ -1,5 +1,5 @@
 {
-  "name": "@rym-lib/query-module-driver-prisma",
+  "name": "@rym-lib/rdb-command",
   "version": "0.0.0",
   "private": false,
   "author": {
@@ -26,16 +26,6 @@
         "types": "./build/index.d.ts",
         "default": "./build/index.js"
       }
-    },
-    "./connector-prisma": {
-      "import": {
-        "types": "./build/connector-prisma.d.mts",
-        "default": "./build/connector-prisma.mjs"
-      },
-      "require": {
-        "types": "./build/connector-prisma.d.ts",
-        "default": "./build/connector-prisma.js"
-      }
     }
   },
   "scripts": {
@@ -47,18 +37,9 @@
   },
   "devDependencies": {
     "@rym-lib/dev-config": "*",
-    "@rym-lib/query-module": "*",
     "@types/node": "^22.4.1",
     "npm-check-updates": "^17.0.6",
-    "prisma": "^5.22.0",
-    "@prisma/client": "^5.22.0",
     "tsup": "^8.2.4",
-    "vitest": "^2.0.5",
-    "coral-sql": "^0.0.3-3"
-  },
-  "dependencies": {},
-  "peerDependencies": {
-    "@prisma/client": ">=5.0.0",
-    "coral-sql": ">=0.0.3"
+    "vitest": "^2.0.5"
   }
 }
