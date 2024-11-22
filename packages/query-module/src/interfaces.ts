@@ -50,6 +50,7 @@ export interface QueryRunnerInterface<
 > {
   one(params?: Params): Promise<Data | null>
   many(params?: Params): Promise<List>
+  find(params: Params): Promise<Data>
 }
 
 export interface QueryRunnerContext {
