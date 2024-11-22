@@ -1,5 +1,18 @@
 # @rym-lib/nakadachi-interactor-mixin-validator
 
+## 1.0.0-alpha.0
+
+### Major Changes
+
+- initial release 1.0.0
+
+### Patch Changes
+
+- Updated dependencies
+  - @rym-lib/exception@1.0.0-alpha.0
+  - @rym-lib/inversify-bundler@1.0.0-alpha.0
+  - @rym-lib/nakadachi@1.0.0-alpha.0
+
 ## 0.0.17
 
 ### Patch Changes

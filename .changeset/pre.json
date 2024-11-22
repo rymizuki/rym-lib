@@ -1,0 +1,27 @@
+{
+  "mode": "pre",
+  "tag": "alpha",
+  "initialVersions": {
+    "@rym-lib/dev-config": "0.0.0",
+    "@rym-lib/exception": "0.0.17",
+    "@rym-lib/inversify-bundler": "0.0.17",
+    "@rym-lib/inversify-bundler-express": "0.0.17",
+    "@rym-lib/nakadachi": "0.0.17",
+    "@rym-lib/nakadachi-adapter-remix": "0.0.17",
+    "@rym-lib/nakadachi-interactor": "0.0.17",
+    "@rym-lib/nakadachi-interactor-mixin-validator": "0.0.17",
+    "@rym-lib/query-module": "0.0.17",
+    "@rym-lib/query-module-driver-prisma": "0.0.17",
+    "@rym-lib/query-module-driver-sequelize": "0.0.17",
+    "@rym-lib/query-module-pagination": "0.0.17",
+    "@rym-lib/rdb-command": "0.0.17",
+    "@rym-lib/remix-helper": "0.0.17",
+    "@rym-lib/seeder": "0.0.17",
+    "@rym-lib/ui": "0.0.17",
+    "@rym-lib/uri": "0.0.17",
+    "@rym-lib/utilities": "0.0.17"
+  },
+  "changesets": [
+    "sweet-snails-rule"
+  ]
+}
