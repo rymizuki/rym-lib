@@ -2,8 +2,6 @@
   "name": "@rym-lib/query-module",
   "version": "0.0.17",
   "private": false,
-  "main": "build/index.js",
-  "types": "build/index.d.ts",
   "author": {
     "name": "mizuki_r",
     "email": "ry.mizuki@gmail.com"
@@ -14,12 +12,32 @@
     "access": "public"
   },
   "files": [
-    "build/index.js",
-    "build/index.js.map",
-    "build/index.d.ts"
+    "build/*"
   ],
+  "exports": {
+    ".": {
+      "import": {
+        "types": "./build/index.d.mts",
+        "default": "./build/index.mjs"
+      },
+      "require": {
+        "types": "./build/index.d.ts",
+        "default": "./build/index.js"
+      }
+    },
+    "./middleware/*": {
+      "import": {
+        "types": "./build/middleware/*.mts",
+        "default": "./build/middleware/*.mjs"
+      },
+      "require": {
+        "types": "./build/middleware/*.ts",
+        "default": "./build/middleware/*.js"
+      }
+    }
+  },
   "scripts": {
-    "build": "tsup --dts --outDir build --splitting false --sourcemap --clean ./src/index.ts",
+    "build": "tsup",
     "test": "vitest run",
     "lint": "eslint --max-warnings 0 .",
     "format": "prettier -w './**/*.{ts,tsx,js,json,css}' --check",
@@ -27,6 +45,7 @@
   },
   "devDependencies": {
     "@rym-lib/dev-config": "*",
+    "@rym-lib/utilities": "*",
     "@types/node": "^22.4.1",
     "npm-check-updates": "^17.0.6",
     "tsup": "^8.2.4",
