@@ -1,6 +1,7 @@
 import crypto from 'crypto'
 
 import { QueryCriteria } from './criteria'
+import { QueryRunnerResourceNotFoundException } from './exceptions'
 import {
   QueryDriverInterface,
   QueryResultData,
@@ -58,5 +59,18 @@ export class QueryRunner<
     }
 
     return result
+  }
+
+  async find(params: Params): Promise<Data> {
+    const record = await this.one(params)
+
+    if (!record) {
+      throw new QueryRunnerResourceNotFoundException(
+        this.constructor.name,
+        params,
+      )
+    }
+
+    return record
   }
 }

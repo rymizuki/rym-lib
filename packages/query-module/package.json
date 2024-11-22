@@ -50,5 +50,8 @@
     "npm-check-updates": "^17.0.6",
     "tsup": "^8.2.4",
     "vitest": "^2.0.5"
+  },
+  "dependencies": {
+    "@rym-lib/exception": "*"
   }
 }
