@@ -66,7 +66,7 @@ export class QueryRunner<
 
     if (!record) {
       throw new QueryRunnerResourceNotFoundException(
-        this.constructor.name,
+        this.spec.name ?? '',
         params,
       )
     }
