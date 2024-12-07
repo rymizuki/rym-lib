@@ -49,7 +49,7 @@ type CreateInteractorResult<Output> = {
   interactor: (...args: any[]) => Promise<Output>
 }
 
-interface BuilderPort<Data, Output> {
+export interface BuilderPort<Data, Output> {
   createInteractor(
     name: string,
     Interactor: Newable<InteractionPort<Data>>,
