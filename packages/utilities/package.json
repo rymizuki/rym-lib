@@ -35,6 +35,16 @@
         "types": "./build/array.d.cts",
         "default": "./build/array.cjs"
       }
+    },
+    "./object": {
+      "import": {
+        "types": "./build/object.d.ts",
+        "default": "./build/object.js"
+      },
+      "require": {
+        "types": "./build/object.d.cts",
+        "default": "./build/object.cjs"
+      }
     }
   },
   "files": [
