@@ -39,6 +39,41 @@ describe('Interactor', () => {
         })
       })
     })
+
+    describe('case multiple interaction by http-method', () => {
+      let interactor: (...args: any[]) => Promise<any>
+
+      beforeEach(() => {
+        interactor = app.createInteractor(
+          (router) => router.post(MockInteractor, []),
+          [],
+        ).interactor
+      })
+
+      describe('case not binding method', () => {
+        it('should be throw Method Not Allowed Exception', async () => {
+          expect(
+            await interactor({
+              request: new Request('http://example.com/', { method: 'GET' }),
+            }),
+          ).toHaveProperty('error', new MethodNotAllowedException())
+        })
+      })
+
+      describe('case binding method', () => {
+        it('should be return response', async () => {
+          expect(
+            await interactor({
+              request: new Request('http://example.com/', { method: 'POST' }),
+            }),
+          ).toStrictEqual({
+            data: {
+              status: 'succeeded',
+            },
+          })
+        })
+      })
+    })
   })
 })
 

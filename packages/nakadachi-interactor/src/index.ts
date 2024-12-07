@@ -1,1 +1,2 @@
-export * from './interactor'
+export { builder } from './interactor'
+export type { InteractionPort } from './interactor'

@@ -45,6 +45,7 @@
   },
   "peerDependencies": {
     "@rym-lib/inversify-bundler": ">=1.0.0-alpha.1",
-    "@rym-lib/nakadachi": ">=1.0.0-alpha.1"
+    "@rym-lib/nakadachi": ">=1.0.0-alpha.1",
+    "@rym-lib/exception": ">=1.0.0-alpha.1"
   }
 }
