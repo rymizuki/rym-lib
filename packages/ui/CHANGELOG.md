@@ -1,5 +1,11 @@
 # @rym-lib/ui
 
+## 1.0.0-alpha.2
+
+### Patch Changes
+
+- add features and fixes
+
 ## 1.0.0-alpha.1
 
 ### Patch Changes
