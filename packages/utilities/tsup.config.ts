@@ -4,6 +4,7 @@ export default defineConfig({
   entry: {
     index: './src/index.ts',
     array: './src/array.ts',
+    object: './src/object.ts',
   },
   dts: true,
   clean: true,
