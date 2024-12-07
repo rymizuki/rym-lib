@@ -104,6 +104,7 @@ export interface QuerySpecification<
   List extends QueryResultList<Data> = QueryResultList<Data>,
   Params extends QueryRunnerCriteria<Data> = QueryRunnerCriteria<Data>,
 > {
+  name?: string
   source: QuerySourceInterface<Data, Driver>
   rules: Partial<Record<keyof Data, string>>
   criteria?: (params: Partial<Params>) => Partial<Params>
