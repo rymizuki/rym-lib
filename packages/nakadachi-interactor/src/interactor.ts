@@ -35,7 +35,8 @@ export interface InteractionPort<Data> {
 export function builder<
   Data,
   Output,
-  Adapter extends NakadachiAdapterInterface<Output>,
+  Adapter extends
+    NakadachiAdapterInterface<Output> = NakadachiAdapterInterface<Output>,
 >(
   createAdapter: (...args: any[]) => Adapter,
   options: Partial<NakadachiOption> = {},
@@ -73,15 +74,15 @@ export class App<
     private options: Partial<NakadachiOption> = {},
   ) {}
 
-  createInteractor(
+  createInteractor<D extends Data>(
     ...args:
       | [
           string,
-          Newable<InteractionPort<Data>>,
+          Newable<InteractionPort<D>>,
           ModuleInput[],
           NakadachiMiddleware[]?,
         ]
-      | [(router: RouterPort<Data>) => RouterPort<Data>, NakadachiMiddleware[]]
+      | [(router: RouterPort<D>) => RouterPort<D>, NakadachiMiddleware[]]
   ) {
     if (args.length === 2) {
       const [dispatch, middlewares] = args
@@ -101,7 +102,6 @@ export class App<
 
         return await app.interact(async (done, input, context) => {
           const route = router.match(input.method)
-          console.debug(input, route)
           if (!route) {
             throw new MethodNotAllowedException()
           }
@@ -111,7 +111,7 @@ export class App<
             )
           }
           const container = this.createContainer(context.container, bundler)
-          const interaction = container.get<InteractionPort<Data>>(
+          const interaction = container.get<InteractionPort<D>>(
             route.Interactor,
           )
           await interaction.interact(done, input, context)
@@ -125,7 +125,7 @@ export class App<
     } else {
       const [name, Interactor, modules, middlewares] = args as [
         string,
-        Newable<InteractionPort<Data>>,
+        Newable<InteractionPort<D>>,
         ModuleInput[],
         NakadachiMiddleware[]?,
       ]
@@ -144,7 +144,7 @@ export class App<
             )
           }
           const container = this.createContainer(context.container, bundler)
-          const interaction = container.get<InteractionPort<Data>>(identifier)
+          const interaction = container.get<InteractionPort<D>>(identifier)
           await interaction.interact(done, input, context)
         })
       }
