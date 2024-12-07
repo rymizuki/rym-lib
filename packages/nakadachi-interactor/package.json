@@ -39,6 +39,7 @@
     "@rym-lib/nakadachi": ">=1.0.0-alpha.1",
     "@types/node": "^22.9.0",
     "npm-check-updates": "^17.0.6",
+    "reflect-metadata": "^0.2.2",
     "tsup": "^8.2.4",
     "vitest": "^2.0.5"
   },
