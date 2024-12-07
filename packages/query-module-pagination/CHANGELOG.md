@@ -1,5 +1,11 @@
 # @rym-lib/query-module-pagination
 
+## 1.0.0-alpha.3
+
+### Patch Changes
+
+- add fixes
+
 ## 1.0.0-alpha.2
 
 ### Patch Changes
