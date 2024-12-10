@@ -11,4 +11,5 @@ export interface QueryRunnerCriteriaWithPage<Data>
   extends QueryRunnerCriteria<Data> {
   page?: number
   rows?: number
+  noPagination?: boolean
 }
