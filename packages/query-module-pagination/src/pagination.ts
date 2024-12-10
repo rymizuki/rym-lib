@@ -13,6 +13,7 @@ export function pagination<
   const middleware: QueryRunnerMiddleware<Data, List, Params> = {
     preprocess(criteria) {
       if (criteria.take === 1) return
+      if (criteria.noPagination) return
       if (!criteria.page) criteria.page = 1
       if (!criteria.rows) criteria.rows = defaultRows || 20
 
@@ -22,7 +23,8 @@ export function pagination<
       criteria.skip = (page - 1) * rows
     },
     postprocess(result, criteria) {
-      if (!criteria.take || criteria.take === 1) return
+      if (!criteria.take || criteria.take === 1 || !criteria.noPagination)
+        return
 
       const hasNext = result.items.length === criteria.take
       const items = result.items
