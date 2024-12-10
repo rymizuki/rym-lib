@@ -23,8 +23,7 @@ export function pagination<
       criteria.skip = (page - 1) * rows
     },
     postprocess(result, criteria) {
-      if (!criteria.take || criteria.take === 1 || !criteria.noPagination)
-        return
+      if (!criteria.take || criteria.take === 1 || criteria.noPagination) return
 
       const hasNext = result.items.length === criteria.take
       const items = result.items
