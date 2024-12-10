@@ -22,6 +22,7 @@
     "@rym-lib/utilities": "1.0.0-alpha.0"
   },
   "changesets": [
+    "brown-coats-swim",
     "mighty-eyes-invent",
     "polite-zoos-heal",
     "proud-zoos-give",

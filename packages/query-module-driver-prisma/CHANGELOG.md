@@ -1,5 +1,11 @@
 # @rym-lib/query-module-driver-prisma
 
+## 1.0.0-alpha.6
+
+### Patch Changes
+
+- fix bugs
+
 ## 1.0.0-alpha.5
 
 ### Patch Changes
