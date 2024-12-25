@@ -12,7 +12,7 @@ export class QueryCriteria<Data extends QueryResultData>
   implements QueryCriteriaInterface<Data>
 {
   private attr: {
-    filter: QueryFilter<Data>
+    filter: QueryFilter<Data> | QueryFilter<Data>[]
     orderBy: QueryCriteriaOrderBy<Data>
     take: QueryCriteriaTake
     skip: QueryCriteriaSkip
@@ -49,14 +49,23 @@ export class QueryCriteria<Data extends QueryResultData>
   private remap<P extends typeof this.attr>(input: P): P {
     const attr = {
       filter: ((filter) => {
-        const ret: any = {}
-        for (const prev in filter) {
-          if (!Object.prototype.hasOwnProperty.call(filter, prev)) continue
-          const value = filter[prev]
-          const rename = this.mapping[prev]
-          ret[rename ? rename : prev] = value
+        const filters = Array.isArray(filter) ? filter : [filter]
+        const results = []
+        for (const f of filters) {
+          const ret: any = {}
+          for (const prev in f) {
+            if (!Object.prototype.hasOwnProperty.call(filter, prev)) continue
+            const value = f[prev]
+            const rename = this.mapping[prev]
+            ret[rename ? rename : prev] = value
+          }
+          results.push(ret)
         }
-        return ret as P['filter']
+        return results.length === 0
+          ? undefined
+          : results.length === 1
+            ? (results[0] as P['filter'])
+            : (results as P['filter'][])
       })(input.filter),
       orderBy: input.orderBy,
       take: input.take,

@@ -17,25 +17,29 @@ export function deflate<D, C extends Column<D> = Column<D>>(
   const middleware: QueryRunnerMiddleware<D> = {
     preprocess(criteria) {
       if (criteria.filter) {
-        for (const column in criteria.filter) {
-          if (!Object.prototype.hasOwnProperty.call(criteria.filter, column))
-            continue
-          const element = criteria.filter[column]
-          for (const operator in element) {
-            if (!Object.prototype.hasOwnProperty.call(element, operator))
+        for (const filter of Array.isArray(criteria.filter)
+          ? criteria.filter
+          : [criteria.filter]) {
+          for (const column in filter) {
+            if (!Object.prototype.hasOwnProperty.call(criteria.filter, column))
               continue
-            // eslint-disable-next-line @typescript-eslint/no-explicit-any
-            const value = (element as any)[operator]
+            const element = filter[column]
+            for (const operator in element) {
+              if (!Object.prototype.hasOwnProperty.call(element, operator))
+                continue
+              // eslint-disable-next-line @typescript-eslint/no-explicit-any
+              const value = (element as any)[operator]
 
-            if (targets.includes(column)) {
-              if (operator === 'in' && Array.isArray(value)) {
-                // eslint-disable-next-line @typescript-eslint/no-explicit-any
-                ;(criteria.filter as any)[column][operator] = value.map((v) =>
-                  iteratee(v),
-                )
-              } else {
-                // eslint-disable-next-line @typescript-eslint/no-explicit-any
-                ;(criteria.filter as any)[column][operator] = iteratee(value)
+              if (targets.includes(column)) {
+                if (operator === 'in' && Array.isArray(value)) {
+                  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+                  ;(criteria.filter as any)[column][operator] = value.map((v) =>
+                    iteratee(v),
+                  )
+                } else {
+                  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+                  ;(criteria.filter as any)[column][operator] = iteratee(value)
+                }
               }
             }
           }
