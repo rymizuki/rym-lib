@@ -50,81 +50,90 @@ export class QueryDriverPrisma implements QueryDriverInterface {
     builder: SQLBuilderPort,
     criteria: QueryCriteriaInterface,
   ) {
-    const cond = createConditions()
+    if (criteria.filter) {
+      const whole = createConditions()
+      for (const filter of Array.isArray(criteria.filter)
+        ? criteria.filter
+        : [criteria.filter]) {
+        const cond = createConditions()
 
-    // filter -> where
-    for (const name of keys(criteria.filter)) {
-      if (typeof name !== 'string') continue
+        // filter -> where
+        for (const name of keys(filter)) {
+          if (typeof name !== 'string') continue
 
-      const property = criteria.filter[name]
-      if (!property) continue
+          const property = filter[name]
+          if (!property) continue
 
-      for (const operator of keys(property)) {
-        const value = property[operator]
-        switch (operator) {
-          case 'eq': {
-            if (value === null) {
-              // name IS NULL
-              cond.and(name, is_null())
-            } else {
-              // name = value
-              cond.and(name, value)
+          for (const operator of keys(property)) {
+            const value = property[operator]
+            switch (operator) {
+              case 'eq': {
+                if (value === null) {
+                  // name IS NULL
+                  cond.and(name, is_null())
+                } else {
+                  // name = value
+                  cond.and(name, value)
+                }
+                break
+              }
+              case 'ne': {
+                if (value === null) {
+                  // name IS NOT NULL
+                  cond.and(name, is_not_null())
+                } else {
+                  // name != value
+                  cond.and(name, '!=', value)
+                }
+                break
+              }
+              case 'lt': {
+                // name < value
+                cond.and(name, '<', value)
+                break
+              }
+              case 'lte': {
+                // name <= value
+                cond.and(name, '<=', value)
+                break
+              }
+              case 'gt': {
+                // name > value
+                cond.and(name, '>', value)
+                break
+              }
+              case 'gte': {
+                // name >= value
+                cond.and(name, '>=', value)
+                break
+              }
+              case 'contains': {
+                if (value) {
+                  // name LIKE `%${value}%`
+                  cond.and(name, 'like', `%${value}%`)
+                }
+                break
+              }
+              case 'not_contains': {
+                if (value) {
+                  // name NOT LIKE `%${value}%`
+                  cond.and(name, 'not like', `%${value}%`)
+                }
+                break
+              }
+              case 'in': {
+                // name IN value
+                cond.and(name, 'in', value)
+                break
+              }
             }
-            break
-          }
-          case 'ne': {
-            if (value === null) {
-              // name IS NOT NULL
-              cond.and(name, is_not_null())
-            } else {
-              // name != value
-              cond.and(name, '!=', value)
-            }
-            break
-          }
-          case 'lt': {
-            // name < value
-            cond.and(name, '<', value)
-            break
-          }
-          case 'lte': {
-            // name <= value
-            cond.and(name, '<=', value)
-            break
-          }
-          case 'gt': {
-            // name > value
-            cond.and(name, '>', value)
-            break
-          }
-          case 'gte': {
-            // name >= value
-            cond.and(name, '>=', value)
-            break
-          }
-          case 'contains': {
-            if (value) {
-              // name LIKE `%${value}%`
-              cond.and(name, 'like', `%${value}%`)
-            }
-            break
-          }
-          case 'not_contains': {
-            if (value) {
-              // name NOT LIKE `%${value}%`
-              cond.and(name, 'not like', `%${value}%`)
-            }
-            break
-          }
-          case 'in': {
-            // name IN value
-            cond.and(name, 'in', value)
-            break
           }
         }
+
+        whole.or(cond)
       }
+      builder.where(whole)
     }
-    builder.where(cond)
 
     // orderBy
     if (criteria.orderBy) {
