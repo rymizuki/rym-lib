@@ -1,5 +1,11 @@
 # @rym-lib/utilities
 
+## 1.0.0-alpha.7
+
+### Patch Changes
+
+- add features for query-modules
+
 ## 1.0.0-alpha.6
 
 ### Patch Changes

@@ -1,5 +1,13 @@
 # @rym-lib/nakadachi-adapter-remix
 
+## 1.0.0-alpha.7
+
+### Patch Changes
+
+- add features for query-modules
+- Updated dependencies
+  - @rym-lib/nakadachi@1.0.0-alpha.7
+
 ## 1.0.0-alpha.6
 
 ### Patch Changes

@@ -1,5 +1,15 @@
 # @rym-lib/nakadachi-interactor-mixin-validator
 
+## 1.0.0-alpha.7
+
+### Patch Changes
+
+- add features for query-modules
+- Updated dependencies
+  - @rym-lib/exception@1.0.0-alpha.7
+  - @rym-lib/inversify-bundler@1.0.0-alpha.7
+  - @rym-lib/nakadachi@1.0.0-alpha.7
+
 ## 1.0.0-alpha.6
 
 ### Patch Changes
