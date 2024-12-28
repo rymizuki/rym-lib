@@ -54,7 +54,7 @@ export class QueryCriteria<Data extends QueryResultData>
         for (const f of filters) {
           const ret: any = {}
           for (const prev in f) {
-            if (!Object.prototype.hasOwnProperty.call(filter, prev)) continue
+            if (!Object.prototype.hasOwnProperty.call(f, prev)) continue
             const value = f[prev]
             const rename = this.mapping[prev]
             ret[rename ? rename : prev] = value

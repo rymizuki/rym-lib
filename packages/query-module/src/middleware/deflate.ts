@@ -21,8 +21,7 @@ export function deflate<D, C extends Column<D> = Column<D>>(
           ? criteria.filter
           : [criteria.filter]) {
           for (const column in filter) {
-            if (!Object.prototype.hasOwnProperty.call(criteria.filter, column))
-              continue
+            if (!Object.prototype.hasOwnProperty.call(filter, column)) continue
             const element = filter[column]
             for (const operator in element) {
               if (!Object.prototype.hasOwnProperty.call(element, operator))
@@ -33,12 +32,12 @@ export function deflate<D, C extends Column<D> = Column<D>>(
               if (targets.includes(column)) {
                 if (operator === 'in' && Array.isArray(value)) {
                   // eslint-disable-next-line @typescript-eslint/no-explicit-any
-                  ;(criteria.filter as any)[column][operator] = value.map((v) =>
+                  ;(filter as any)[column][operator] = value.map((v) =>
                     iteratee(v),
                   )
                 } else {
                   // eslint-disable-next-line @typescript-eslint/no-explicit-any
-                  ;(criteria.filter as any)[column][operator] = iteratee(value)
+                  ;(filter as any)[column][operator] = iteratee(value)
                 }
               }
             }
