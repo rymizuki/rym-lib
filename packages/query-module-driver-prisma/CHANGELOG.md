@@ -1,5 +1,11 @@
 # @rym-lib/query-module-driver-prisma
 
+## 1.0.0-alpha.12
+
+### Patch Changes
+
+- missing include index.d.mts
+
 ## 1.0.0-alpha.11
 
 ### Patch Changes

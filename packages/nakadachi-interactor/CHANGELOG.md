@@ -1,5 +1,15 @@
 # @rym-lib/nakadachi-interactor
 
+## 1.0.0-alpha.12
+
+### Patch Changes
+
+- missing include index.d.mts
+- Updated dependencies
+  - @rym-lib/exception@1.0.0-alpha.12
+  - @rym-lib/inversify-bundler@1.0.0-alpha.12
+  - @rym-lib/nakadachi@1.0.0-alpha.12
+
 ## 1.0.0-alpha.11
 
 ### Patch Changes

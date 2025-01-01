@@ -1,5 +1,13 @@
 # @rym-lib/query-module
 
+## 1.0.0-alpha.12
+
+### Patch Changes
+
+- missing include index.d.mts
+- Updated dependencies
+  - @rym-lib/exception@1.0.0-alpha.12
+
 ## 1.0.0-alpha.11
 
 ### Patch Changes

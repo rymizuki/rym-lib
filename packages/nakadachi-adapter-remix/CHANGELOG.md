@@ -1,5 +1,13 @@
 # @rym-lib/nakadachi-adapter-remix
 
+## 1.0.0-alpha.12
+
+### Patch Changes
+
+- missing include index.d.mts
+- Updated dependencies
+  - @rym-lib/nakadachi@1.0.0-alpha.12
+
 ## 1.0.0-alpha.11
 
 ### Patch Changes

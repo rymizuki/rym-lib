@@ -1,7 +1,7 @@
 {
   "name": "@rym-lib/ui",
   "type": "module",
-  "version": "1.0.0-alpha.11",
+  "version": "1.0.0-alpha.12",
   "private": false,
   "main": "build/index.js",
   "types": "build/index.d.ts",
