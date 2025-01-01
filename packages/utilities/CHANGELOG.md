@@ -1,5 +1,11 @@
 # @rym-lib/utilities
 
+## 1.0.0-alpha.9
+
+### Patch Changes
+
+- fix bug
+
 ## 1.0.0-alpha.8
 
 ### Patch Changes
