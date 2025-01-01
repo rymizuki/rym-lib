@@ -16,3 +16,58 @@ jobs:
       - run: npm run publish
         env:
           NODE_AUTH_TOKEN: ${{ secrets.NPM_ACCESS_TOKEN }}
+
+      - name: notify-slack-succeeded
+        if: success()
+        uses: slackapi/slack-github-action@v2.0.0
+        with:
+          webhook: ${{secrets.SLACK_WEBHOOK_URL}}
+          webhook-type: incoming-webhook
+          payload: |
+            {
+              "username": "Publisher",
+              "icon_emoji": ":sunny:",
+              "attachments": [
+                {
+                  "color": "good",
+                  "author_name": "${{ github.actor }}",
+                  "author_icon": "${{ github.event.sender.avatar_url }}",
+                  "pretext": "リリースしました",
+                  "fields": [
+                    {
+                      "title": "ref",
+                      "value": "${{ github.ref }}"
+                    },
+                  ]
+                }
+              ]
+            }
+        env:
+          SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK_URL }}
+      - name: notify-slack-failed
+        if: failure()
+        uses: slackapi/slack-github-action@v2.0.0
+        with:
+          webhook: ${{secrets.SLACK_WEBHOOK_URL}}
+          webhook-type: incoming-webhook
+          payload: |
+            {
+              "username": "Publisher",
+              "icon_emoji": ":umbrella:",
+              "attachments": [
+                {
+                  "color": "danger",
+                  "author_name": "${{ github.actor }}",
+                  "author_icon": "${{ github.event.sender.avatar_url }}",
+                  "pretext": "リリースできませんでした",
+                  "fields": [
+                    {
+                      "title": "ref",
+                      "value": "${{ github.ref }}"
+                    },
+                  ]
+                }
+              ]
+            }
+        env:
+          SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK_URL }}
