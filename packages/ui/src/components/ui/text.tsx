@@ -71,7 +71,7 @@ const style = sva({
       },
       false: {
         root: {
-          whiteSpace: 'pre-wrap',
+          whiteSpace: 'normal',
         },
       },
     },
