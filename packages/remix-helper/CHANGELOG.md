@@ -1,5 +1,13 @@
 # @rym-lib/remix-helper
 
+## 1.0.0-alpha.11
+
+### Patch Changes
+
+- fix exports settings
+- Updated dependencies
+  - @rym-lib/utilities@1.0.0-alpha.11
+
 ## 1.0.0-alpha.10
 
 ### Patch Changes

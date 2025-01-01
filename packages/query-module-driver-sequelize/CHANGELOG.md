@@ -1,5 +1,11 @@
 # @rym-lib/query-module-driver-sequelize
 
+## 1.0.0-alpha.11
+
+### Patch Changes
+
+- fix exports settings
+
 ## 1.0.0-alpha.10
 
 ### Patch Changes
