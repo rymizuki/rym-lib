@@ -14,7 +14,9 @@ export async function parseBody(request: Request) {
       const key = keys.next()
       const value = values.next()
       if (key.done) break
-      data.append(key.value, value.value)
+      if (value.value) {
+        data.append(key.value, value.value as string)
+      }
     }
     return parse(data.toString(), {
       allowDots: true,

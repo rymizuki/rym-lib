@@ -30,7 +30,11 @@ export class Adapter implements NakadachiAdapterInterface<TypedResponse> {
       ignoreQueryPrefix: true,
       arrayLimit: PARSE_ARRAY_LIMIT,
     })
-    const body = /^HEAD|GET$/.test(method) ? null : await parseBody(request)
+    const body = /^HEAD|GET$/.test(method)
+      ? null
+      : /^DELETE$/.test(method) && !headers.get('Content-Type')
+        ? null
+        : await parseBody(request)
     return new Input({
       params,
       headers,
