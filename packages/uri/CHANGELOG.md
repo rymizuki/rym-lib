@@ -1,5 +1,11 @@
 # @rym-lib/uri
 
+## 1.0.0-alpha.13
+
+### Patch Changes
+
+- support minimum feature for nakadachi-adapter-remix
+
 ## 1.0.0-alpha.12
 
 ### Patch Changes

@@ -1,5 +1,13 @@
 # @rym-lib/nakadachi-adapter-remix
 
+## 1.0.0-alpha.13
+
+### Patch Changes
+
+- support minimum feature for nakadachi-adapter-remix
+- Updated dependencies
+  - @rym-lib/nakadachi@1.0.0-alpha.13
+
 ## 1.0.0-alpha.12
 
 ### Patch Changes

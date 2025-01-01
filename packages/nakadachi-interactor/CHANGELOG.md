@@ -1,5 +1,15 @@
 # @rym-lib/nakadachi-interactor
 
+## 1.0.0-alpha.13
+
+### Patch Changes
+
+- support minimum feature for nakadachi-adapter-remix
+- Updated dependencies
+  - @rym-lib/exception@1.0.0-alpha.13
+  - @rym-lib/inversify-bundler@1.0.0-alpha.13
+  - @rym-lib/nakadachi@1.0.0-alpha.13
+
 ## 1.0.0-alpha.12
 
 ### Patch Changes
