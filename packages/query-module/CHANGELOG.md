@@ -1,5 +1,13 @@
 # @rym-lib/query-module
 
+## 1.0.0-alpha.10
+
+### Patch Changes
+
+- update ui
+- Updated dependencies
+  - @rym-lib/exception@1.0.0-alpha.10
+
 ## 1.0.0-alpha.9
 
 ### Patch Changes

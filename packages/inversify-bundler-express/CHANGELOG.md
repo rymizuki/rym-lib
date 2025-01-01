@@ -1,5 +1,13 @@
 # @rym-lib/inversify-bundler-express
 
+## 1.0.0-alpha.10
+
+### Patch Changes
+
+- update ui
+- Updated dependencies
+  - @rym-lib/inversify-bundler@1.0.0-alpha.10
+
 ## 1.0.0-alpha.9
 
 ### Patch Changes
