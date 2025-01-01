@@ -1,4 +1,4 @@
-import { cloneElement, ReactElement, useState } from 'react'
+import { cloneElement, isValidElement, ReactElement, useState } from 'react'
 import { createPortal } from 'react-dom'
 
 interface DialogCloseFunction {
@@ -7,7 +7,7 @@ interface DialogCloseFunction {
 }
 
 type Props = {
-  dialog: ReactElement
+  dialog: ReactElement | ((props: { close: () => void }) => ReactElement)
   children: ReactElement
   onClose?: DialogCloseFunction
 }
@@ -30,7 +30,9 @@ export const DialogOpener = ({ dialog, children, onClose }: Props) => {
       <span>{cloneElement(children, { onClick: handle_opener_click })}</span>
       {visibility &&
         createPortal(
-          cloneElement(dialog, { onClose: handle_close }),
+          typeof dialog === 'function'
+            ? dialog({ close: handle_close })
+            : cloneElement(dialog, { onClose: handle_close }),
           document.body,
         )}
     </span>
