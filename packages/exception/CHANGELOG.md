@@ -1,5 +1,11 @@
 # @rym-lib/exception
 
+## 1.0.0-alpha.14
+
+### Patch Changes
+
+- update uri package
+
 ## 1.0.0-alpha.13
 
 ### Patch Changes
