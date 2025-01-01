@@ -1,3 +1,4 @@
+import { nodeModulesPolyfillPlugin } from 'esbuild-plugins-node-modules-polyfill'
 import { defineConfig } from 'tsup'
 
 export default defineConfig({
@@ -10,4 +11,9 @@ export default defineConfig({
   outDir: 'build',
   format: ['cjs', 'esm'],
   external: [],
+  esbuildPlugins: [
+    nodeModulesPolyfillPlugin({
+      modules: ['url'],
+    }),
+  ],
 })

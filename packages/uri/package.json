@@ -40,6 +40,7 @@
   },
   "devDependencies": {
     "@rym-lib/dev-config": "*",
+    "esbuild-plugins-node-modules-polyfill": "^1.6.8",
     "npm-check-updates": "^17.1.11",
     "qs": "^6.13.1",
     "tsup": "^8.3.5",
