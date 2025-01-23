@@ -13,3 +13,5 @@ styled-system
 styled-system-studio
 
 coverage
+
+/.env
