@@ -52,11 +52,12 @@ export class QueryCriteria<Data extends QueryResultData>
         const filters = Array.isArray(filter) ? filter : [filter]
         const results = []
         for (const f of filters) {
+          if (!Object.keys(f).length) continue
           const ret: any = {}
           for (const prev in f) {
             if (!Object.prototype.hasOwnProperty.call(f, prev)) continue
             const value = f[prev]
-            const rename = this.mapping[prev]
+            const rename = (this.mapping as any)[prev]
             ret[rename ? rename : prev] = value
           }
           results.push(ret)

@@ -7,6 +7,11 @@ export default defineConfig({
     globals: true,
     include: ['src/**/*.spec.ts'],
     reporters: ['verbose'],
+    coverage: {
+      include: ['src/**/*'],
+      exclude: ['src/test-utils/**/*'],
+      reporter: ['text', 'clover'],
+    },
     env: {},
   },
 })

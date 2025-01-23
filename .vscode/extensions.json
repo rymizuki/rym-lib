@@ -3,6 +3,7 @@
     "esbenp.prettier-vscode",
     "editorconfig.editorconfig",
     "streetsidesoftware.code-spell-checker",
-    "dbaeumer.vscode-eslint"
+    "dbaeumer.vscode-eslint",
+    "ryanluker.vscode-coverage-gutters"
   ]
 }

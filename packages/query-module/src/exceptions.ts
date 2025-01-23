@@ -1,6 +1,6 @@
 import { Exception } from '@rym-lib/exception'
 
-import { QueryRunnerCriteria, QuerySpecification } from './interfaces'
+import { QueryRunnerCriteria } from './interfaces'
 
 export class QueryRunnerResourceNotFoundException extends Exception {
   constructor(

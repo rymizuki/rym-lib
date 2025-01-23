@@ -5,6 +5,7 @@ export default defineConfig({
     index: './src/index.ts',
     'middleware/inflate': './src/middleware/inflate.ts',
     'middleware/deflate': './src/middleware/deflate.ts',
+    'test-utils/test-mock-logger': './src/test-utils/test-mock-logger.ts',
   },
   dts: true,
   clean: true,

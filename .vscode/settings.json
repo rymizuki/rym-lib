@@ -10,5 +10,16 @@
     "keyframes",
     "logone",
     "tsup"
-  ]
+  ],
+  "coverage-gutters.coverageBaseDir": "packages/**/coverage",
+  "coverage-gutters.coverageFileNames": [
+    "clover.xml",
+    "lcov.info",
+    "cov.xml",
+    "coverage.xml",
+    "cobertura.xml",
+    "jacoco.xml",
+    "coverage.cobertura.xml"
+  ],
+  "coverage-gutters.customizable.context-menu": true
 }

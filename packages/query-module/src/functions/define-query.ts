@@ -1,13 +1,13 @@
 import {
-  QueryResultData,
   QueryDriverInterface,
-  QuerySpecification,
-  QueryRunnerContext,
-  QueryLoggerInterface,
-  QueryRunnerInterface,
+  QueryResultData,
   QueryResultList,
+  QueryRunnerContext,
   QueryRunnerCriteria,
+  QueryRunnerInterface,
+  QuerySpecification,
 } from '../interfaces'
+import { createLogger } from '../logger'
 import { QueryRunner } from '../runner'
 
 export function defineQuery<
@@ -27,21 +27,9 @@ export function defineQuery<
     ) => QueryRunnerInterface<Data>
   },
 ) {
-  const logger: QueryLoggerInterface = {
-    verbose(message, payload) {
-      console.debug(message, payload)
-    },
-    info(message, payload) {
-      console.info(message, payload)
-    },
-    error(message, error) {
-      console.error(message, error)
-    },
-  }
-
   const ctx: QueryRunnerContext = {
-    logger,
     ...context,
+    logger: context.logger ? context.logger : createLogger(),
   }
 
   return options?.builder
