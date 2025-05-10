@@ -133,6 +133,31 @@ describe('query-module-sql-builder', () => {
                 expect(bindings).toStrictEqual(['%example%'])
               }))
           })
+          describe('given "example1 example2  example3"', () => {
+            let criteria: Partial<QueryCriteriaInterface>
+            beforeEach(
+              () =>
+                (criteria = {
+                  filter: { name: { contains: 'example1 example2  example3' } },
+                }),
+            )
+            describe('to SQL', () =>
+              it('should be `name LIKE ? AND name LIKE ? AND name LIKE ?`', () => {
+                const { sql } = execute(builder, criteria)
+                expect(sql).toBe(
+                  'SELECT * FROM `example` WHERE (((`name` LIKE ?) AND (`name` LIKE ?) AND (`name` LIKE ?)))',
+                )
+              }))
+            describe('to Bindings', () =>
+              it('should be ["%example1%", "%example2%", "%example3%"]', () => {
+                const { bindings } = execute(builder, criteria)
+                expect(bindings).toStrictEqual([
+                  '%example1%',
+                  '%example2%',
+                  '%example3%',
+                ])
+              }))
+          })
         })
         // region .filter.not_contains
         describe('not_contains', () => {
@@ -153,6 +178,33 @@ describe('query-module-sql-builder', () => {
               it('should be ["%example%"]', () => {
                 const { bindings } = execute(builder, criteria)
                 expect(bindings).toStrictEqual(['%example%'])
+              }))
+          })
+          describe('given "example1 example2  example3"', () => {
+            let criteria: Partial<QueryCriteriaInterface>
+            beforeEach(
+              () =>
+                (criteria = {
+                  filter: {
+                    name: { not_contains: 'example1 example2  example3' },
+                  },
+                }),
+            )
+            describe('to SQL', () =>
+              it('should be `name NOT LIKE ? AND name NOT LIKE ? AND name NOT LIKE ?`', () => {
+                const { sql } = execute(builder, criteria)
+                expect(sql).toBe(
+                  'SELECT * FROM `example` WHERE (((`name` NOT LIKE ?) AND (`name` NOT LIKE ?) AND (`name` NOT LIKE ?)))',
+                )
+              }))
+            describe('to Bindings', () =>
+              it('should be ["%example1%", "%example2%", "%example3%"]', () => {
+                const { bindings } = execute(builder, criteria)
+                expect(bindings).toStrictEqual([
+                  '%example1%',
+                  '%example2%',
+                  '%example3%',
+                ])
               }))
           })
         })
