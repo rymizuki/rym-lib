@@ -8,7 +8,7 @@ import {
   QueryDriverInterface,
   QueryRunnerCriteria,
 } from '@rym-lib/query-module'
-import { createLogger } from '@rym-lib/query-module/test-utils/test-mock-logger'
+import { createLogger } from '@rym-lib/query-module/test-utils'
 
 import prisma from './test-utils/prisma'
 import { prismaMock } from './test-utils/prisma-mock'

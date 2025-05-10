@@ -1,4 +1,8 @@
 {
-  "include": ["./src"],
-  "extends": ["@rym-lib/dev-config/tsconfig/base.json"]
+  "include": [
+    "./src"
+  ],
+  "extends": [
+    "@rym-lib/dev-config/tsconfig/base.json"
+  ]
 }
