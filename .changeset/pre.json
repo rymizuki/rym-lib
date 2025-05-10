@@ -20,7 +20,7 @@
     "@rym-lib/ui": "1.0.0-alpha.0",
     "@rym-lib/uri": "1.0.0-alpha.0",
     "@rym-lib/utilities": "1.0.0-alpha.0",
-    "@rym-lib/query-module-sql-builder": "0.0.0"
+    "@rym-lib/query-module-sql-builder": "0.0.1-alpha.0"
   },
   "changesets": [
     "brown-coats-swim",
@@ -35,6 +35,7 @@
     "orange-walls-boil",
     "polite-zoos-heal",
     "proud-zoos-give",
+    "sharp-beers-shout",
     "sharp-months-jam",
     "sour-pandas-refuse",
     "sweet-snails-rule",
