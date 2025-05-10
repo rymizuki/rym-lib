@@ -1,5 +1,15 @@
 # @rym-lib/query-module-driver-prisma
 
+## 1.0.1
+
+### Patch Changes
+
+- afdcf5d: update query-module-driver-\*
+- c34a966: update query-module-sql-builder
+- Updated dependencies [afdcf5d]
+- Updated dependencies [c34a966]
+  - @rym-lib/query-module-sql-builder@1.0.1
+
 ## 1.0.1-alpha.1
 
 ### Patch Changes

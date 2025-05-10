@@ -1,5 +1,12 @@
 # @rym-lib/inversify-bundler
 
+## 1.0.1
+
+### Patch Changes
+
+- afdcf5d: update query-module-driver-\*
+- c34a966: update query-module-sql-builder
+
 ## 1.0.1-alpha.1
 
 ### Patch Changes

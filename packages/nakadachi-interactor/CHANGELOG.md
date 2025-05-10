@@ -1,5 +1,17 @@
 # @rym-lib/nakadachi-interactor
 
+## 1.0.1
+
+### Patch Changes
+
+- afdcf5d: update query-module-driver-\*
+- c34a966: update query-module-sql-builder
+- Updated dependencies [afdcf5d]
+- Updated dependencies [c34a966]
+  - @rym-lib/exception@1.0.1
+  - @rym-lib/inversify-bundler@1.0.1
+  - @rym-lib/nakadachi@1.0.1
+
 ## 1.0.1-alpha.1
 
 ### Patch Changes
