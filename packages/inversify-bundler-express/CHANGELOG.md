@@ -1,5 +1,13 @@
 # @rym-lib/inversify-bundler-express
 
+## 1.0.1-alpha.0
+
+### Patch Changes
+
+- update query-module-driver-\*
+- Updated dependencies
+  - @rym-lib/inversify-bundler@1.0.1-alpha.0
+
 ## 1.0.0
 
 ### Major Changes
