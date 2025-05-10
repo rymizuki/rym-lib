@@ -35,6 +35,16 @@
         "default": "./build/middleware/*.js"
       }
     },
+    "./test-utils": {
+      "import": {
+        "types": "./build/test-utils.mjs",
+        "default": "./build/test-utils.js"
+      },
+      "require": {
+        "types": "./build/test-utils.ts",
+        "default": "./build/test-utils.js"
+      }
+    },
     "./test-utils/*": {
       "import": {
         "types": "./build/test-utils/*.mts",
