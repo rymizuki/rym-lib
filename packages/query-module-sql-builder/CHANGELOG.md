@@ -1,5 +1,11 @@
 # @rym-lib/query-module-sql-builder
 
+## 1.0.0-alpha.16
+
+### Patch Changes
+
+- update packages
+
 ## 0.0.1-alpha.1
 
 ### Patch Changes

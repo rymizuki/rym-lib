@@ -1,5 +1,11 @@
 # @rym-lib/query-module-driver-sequelize
 
+## 1.0.0-alpha.16
+
+### Patch Changes
+
+- update packages
+
 ## 1.0.0-alpha.15
 
 ### Patch Changes
