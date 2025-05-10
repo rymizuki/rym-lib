@@ -1,5 +1,30 @@
 # @rym-lib/inversify-bundler
 
+## 1.0.0
+
+### Major Changes
+
+- 51023ab: initial release 1.0.0
+
+### Patch Changes
+
+- e8d2223: fix bugs
+- 6013328: add tests
+- 3332bf4: fix bugs
+- 66c9cd9: add features for query-modules
+- 96e3994: missing include index.d.mts
+- 7ce0a23: update uri package
+- fc3b944: add features and fixes
+- c86d92c: fix exports settings
+- ddf8d6a: update ui
+- 331df3c: bump up
+- 8f64765: update features
+- 5881810: fix bugs
+- 3e1a0c5: update packages
+- 90fc17b: fix bug
+- f9fc090: support minimum feature for nakadachi-adapter-remix
+- 7c609ea: add fixes
+
 ## 1.0.0-alpha.16
 
 ### Patch Changes
