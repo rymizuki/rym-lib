@@ -1,5 +1,13 @@
 # @rym-lib/query-module
 
+## 1.0.1-alpha.1
+
+### Patch Changes
+
+- update query-module-sql-builder
+- Updated dependencies
+  - @rym-lib/exception@1.0.1-alpha.1
+
 ## 1.0.1-alpha.0
 
 ### Patch Changes
