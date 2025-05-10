@@ -39,6 +39,7 @@ describe('query-module-sql-builder', () => {
   describe('filters', () => {
     describe('given record', () => {
       describe('operators', () => {
+        // region .filter.eq
         describe('eq', () => {
           describe('given `null`', () => {
             let criteria: Partial<QueryCriteriaInterface>
@@ -75,6 +76,7 @@ describe('query-module-sql-builder', () => {
               }))
           })
         })
+        // region .filter.ne
         describe('ne', () => {
           describe('given `null`', () => {
             let criteria: Partial<QueryCriteriaInterface>
@@ -111,6 +113,7 @@ describe('query-module-sql-builder', () => {
               }))
           })
         })
+        // region .filter.contains
         describe('contains', () => {
           describe('given `"example"`', () => {
             let criteria: Partial<QueryCriteriaInterface>
@@ -130,7 +133,33 @@ describe('query-module-sql-builder', () => {
                 expect(bindings).toStrictEqual(['%example%'])
               }))
           })
+          describe('given "example1 example2  example3"', () => {
+            let criteria: Partial<QueryCriteriaInterface>
+            beforeEach(
+              () =>
+                (criteria = {
+                  filter: { name: { contains: 'example1 example2  example3' } },
+                }),
+            )
+            describe('to SQL', () =>
+              it('should be `name LIKE ? AND name LIKE ? AND name LIKE ?`', () => {
+                const { sql } = execute(builder, criteria)
+                expect(sql).toBe(
+                  'SELECT * FROM `example` WHERE (((`name` LIKE ?) AND (`name` LIKE ?) AND (`name` LIKE ?)))',
+                )
+              }))
+            describe('to Bindings', () =>
+              it('should be ["%example1%", "%example2%", "%example3%"]', () => {
+                const { bindings } = execute(builder, criteria)
+                expect(bindings).toStrictEqual([
+                  '%example1%',
+                  '%example2%',
+                  '%example3%',
+                ])
+              }))
+          })
         })
+        // region .filter.not_contains
         describe('not_contains', () => {
           describe('given `"example"`', () => {
             let criteria: Partial<QueryCriteriaInterface>
@@ -151,7 +180,35 @@ describe('query-module-sql-builder', () => {
                 expect(bindings).toStrictEqual(['%example%'])
               }))
           })
+          describe('given "example1 example2  example3"', () => {
+            let criteria: Partial<QueryCriteriaInterface>
+            beforeEach(
+              () =>
+                (criteria = {
+                  filter: {
+                    name: { not_contains: 'example1 example2  example3' },
+                  },
+                }),
+            )
+            describe('to SQL', () =>
+              it('should be `name NOT LIKE ? AND name NOT LIKE ? AND name NOT LIKE ?`', () => {
+                const { sql } = execute(builder, criteria)
+                expect(sql).toBe(
+                  'SELECT * FROM `example` WHERE (((`name` NOT LIKE ?) AND (`name` NOT LIKE ?) AND (`name` NOT LIKE ?)))',
+                )
+              }))
+            describe('to Bindings', () =>
+              it('should be ["%example1%", "%example2%", "%example3%"]', () => {
+                const { bindings } = execute(builder, criteria)
+                expect(bindings).toStrictEqual([
+                  '%example1%',
+                  '%example2%',
+                  '%example3%',
+                ])
+              }))
+          })
         })
+        // region .filter.in
         describe('in', () => {
           describe('given `[]`', () => {
             let criteria: Partial<QueryCriteriaInterface>
@@ -189,6 +246,7 @@ describe('query-module-sql-builder', () => {
               }))
           })
         })
+        // region .filter.lt
         describe('lt', () => {
           describe('given `100`', () => {
             let criteria: Partial<QueryCriteriaInterface>
@@ -207,6 +265,7 @@ describe('query-module-sql-builder', () => {
               }))
           })
         })
+        // region .filter.lte
         describe('lte', () => {
           describe('given `100`', () => {
             let criteria: Partial<QueryCriteriaInterface>
@@ -225,6 +284,7 @@ describe('query-module-sql-builder', () => {
               }))
           })
         })
+        // region .filter.gt
         describe('gt', () => {
           describe('given `100`', () => {
             let criteria: Partial<QueryCriteriaInterface>
@@ -243,6 +303,7 @@ describe('query-module-sql-builder', () => {
               }))
           })
         })
+        // region .filter.gte
         describe('gte', () => {
           describe('given `100`', () => {
             let criteria: Partial<QueryCriteriaInterface>
@@ -264,7 +325,29 @@ describe('query-module-sql-builder', () => {
       })
     })
 
-    describe.skip('given array', () => {})
+    describe('given array', () => {
+      let criteria: Partial<QueryCriteriaInterface>
+      beforeEach(
+        () =>
+          (criteria = {
+            filter: [{ name: { eq: 'example' } }, { age: { lt: 10 } }],
+          }),
+      )
+      describe('to SQL', () => {
+        it('should be `name = ? OR age < 10`', () => {
+          const { sql } = execute(builder, criteria)
+          expect(sql).toBe(
+            'SELECT * FROM `example` WHERE (((`name` = ?)) OR ((`age` < ?)))',
+          )
+        })
+      })
+      describe('to Bindings', () => {
+        it('should be ["example", 10]', () => {
+          const { bindings } = execute(builder, criteria)
+          expect(bindings).toStrictEqual(['example', 10])
+        })
+      })
+    })
   })
 
   // region .orderBy

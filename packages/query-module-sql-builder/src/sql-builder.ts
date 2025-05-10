@@ -10,14 +10,24 @@ import type { QueryCriteriaInterface } from '@rym-lib/query-module'
 
 export { createBuilder }
 
+type BuildSqlOptions = {
+  containsSplitSpaces: boolean
+}
+
 function keys<T extends Record<string, unknown>>(value: T) {
   return Object.keys(value) as (keyof T)[]
+}
+
+const defaults: BuildSqlOptions = {
+  containsSplitSpaces: true,
 }
 
 export function buildSQL(
   builder: SQLBuilderPort,
   criteria: QueryCriteriaInterface,
+  options: Partial<BuildSqlOptions> = {},
 ) {
+  const o = { ...defaults, ...options }
   if (criteria.filter) {
     const whole = createConditions()
     for (const filter of Array.isArray(criteria.filter)
@@ -76,15 +86,25 @@ export function buildSQL(
               break
             }
             case 'contains': {
-              if (value) {
+              if (!value) break
+              const values =
+                o.containsSplitSpaces && /\x20/.test(value)
+                  ? value.split(/\x20+/)
+                  : [value]
+              for (const value of values) {
                 // name LIKE `%${value}%`
                 cond.and(name, 'like', `%${value}%`)
               }
               break
             }
             case 'not_contains': {
-              if (value) {
-                // name NOT LIKE `%${value}%`
+              if (!value) break
+              const values =
+                o.containsSplitSpaces && /\x20/.test(value)
+                  ? value.split(/\x20+/)
+                  : [value]
+              for (const value of values) {
+                // name LIKE `%${value}%`
                 cond.and(name, 'not like', `%${value}%`)
               }
               break
