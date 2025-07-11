@@ -1,5 +1,13 @@
 # @rym-lib/nakadachi-adapter-remix
 
+## 1.0.3
+
+### Patch Changes
+
+- fix quote setting for rdb-command
+- Updated dependencies
+  - @rym-lib/nakadachi@1.0.3
+
 ## 1.0.2
 
 ### Patch Changes

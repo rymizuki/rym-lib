@@ -1,5 +1,11 @@
 # @rym-lib/rdb-command
 
+## 1.0.3
+
+### Patch Changes
+
+- fix quote setting for rdb-command
+
 ## 1.0.2
 
 ### Patch Changes
