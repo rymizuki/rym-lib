@@ -1,5 +1,11 @@
 # @rym-lib/exception
 
+## 1.0.4
+
+### Patch Changes
+
+- fix support postgresql
+
 ## 1.0.3
 
 ### Patch Changes
