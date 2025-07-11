@@ -13,13 +13,17 @@ import {
 
 export class QueryDriverSequelize implements QueryDriverInterface {
   private setup: ((builder: SQLBuilderPort) => SQLBuilderPort) | null = null
+  private builderSetup: () => SQLBuilderPort
 
   constructor(
     private db: Sequelize,
     private context: {
       logger: QueryLoggerInterface
     },
-  ) {}
+    builderSetup?: () => SQLBuilderPort,
+  ) {
+    this.builderSetup = builderSetup ? builderSetup : () => createBuilder()
+  }
 
   source(setup: (builder: SQLBuilderPort) => SQLBuilderPort): this {
     this.setup = setup
@@ -32,7 +36,10 @@ export class QueryDriverSequelize implements QueryDriverInterface {
     if (!this.setup) {
       throw new Error('QueryDriver must be required source.')
     }
-    const [sql, replacements] = buildSQL(this.setup(createBuilder()), criteria)
+    const [sql, replacements] = buildSQL(
+      this.setup(this.builderSetup()),
+      criteria,
+    )
     this.context.logger.verbose(`[QueryDriverSequelize] ${sql}`, {
       sql,
       replacements,
