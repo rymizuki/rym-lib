@@ -40,7 +40,7 @@ describe('db', () => {
       })
       it('should be execute INSERT', () => {
         expect(execute_spy).toHaveBeenCalledWith(
-          'INSERT INTO `example` (`id`,`value`) VALUES (?,?)',
+          'INSERT INTO `example` (`id`,`value`) VALUES ($1,$2)',
           ['example_id', 'example_value'],
         )
       })
@@ -60,8 +60,8 @@ describe('db', () => {
       })
       it('should be execute UPDATE', () => {
         expect(execute_spy).toHaveBeenCalledWith(
-          'UPDATE `example` SET `foreign_id` = ?, `value` = ? WHERE (`id` = ?)',
-          ['example_foreign_id', 'example_value', 'example_id'],
+          'UPDATE `example` SET `foreign_id` = $2, `value` = $3 WHERE (`id` = $1)',
+          ['example_id', 'example_foreign_id', 'example_value'],
         )
       })
     })
@@ -73,7 +73,7 @@ describe('db', () => {
       })
       it('should be execute DELETE', () => {
         expect(execute_spy).toHaveBeenCalledWith(
-          'DELETE FROM `example` WHERE (`id` = ?)',
+          'DELETE FROM `example` WHERE (`id` = $1)',
           ['example_id'],
         )
       })
@@ -86,7 +86,7 @@ describe('db', () => {
       })
       it('should be query SELECT', () => {
         expect(query_spy).toHaveBeenCalledWith(
-          'SELECT\n  *\nFROM\n  `example`\nWHERE\n  ((`id` = ?))\nLIMIT 1',
+          'SELECT\n  *\nFROM\n  `example`\nWHERE\n  ((`id` = $1))\nLIMIT 1',
           ['example_id'],
         )
       })
@@ -119,7 +119,7 @@ describe('db', () => {
       })
       it('should be execute INSERT', () => {
         expect(execute_spy).toHaveBeenCalledWith(
-          'INSERT INTO example (id,value) VALUES (?,?)',
+          'INSERT INTO example (id,value) VALUES ($1,$2)',
           ['example_id', 'example_value'],
         )
       })
@@ -139,8 +139,8 @@ describe('db', () => {
       })
       it('should be execute UPDATE', () => {
         expect(execute_spy).toHaveBeenCalledWith(
-          'UPDATE example SET foreign_id = ?, value = ? WHERE (id = ?)',
-          ['example_foreign_id', 'example_value', 'example_id'],
+          'UPDATE example SET foreign_id = $2, value = $3 WHERE (id = $1)',
+          ['example_id', 'example_foreign_id', 'example_value'],
         )
       })
     })
@@ -152,7 +152,7 @@ describe('db', () => {
       })
       it('should be execute DELETE', () => {
         expect(execute_spy).toHaveBeenCalledWith(
-          'DELETE FROM example WHERE (id = ?)',
+          'DELETE FROM example WHERE (id = $1)',
           ['example_id'],
         )
       })
@@ -165,7 +165,7 @@ describe('db', () => {
       })
       it('should be query SELECT', () => {
         expect(query_spy).toHaveBeenCalledWith(
-          'SELECT\n  *\nFROM\n  example\nWHERE\n  ((id = ?))\nLIMIT 1',
+          'SELECT\n  *\nFROM\n  example\nWHERE\n  ((id = $1))\nLIMIT 1',
           ['example_id'],
         )
       })

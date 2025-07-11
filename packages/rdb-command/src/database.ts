@@ -27,13 +27,18 @@ function escape(value: string, options: { quote?: string | null } = {}) {
 export class DataBase implements DataBasePort {
   private middlewares: DataBaseMiddleware[] = []
   private context: DataBaseContext
+  private toSqlOptions: SQLBuilderToSQLInputOptions
 
   constructor(
     private conn: DataBaseConnectorPort,
     private logger: DataBaseLogger,
-    private toSqlOptions: SQLBuilderToSQLInputOptions = {},
+    options: SQLBuilderToSQLInputOptions = {},
   ) {
     this.context = { logger }
+    this.toSqlOptions = {
+      ...{ placeholder: '$' },
+      ...options,
+    }
   }
 
   async findOrCreate<Row>(
@@ -79,7 +84,7 @@ export class DataBase implements DataBasePort {
       .join(',')
     const replacements = Object.values(this.parse(data))
 
-    const sql = `INSERT INTO ${escape(table, this.toSqlOptions)} (${columns}) VALUES (${replacements.map(() => `?`).join(',')})`
+    const sql = `INSERT INTO ${escape(table, this.toSqlOptions)} (${columns}) VALUES (${replacements.map((_, index) => `$${index + 1}`).join(',')})`
     this.context.logger.debug(`[DataBase] create: ${sql} `, { replacements })
 
     await this.execute(sql, replacements, options)
@@ -94,12 +99,15 @@ export class DataBase implements DataBasePort {
     const cond = this.createCondition(where)
     const [cond_sql, bindings] = cond.toSQL(this.toSqlOptions)
     const setters = Object.keys(data)
-      .map((prop) => `${escape(prop, this.toSqlOptions)} = ?`)
+      .map(
+        (prop, index) =>
+          `${escape(prop, this.toSqlOptions)} = $${bindings.length + index + 1}`,
+      )
       .join(', ')
     const values = Object.values(this.parse(data))
 
     const sql = `UPDATE ${escape(table, this.toSqlOptions)} SET ${setters} WHERE ${cond_sql}`
-    const replacements = [...values, ...bindings]
+    const replacements = [...bindings, ...values]
     this.context.logger.debug(`[DataBase] update: ${sql} `, {
       replacements,
     })
