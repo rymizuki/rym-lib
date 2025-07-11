@@ -22,7 +22,7 @@ export class Seeder {
       const pk_value = record[pk_index]
       const row = (
         await this.client.$queryRawUnsafe(
-          `SELECT * FROM ${table_name} WHERE ${pk} = ? LIMIT 1`,
+          `SELECT * FROM ${table_name} WHERE ${pk} = $1 LIMIT 1`,
           pk_value,
         )
       )[0]
@@ -35,17 +35,18 @@ export class Seeder {
           continue
         }
 
+        let index = 0
         const setters = columns
           .filter((prop) => prop !== pk)
-          .map((prop) => `${prop} = ?`)
+          .map((prop) => `${prop} = $${++index}`)
         const values = columns
           .map((_, index) => (index === pk_index ? null : record[index]))
           .filter((value) => value !== null)
         if (this.options.updated_at) {
-          setters.push(`updated_at = ?`)
+          setters.push(`updated_at = $${++index}`)
           values.push(new Date())
         }
-        const sql = `UPDATE ${table_name} SET ${setters.join(', ')} WHERE ${pk} = ?`
+        const sql = `UPDATE ${table_name} SET ${setters.join(', ')} WHERE ${pk} = $${++index}`
         try {
           await this.client.$executeRawUnsafe(sql, ...values, pk_value)
         } catch (error) {
@@ -56,14 +57,14 @@ export class Seeder {
         const cols = [...columns].map((col) => `${col}`)
         const values = columns.map((_, index) => record[index])
         if (this.options.created_at) {
-          cols.push('`created_at`')
+          cols.push('created_at')
           values.push(new Date())
         }
         if (this.options.updated_at) {
-          cols.push('`updated_at`')
+          cols.push('updated_at')
           values.push(new Date())
         }
-        const sql = `INSERT INTO ${table_name} (${cols.join(', ')}) VALUES (${cols.map(() => '?').join(', ')})`
+        const sql = `INSERT INTO ${table_name} (${cols.join(', ')}) VALUES (${cols.map((_, index) => `$${index + 1}`).join(', ')})`
         try {
           await this.client.$executeRawUnsafe(sql, ...values)
         } catch (error) {
