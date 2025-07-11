@@ -12,13 +12,17 @@ import {
 
 export class QueryDriverPrisma implements QueryDriverInterface {
   private setup: ((builder: SQLBuilderPort) => SQLBuilderPort) | null = null
+  private builderSetup: () => SQLBuilderPort
 
   constructor(
     private db: PrismaClient,
     private context: {
       logger: QueryLoggerInterface
     },
-  ) {}
+    builderSetup?: () => SQLBuilderPort,
+  ) {
+    this.builderSetup = builderSetup ? builderSetup : () => createBuilder()
+  }
 
   source(setup: (builder: SQLBuilderPort) => SQLBuilderPort): this {
     this.setup = setup
@@ -33,7 +37,10 @@ export class QueryDriverPrisma implements QueryDriverInterface {
       throw new Error('QueryDriver must be required source.')
     }
 
-    const [sql, replacements] = buildSQL(this.setup(createBuilder()), criteria)
+    const [sql, replacements] = buildSQL(
+      this.setup(this.builderSetup()),
+      criteria,
+    )
     this.context.logger.verbose(`[QueryDriverPrisma] ${sql}`, { replacements })
 
     const rows = await this.db.$queryRawUnsafe(sql, ...replacements)
