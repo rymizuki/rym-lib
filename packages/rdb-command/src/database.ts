@@ -1,4 +1,8 @@
-import { createBuilder, createConditions } from 'coral-sql'
+import {
+  createBuilder,
+  createConditions,
+  SQLBuilderToSQLInputOptions,
+} from 'coral-sql'
 
 import {
   DataBaseCommandOptionsPartial,
@@ -10,6 +14,16 @@ import {
   WhereType,
 } from './interfaces'
 
+function escape(value: string, options: { quote?: string | null } = {}) {
+  const quote =
+    options.quote === null
+      ? ''
+      : options.quote !== undefined
+        ? options.quote
+        : '`'
+  return `${quote}${encodeURIComponent(value)}${quote}`
+}
+
 export class DataBase implements DataBasePort {
   private middlewares: DataBaseMiddleware[] = []
   private context: DataBaseContext
@@ -17,6 +31,7 @@ export class DataBase implements DataBasePort {
   constructor(
     private conn: DataBaseConnectorPort,
     private logger: DataBaseLogger,
+    private toSqlOptions: SQLBuilderToSQLInputOptions = {},
   ) {
     this.context = { logger }
   }
@@ -60,11 +75,11 @@ export class DataBase implements DataBasePort {
     options: DataBaseCommandOptionsPartial = {},
   ) {
     const columns = Object.keys(data)
-      .map((prop) => '`' + encodeURIComponent(prop) + '`')
+      .map((prop) => escape(prop, this.toSqlOptions))
       .join(',')
     const replacements = Object.values(this.parse(data))
 
-    const sql = `INSERT INTO ${table} (${columns}) VALUES (${replacements.map(() => `?`).join(',')})`
+    const sql = `INSERT INTO ${escape(table, this.toSqlOptions)} (${columns}) VALUES (${replacements.map(() => `?`).join(',')})`
     this.context.logger.debug(`[DataBase] create: ${sql} `, { replacements })
 
     await this.execute(sql, replacements, options)
@@ -77,13 +92,13 @@ export class DataBase implements DataBasePort {
     options: DataBaseCommandOptionsPartial = {},
   ) {
     const cond = this.createCondition(where)
-    const [cond_sql, bindings] = cond.toSQL()
+    const [cond_sql, bindings] = cond.toSQL(this.toSqlOptions)
     const setters = Object.keys(data)
-      .map((prop) => `${encodeURIComponent(prop)} = ?`)
+      .map((prop) => `${escape(prop, this.toSqlOptions)} = ?`)
       .join(', ')
     const values = Object.values(this.parse(data))
 
-    const sql = `UPDATE ${table} SET ${setters} WHERE ${cond_sql}`
+    const sql = `UPDATE ${escape(table, this.toSqlOptions)} SET ${setters} WHERE ${cond_sql}`
     const replacements = [...values, ...bindings]
     this.context.logger.debug(`[DataBase] update: ${sql} `, {
       replacements,
@@ -97,8 +112,8 @@ export class DataBase implements DataBasePort {
     options: DataBaseCommandOptionsPartial = {},
   ): Promise<void> {
     const cond = this.createCondition(where)
-    const [cond_sql, replacements] = cond.toSQL()
-    const sql = `DELETE FROM ${table} WHERE ${cond_sql}`
+    const [cond_sql, replacements] = cond.toSQL(this.toSqlOptions)
+    const sql = `DELETE FROM ${escape(table, this.toSqlOptions)} WHERE ${cond_sql}`
     await this.execute(sql, replacements, options)
   }
 
@@ -109,7 +124,7 @@ export class DataBase implements DataBasePort {
   ): Promise<Row | null> {
     const builder = createBuilder().from(table).limit(1)
     const cond = this.createCondition(where)
-    const [sql, replacements] = builder.where(cond).toSQL()
+    const [sql, replacements] = builder.where(cond).toSQL(this.toSqlOptions)
 
     const rows = await this.query<Row>(sql, replacements, options)
     if (!rows.length) {

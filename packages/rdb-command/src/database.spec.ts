@@ -16,82 +16,163 @@ class DummyDataBaseLogger implements DataBaseLogger {
 }
 
 describe('db', () => {
-  let conn: DataBaseConnectorPort
-  let db: DataBasePort
-  beforeEach(() => {
-    conn = new TestConnector()
-    db = new DataBase(conn, new DummyDataBaseLogger())
-  })
-
-  let execute_spy: MockInstance
-  let query_spy: MockInstance
-  beforeEach(() => {
-    execute_spy = vi.spyOn(conn, 'execute')
-    query_spy = vi.spyOn(conn, 'query')
-  })
-
-  describe('create', () => {
-    beforeEach(async () => {
-      await db.create('example', {
-        id: 'example_id',
-        value: 'example_value',
-      })
+  describe('no options', () => {
+    let conn: DataBaseConnectorPort
+    let db: DataBasePort
+    beforeEach(() => {
+      conn = new TestConnector()
+      db = new DataBase(conn, new DummyDataBaseLogger())
     })
-    it('should be execute INSERT', () => {
-      expect(execute_spy).toHaveBeenCalledWith(
-        'INSERT INTO `example` (`id`,`value`) VALUES (?,?)',
-        ['example_id', 'example_value'],
-      )
+
+    let execute_spy: MockInstance
+    let query_spy: MockInstance
+    beforeEach(() => {
+      execute_spy = vi.spyOn(conn, 'execute')
+      query_spy = vi.spyOn(conn, 'query')
     })
-  })
-  describe('update', () => {
-    beforeEach(async () => {
-      await db.update(
-        'example',
-        {
+
+    describe('create', () => {
+      beforeEach(async () => {
+        await db.create('example', {
           id: 'example_id',
-        },
-        {
-          foreign_id: 'example_foreign_id',
           value: 'example_value',
-        },
-      )
-    })
-    it('should be execute UPDATE', () => {
-      expect(execute_spy).toHaveBeenCalledWith(
-        'UPDATE `example` SET `foreign_id` = ?, `value` = ? WHERE (`id` = ?)',
-        ['example_foreign_id', 'example_value', 'example_id'],
-      )
-    })
-  })
-  describe('delete', () => {
-    beforeEach(async () => {
-      await db.delete('example', {
-        id: 'example_id',
+        })
+      })
+      it('should be execute INSERT', () => {
+        expect(execute_spy).toHaveBeenCalledWith(
+          'INSERT INTO `example` (`id`,`value`) VALUES (?,?)',
+          ['example_id', 'example_value'],
+        )
       })
     })
-    it('should be execute DELETE', () => {
-      expect(execute_spy).toHaveBeenCalledWith(
-        'DELETE FROM `example` WHERE (`id` = ?)',
-        ['example_id'],
-      )
-    })
-  })
-  describe('find', () => {
-    beforeEach(async () => {
-      await db.find('example', {
-        id: 'example_id',
+    describe('update', () => {
+      beforeEach(async () => {
+        await db.update(
+          'example',
+          {
+            id: 'example_id',
+          },
+          {
+            foreign_id: 'example_foreign_id',
+            value: 'example_value',
+          },
+        )
+      })
+      it('should be execute UPDATE', () => {
+        expect(execute_spy).toHaveBeenCalledWith(
+          'UPDATE `example` SET `foreign_id` = ?, `value` = ? WHERE (`id` = ?)',
+          ['example_foreign_id', 'example_value', 'example_id'],
+        )
       })
     })
-    it('should be query SELECT', () => {
-      expect(query_spy).toHaveBeenCalledWith(
-        'SELECT\n  *\nFROM\n  `example`\nWHERE\n  ((`id` = ?))\nLIMIT 1',
-        ['example_id'],
-      )
+    describe('delete', () => {
+      beforeEach(async () => {
+        await db.delete('example', {
+          id: 'example_id',
+        })
+      })
+      it('should be execute DELETE', () => {
+        expect(execute_spy).toHaveBeenCalledWith(
+          'DELETE FROM `example` WHERE (`id` = ?)',
+          ['example_id'],
+        )
+      })
     })
+    describe('find', () => {
+      beforeEach(async () => {
+        await db.find('example', {
+          id: 'example_id',
+        })
+      })
+      it('should be query SELECT', () => {
+        expect(query_spy).toHaveBeenCalledWith(
+          'SELECT\n  *\nFROM\n  `example`\nWHERE\n  ((`id` = ?))\nLIMIT 1',
+          ['example_id'],
+        )
+      })
+    })
+    describe.skip('findOrCreate', () => {})
+    describe.skip('updateOrCreate', () => {})
   })
-  describe.skip('findOrCreate', () => {})
-  describe.skip('updateOrCreate', () => {})
+
+  describe('options.quote = null', () => {
+    let conn: DataBaseConnectorPort
+    let db: DataBasePort
+    beforeEach(() => {
+      conn = new TestConnector()
+      db = new DataBase(conn, new DummyDataBaseLogger(), { quote: null })
+    })
+
+    let execute_spy: MockInstance
+    let query_spy: MockInstance
+    beforeEach(() => {
+      execute_spy = vi.spyOn(conn, 'execute')
+      query_spy = vi.spyOn(conn, 'query')
+    })
+
+    describe('create', () => {
+      beforeEach(async () => {
+        await db.create('example', {
+          id: 'example_id',
+          value: 'example_value',
+        })
+      })
+      it('should be execute INSERT', () => {
+        expect(execute_spy).toHaveBeenCalledWith(
+          'INSERT INTO example (id,value) VALUES (?,?)',
+          ['example_id', 'example_value'],
+        )
+      })
+    })
+    describe('update', () => {
+      beforeEach(async () => {
+        await db.update(
+          'example',
+          {
+            id: 'example_id',
+          },
+          {
+            foreign_id: 'example_foreign_id',
+            value: 'example_value',
+          },
+        )
+      })
+      it('should be execute UPDATE', () => {
+        expect(execute_spy).toHaveBeenCalledWith(
+          'UPDATE example SET foreign_id = ?, value = ? WHERE (id = ?)',
+          ['example_foreign_id', 'example_value', 'example_id'],
+        )
+      })
+    })
+    describe('delete', () => {
+      beforeEach(async () => {
+        await db.delete('example', {
+          id: 'example_id',
+        })
+      })
+      it('should be execute DELETE', () => {
+        expect(execute_spy).toHaveBeenCalledWith(
+          'DELETE FROM example WHERE (id = ?)',
+          ['example_id'],
+        )
+      })
+    })
+    describe('find', () => {
+      beforeEach(async () => {
+        await db.find('example', {
+          id: 'example_id',
+        })
+      })
+      it('should be query SELECT', () => {
+        expect(query_spy).toHaveBeenCalledWith(
+          'SELECT\n  *\nFROM\n  example\nWHERE\n  ((id = ?))\nLIMIT 1',
+          ['example_id'],
+        )
+      })
+    })
+    describe.skip('findOrCreate', () => {})
+    describe.skip('updateOrCreate', () => {})
+  })
 })
 
 class TestConnector implements DataBaseConnectorPort {
