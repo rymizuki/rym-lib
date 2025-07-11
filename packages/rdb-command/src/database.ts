@@ -64,7 +64,7 @@ export class DataBase implements DataBasePort {
       .join(',')
     const replacements = Object.values(this.parse(data))
 
-    const sql = `INSERT INTO \`${table}\` (${columns}) VALUES (${replacements.map(() => `?`).join(',')})`
+    const sql = `INSERT INTO ${table} (${columns}) VALUES (${replacements.map(() => `?`).join(',')})`
     this.context.logger.debug(`[DataBase] create: ${sql} `, { replacements })
 
     await this.execute(sql, replacements, options)
@@ -79,11 +79,11 @@ export class DataBase implements DataBasePort {
     const cond = this.createCondition(where)
     const [cond_sql, bindings] = cond.toSQL()
     const setters = Object.keys(data)
-      .map((prop) => `\`${encodeURIComponent(prop)}\` = ?`)
+      .map((prop) => `${encodeURIComponent(prop)} = ?`)
       .join(', ')
     const values = Object.values(this.parse(data))
 
-    const sql = `UPDATE \`${table}\` SET ${setters} WHERE ${cond_sql}`
+    const sql = `UPDATE ${table} SET ${setters} WHERE ${cond_sql}`
     const replacements = [...values, ...bindings]
     this.context.logger.debug(`[DataBase] update: ${sql} `, {
       replacements,
@@ -98,7 +98,7 @@ export class DataBase implements DataBasePort {
   ): Promise<void> {
     const cond = this.createCondition(where)
     const [cond_sql, replacements] = cond.toSQL()
-    const sql = `DELETE FROM \`${table}\` WHERE ${cond_sql}`
+    const sql = `DELETE FROM ${table} WHERE ${cond_sql}`
     await this.execute(sql, replacements, options)
   }
 
