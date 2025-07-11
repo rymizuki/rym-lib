@@ -130,7 +130,7 @@ export class DataBase implements DataBasePort {
     where: Record<string, unknown>,
     options: DataBaseCommandOptionsPartial = {},
   ): Promise<Row | null> {
-    const builder = createBuilder().from(table).limit(1)
+    const builder = createBuilder(this.toSqlOptions).from(table).limit(1)
     const cond = this.createCondition(where)
     const [sql, replacements] = builder.where(cond).toSQL(this.toSqlOptions)
 
