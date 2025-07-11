@@ -1,5 +1,16 @@
 # @rym-lib/remix-helper
 
+## 1.1.0
+
+### Minor Changes
+
+- support postgresql for db modules
+
+### Patch Changes
+
+- Updated dependencies
+  - @rym-lib/utilities@1.1.0
+
 ## 1.0.4
 
 ### Patch Changes

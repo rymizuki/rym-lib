@@ -1,5 +1,16 @@
 # @rym-lib/nakadachi-adapter-remix
 
+## 2.0.0
+
+### Minor Changes
+
+- support postgresql for db modules
+
+### Patch Changes
+
+- Updated dependencies
+  - @rym-lib/nakadachi@1.1.0
+
 ## 1.0.4
 
 ### Patch Changes

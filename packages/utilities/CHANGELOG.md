@@ -1,5 +1,11 @@
 # @rym-lib/utilities
 
+## 1.1.0
+
+### Minor Changes
+
+- support postgresql for db modules
+
 ## 1.0.4
 
 ### Patch Changes
