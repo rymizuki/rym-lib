@@ -130,7 +130,7 @@ export class DataBase implements DataBasePort {
     where: Record<string, unknown>,
     options: DataBaseCommandOptionsPartial = {},
   ): Promise<Row | null> {
-    const builder = createBuilder(this.toSqlOptions).from(table).limit(1)
+    const builder = createBuilder().from(table).limit(1)
     const cond = this.createCondition(where)
     const [sql, replacements] = builder.where(cond).toSQL(this.toSqlOptions)
 
@@ -146,7 +146,7 @@ export class DataBase implements DataBasePort {
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const result: { value: any } = { value: null }
     await this.conn.transaction(async (conn) => {
-      const db = new DataBase(conn, this.context.logger)
+      const db = new DataBase(conn, this.context.logger, this.toSqlOptions)
       for (const middleware of this.middlewares) {
         db.use(middleware)
       }
