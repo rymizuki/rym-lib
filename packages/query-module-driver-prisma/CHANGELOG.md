@@ -1,5 +1,13 @@
 # @rym-lib/query-module-driver-prisma
 
+## 1.1.1
+
+### Patch Changes
+
+- fix rdb-command
+- Updated dependencies
+  - @rym-lib/query-module-sql-builder@1.1.1
+
 ## 1.1.0
 
 ### Minor Changes

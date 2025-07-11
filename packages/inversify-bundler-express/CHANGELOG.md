@@ -1,6 +1,14 @@
 # @rym-lib/inversify-bundler-express
 
-## 2.0.0
+## 1.1.1
+
+### Patch Changes
+
+- fix rdb-command
+- Updated dependencies
+  - @rym-lib/inversify-bundler@1.1.1
+
+## 1.1.0
 
 ### Minor Changes
 

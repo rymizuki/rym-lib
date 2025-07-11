@@ -1,5 +1,13 @@
 # @rym-lib/query-module
 
+## 1.1.1
+
+### Patch Changes
+
+- fix rdb-command
+- Updated dependencies
+  - @rym-lib/exception@1.1.1
+
 ## 1.1.0
 
 ### Minor Changes

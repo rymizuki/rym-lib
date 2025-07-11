@@ -1,7 +1,7 @@
 {
   "name": "@rym-lib/remix-helper",
   "type": "module",
-  "version": "1.1.0",
+  "version": "1.1.1",
   "private": false,
   "author": {
     "name": "mizuki_r",
@@ -39,7 +39,7 @@
     "ncu": "npm-check-updates"
   },
   "dependencies": {
-    "@rym-lib/utilities": "^1.1.0"
+    "@rym-lib/utilities": "^1.1.1"
   },
   "devDependencies": {
     "@remix-run/react": "^2.14.0",
