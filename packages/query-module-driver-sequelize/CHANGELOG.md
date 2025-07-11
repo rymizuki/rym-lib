@@ -1,5 +1,13 @@
 # @rym-lib/query-module-driver-sequelize
 
+## 1.1.2
+
+### Patch Changes
+
+- rdb-command fix bugs
+- Updated dependencies
+  - @rym-lib/query-module-sql-builder@1.1.2
+
 ## 1.1.1
 
 ### Patch Changes

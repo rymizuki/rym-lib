@@ -1,5 +1,13 @@
 # @rym-lib/nakadachi-adapter-remix
 
+## 1.1.2
+
+### Patch Changes
+
+- rdb-command fix bugs
+- Updated dependencies
+  - @rym-lib/nakadachi@1.1.2
+
 ## 1.1.1
 
 ### Patch Changes

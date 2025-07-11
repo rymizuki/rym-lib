@@ -1,5 +1,11 @@
 # @rym-lib/inversify-bundler
 
+## 1.1.2
+
+### Patch Changes
+
+- rdb-command fix bugs
+
 ## 1.1.1
 
 ### Patch Changes
