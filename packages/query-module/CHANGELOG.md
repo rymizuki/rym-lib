@@ -1,5 +1,13 @@
 # @rym-lib/query-module
 
+## 1.0.2
+
+### Patch Changes
+
+- remove backquote for sqls
+- Updated dependencies
+  - @rym-lib/exception@1.0.2
+
 ## 1.0.1
 
 ### Patch Changes

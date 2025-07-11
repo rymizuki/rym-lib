@@ -1,5 +1,11 @@
 # @rym-lib/nakadachi
 
+## 1.0.2
+
+### Patch Changes
+
+- remove backquote for sqls
+
 ## 1.0.1
 
 ### Patch Changes
