@@ -1,5 +1,13 @@
 # @rym-lib/nakadachi-adapter-remix
 
+## 1.1.3
+
+### Patch Changes
+
+- fix sesder bug
+- Updated dependencies
+  - @rym-lib/nakadachi@1.1.3
+
 ## 1.1.2
 
 ### Patch Changes

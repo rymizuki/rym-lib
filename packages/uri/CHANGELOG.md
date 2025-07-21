@@ -1,5 +1,11 @@
 # @rym-lib/uri
 
+## 1.1.3
+
+### Patch Changes
+
+- fix sesder bug
+
 ## 1.1.2
 
 ### Patch Changes

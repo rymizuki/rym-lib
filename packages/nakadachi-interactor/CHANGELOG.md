@@ -1,5 +1,15 @@
 # @rym-lib/nakadachi-interactor
 
+## 1.1.3
+
+### Patch Changes
+
+- fix sesder bug
+- Updated dependencies
+  - @rym-lib/exception@1.1.3
+  - @rym-lib/inversify-bundler@1.1.3
+  - @rym-lib/nakadachi@1.1.3
+
 ## 1.1.2
 
 ### Patch Changes
