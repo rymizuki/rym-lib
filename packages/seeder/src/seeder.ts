@@ -1,10 +1,15 @@
 import { PrismaClient } from '@prisma/client'
 
 type Value = string | number | Date | boolean
+
 export class Seeder {
   constructor(
     private client: PrismaClient,
-    private options: { created_at?: boolean; updated_at?: boolean },
+    private options: {
+      created_at?: boolean
+      updated_at?: boolean
+      quote?: '`' | '"' | ''
+    },
   ) {}
 
   async load(
@@ -22,7 +27,7 @@ export class Seeder {
       const pk_value = record[pk_index]
       const row = (
         await this.client.$queryRawUnsafe(
-          `SELECT * FROM ${table_name} WHERE ${pk} = $1 LIMIT 1`,
+          `SELECT * FROM ${this.escape(table_name)} WHERE ${this.escape(pk)} = $1 LIMIT 1`,
           pk_value,
         )
       )[0]
@@ -38,12 +43,12 @@ export class Seeder {
         let index = 0
         const setters = columns
           .filter((prop) => prop !== pk)
-          .map((prop) => `${prop} = $${++index}`)
+          .map((prop) => `${this.escape(prop)} = $${++index}`)
         const values = columns
           .map((_, index) => (index === pk_index ? null : record[index]))
           .filter((value) => value !== null)
         if (this.options.updated_at) {
-          setters.push(`updated_at = $${++index}`)
+          setters.push(`${this.escape('updated_at')} = $${++index}`)
           values.push(new Date())
         }
         const sql = `UPDATE ${table_name} SET ${setters.join(', ')} WHERE ${pk} = $${++index}`
@@ -54,17 +59,17 @@ export class Seeder {
           throw error
         }
       } else {
-        const cols = [...columns].map((col) => `${col}`)
+        const cols = [...columns].map((col) => `${this.escape(col)}`)
         const values = columns.map((_, index) => record[index])
         if (this.options.created_at) {
-          cols.push('created_at')
+          cols.push(this.escape('created_at'))
           values.push(new Date())
         }
         if (this.options.updated_at) {
-          cols.push('updated_at')
+          cols.push(this.escape('updated_at'))
           values.push(new Date())
         }
-        const sql = `INSERT INTO ${table_name} (${cols.join(', ')}) VALUES (${cols.map((_, index) => `$${index + 1}`).join(', ')})`
+        const sql = `INSERT INTO ${this.escape(table_name)} (${cols.join(', ')}) VALUES (${cols.map((_, index) => `$${index + 1}`).join(', ')})`
         try {
           await this.client.$executeRawUnsafe(sql, ...values)
         } catch (error) {
@@ -74,5 +79,10 @@ export class Seeder {
       }
     }
     console.info(`loading "${table_name}" done.`)
+  }
+
+  private escape(value: string) {
+    const quote = this.options.quote ?? '`'
+    return `${quote}${value}${quote}`
   }
 }
