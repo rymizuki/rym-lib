@@ -1,5 +1,13 @@
 # @rym-lib/query-module
 
+## 1.1.4
+
+### Patch Changes
+
+- fix seeder bugs
+- Updated dependencies
+  - @rym-lib/exception@1.1.4
+
 ## 1.1.3
 
 ### Patch Changes

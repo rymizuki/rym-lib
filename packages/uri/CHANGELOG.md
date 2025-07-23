@@ -1,5 +1,11 @@
 # @rym-lib/uri
 
+## 1.1.4
+
+### Patch Changes
+
+- fix seeder bugs
+
 ## 1.1.3
 
 ### Patch Changes

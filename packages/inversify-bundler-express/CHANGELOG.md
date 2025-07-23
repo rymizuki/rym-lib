@@ -1,5 +1,13 @@
 # @rym-lib/inversify-bundler-express
 
+## 1.1.4
+
+### Patch Changes
+
+- fix seeder bugs
+- Updated dependencies
+  - @rym-lib/inversify-bundler@1.1.4
+
 ## 1.1.3
 
 ### Patch Changes

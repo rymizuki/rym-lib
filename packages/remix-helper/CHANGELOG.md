@@ -1,5 +1,13 @@
 # @rym-lib/remix-helper
 
+## 1.1.4
+
+### Patch Changes
+
+- fix seeder bugs
+- Updated dependencies
+  - @rym-lib/utilities@1.1.4
+
 ## 1.1.3
 
 ### Patch Changes

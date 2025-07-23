@@ -1,5 +1,13 @@
 # @rym-lib/query-module-driver-prisma
 
+## 1.1.4
+
+### Patch Changes
+
+- fix seeder bugs
+- Updated dependencies
+  - @rym-lib/query-module-sql-builder@1.1.4
+
 ## 1.1.3
 
 ### Patch Changes
