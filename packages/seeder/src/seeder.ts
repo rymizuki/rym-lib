@@ -51,7 +51,7 @@ export class Seeder {
           setters.push(`${this.escape('updated_at')} = $${++index}`)
           values.push(new Date())
         }
-        const sql = `UPDATE ${table_name} SET ${setters.join(', ')} WHERE ${pk} = $${++index}`
+        const sql = `UPDATE ${this.escape(table_name)} SET ${setters.join(', ')} WHERE ${this.escape(pk)} = $${++index}`
         try {
           await this.client.$executeRawUnsafe(sql, ...values, pk_value)
         } catch (error) {
