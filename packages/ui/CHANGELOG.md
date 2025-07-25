@@ -1,5 +1,11 @@
 # @rym-lib/ui
 
+## 1.2.0
+
+### Minor Changes
+
+- nakadachi: add feature for middleware hook
+
 ## 1.1.4
 
 ### Patch Changes

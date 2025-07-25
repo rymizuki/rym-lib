@@ -1,5 +1,16 @@
 # @rym-lib/query-module-driver-sequelize
 
+## 1.2.0
+
+### Minor Changes
+
+- nakadachi: add feature for middleware hook
+
+### Patch Changes
+
+- Updated dependencies
+  - @rym-lib/query-module-sql-builder@1.2.0
+
 ## 1.1.4
 
 ### Patch Changes

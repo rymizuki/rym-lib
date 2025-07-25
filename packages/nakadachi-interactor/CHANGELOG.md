@@ -1,5 +1,18 @@
 # @rym-lib/nakadachi-interactor
 
+## 1.2.0
+
+### Minor Changes
+
+- nakadachi: add feature for middleware hook
+
+### Patch Changes
+
+- Updated dependencies
+  - @rym-lib/exception@1.2.0
+  - @rym-lib/inversify-bundler@1.2.0
+  - @rym-lib/nakadachi@1.2.0
+
 ## 1.1.4
 
 ### Patch Changes

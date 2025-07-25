@@ -1,5 +1,16 @@
 # @rym-lib/remix-helper
 
+## 1.2.0
+
+### Minor Changes
+
+- nakadachi: add feature for middleware hook
+
+### Patch Changes
+
+- Updated dependencies
+  - @rym-lib/utilities@1.2.0
+
 ## 1.1.4
 
 ### Patch Changes
