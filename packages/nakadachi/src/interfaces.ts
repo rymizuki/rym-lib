@@ -57,7 +57,12 @@ export interface NakadachiResponse extends Omit<ResponseInit, 'headers'> {
 }
 
 export interface NakadachiMiddleware {
-  prepare(input: InputPort, context: NakadachiContext): Promise<void>
+  prepare?(input: InputPort, context: NakadachiContext): Promise<void>
+  resolve?(
+    result: NakadachiResult | undefined,
+    input: InputPort,
+    context: NakadachiContext,
+  ): Promise<void>
 }
 
 export interface NakadachiInterface<OutputPort, E extends Events = {}> {

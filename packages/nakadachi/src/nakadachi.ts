@@ -13,11 +13,22 @@ import {
 } from './interfaces'
 import { EventEmitter } from './lib/events'
 
-interface Events {
+interface Events<OutputPort = any> {
   prepare: {
     input: InputPort
     context: NakadachiContext
     response: NakadachiResponse
+  }
+  resolve: {
+    result: NakadachiResult | undefined
+    input: InputPort
+    context: NakadachiContext
+    response: NakadachiResponse
+  }
+  response: {
+    response: OutputPort
+    input: InputPort
+    context: NakadachiContext
   }
 }
 
@@ -32,14 +43,14 @@ export class Nakadachi<OutputPort = any>
   implements NakadachiInterface<OutputPort>
 {
   private options: NakadachiOption
-  private events: EventEmitter<Events>
+  private events: EventEmitter<Events<OutputPort>>
   private middlewares: NakadachiMiddleware[] = []
 
   constructor(
     private adapter: NakadachiAdapterInterface<OutputPort>,
     options: Partial<NakadachiOption> = {},
   ) {
-    this.events = new EventEmitter<Events>()
+    this.events = new EventEmitter<Events<OutputPort>>()
     this.options = {
       timeout: 1 * 60 * 1000,
       ...options,
@@ -69,9 +80,18 @@ export class Nakadachi<OutputPort = any>
 
     try {
       for (const middleware of this.middlewares) {
-        this.on('prepare', async ({ input, context }) => {
-          await middleware.prepare(input, context)
-        })
+        if (middleware.prepare) {
+          const hook = middleware.prepare
+          this.on('prepare', async ({ input, context }) => {
+            await hook(input, context)
+          })
+        }
+        if (middleware.resolve) {
+          const hook = middleware.resolve
+          this.on('resolve', async ({ result, input, context }) => {
+            await hook(result, input, context)
+          })
+        }
       }
 
       await this.events.emit('prepare', {
@@ -92,6 +112,12 @@ export class Nakadachi<OutputPort = any>
           }
         })
       }, this.options.timeout)
+      await this.events.emit('resolve', {
+        result,
+        input,
+        context,
+        response: responseInit,
+      })
     } catch (error) {
       result = { error }
     }
@@ -99,7 +125,18 @@ export class Nakadachi<OutputPort = any>
       result = { data: null, status: 204 }
     }
 
-    return await this.createResponse(result, input, context, responseInit)
+    const response = await this.createResponse(
+      result,
+      input,
+      context,
+      responseInit,
+    )
+    await this.events.emit('response', {
+      response,
+      input,
+      context,
+    })
+    return response
   }
 
   private createContext() {
