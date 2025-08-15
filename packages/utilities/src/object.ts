@@ -16,6 +16,8 @@ export function recursiveExcludeEmptyValue<T extends Record<string, any>>( // es
           ? recursiveExcludeEmptyValue(item as any) // eslint-disable-line @typescript-eslint/no-explicit-any
           : item,
       )
+    } else if (element instanceof Date) {
+      ret[prop] = element
     } else if (typeof element === 'object') {
       ret[prop] = recursiveExcludeEmptyValue(element)
     } else {
