@@ -11,13 +11,23 @@ export function recursiveExcludeEmptyValue<T extends Record<string, any>>( // es
     }
     const element = value[prop]
     if (Array.isArray(element)) {
-      ret[prop] = element.map((item: unknown) =>
-        typeof item === 'object'
-          ? recursiveExcludeEmptyValue(item as any) // eslint-disable-line @typescript-eslint/no-explicit-any
-          : item,
-      )
-    } else if (typeof element === 'object') {
-      ret[prop] = recursiveExcludeEmptyValue(element)
+      ret[prop] = element.map((item: unknown) => {
+        if (item && typeof item === 'object' && item !== null) {
+          const objItem = item as Record<string, any> // eslint-disable-line @typescript-eslint/no-explicit-any
+          if (objItem instanceof Date) {
+            return objItem
+          }
+          return recursiveExcludeEmptyValue(objItem)
+        }
+        return item
+      })
+    } else if (element && typeof element === 'object' && element !== null) {
+      const objElement = element as Record<string, any> // eslint-disable-line @typescript-eslint/no-explicit-any
+      if (objElement instanceof Date) {
+        ret[prop] = objElement
+      } else {
+        ret[prop] = recursiveExcludeEmptyValue(objElement)
+      }
     } else {
       ret[prop] = element
     }
