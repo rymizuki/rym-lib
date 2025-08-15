@@ -1,5 +1,13 @@
 # @rym-lib/remix-helper
 
+## 1.2.1
+
+### Patch Changes
+
+- Patch release for all packages
+- Updated dependencies
+  - @rym-lib/utilities@1.2.1
+
 ## 1.2.0
 
 ### Minor Changes

@@ -1,5 +1,11 @@
 # @rym-lib/query-module-pagination
 
+## 1.2.1
+
+### Patch Changes
+
+- Patch release for all packages
+
 ## 1.2.0
 
 ### Minor Changes
