@@ -1,4 +1,5 @@
 import { beforeEach, describe, expect, it, MockInstance, vi } from 'vitest'
+import { unescape } from '@rym-lib/query-module-sql-builder'
 
 import { QueryRunnerResourceNotFoundException } from './exceptions'
 import { defineQuery } from './functions/define-query'
@@ -380,17 +381,17 @@ describe('QueryRunner with raw operators', () => {
         id: 'users.id',
         name: 'users.name',
         // Simulate CASE-WHEN for status display
-        status_display: `CASE 
+        status_display: unescape(`CASE 
           WHEN users.status = 'active' THEN 'Active User'
           WHEN users.status = 'pending' THEN 'Pending User'
           ELSE 'Inactive User'
-        END`,
+        END`),
         // Simulate CASE-WHEN for user tier
-        user_tier: `CASE 
+        user_tier: unescape(`CASE 
           WHEN users.category = 'premium' AND users.status = 'active' THEN 'gold'
           WHEN users.category = 'premium' THEN 'silver'
           ELSE 'bronze'
-        END`,
+        END`),
       },
     })
   })
