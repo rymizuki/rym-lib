@@ -18,3 +18,4 @@ coverage
 
 # for LLM
 /.claude
+/.serena/cache
