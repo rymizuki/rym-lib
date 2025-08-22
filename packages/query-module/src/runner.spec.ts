@@ -395,11 +395,11 @@ describe('QueryRunner with raw operators', () => {
     })
   })
 
-  describe('raw operators support', () => {
-    it('should accept raw_eq in filter criteria', async () => {
+  describe('automatic raw SQL expression support', () => {
+    it('should automatically handle CASE-WHEN expressions with eq operator', async () => {
       const result = await runner.many({
         filter: {
-          status_display: { raw_eq: 'Active User' },
+          status_display: { eq: 'Active User' },
         },
       })
 
@@ -407,15 +407,15 @@ describe('QueryRunner with raw operators', () => {
       expect(driver.called).toHaveLength(1)
       expect(driver.called[0].method).toBe('execute')
       
-      // Check that the criteria contains the raw operator
+      // Check that the criteria contains the filter
       const criteria = driver.called[0].args[0]
       expect(criteria.filter).toBeDefined()
     })
 
-    it('should accept raw_ne in filter criteria', async () => {
+    it('should automatically handle CASE-WHEN expressions with ne operator', async () => {
       await runner.many({
         filter: {
-          status_display: { raw_ne: 'Inactive User' },
+          status_display: { ne: 'Inactive User' },
         },
       })
 
@@ -424,10 +424,10 @@ describe('QueryRunner with raw operators', () => {
       expect(criteria.filter).toBeDefined()
     })
 
-    it('should accept raw_in in filter criteria', async () => {
+    it('should automatically handle CASE-WHEN expressions with in operator', async () => {
       await runner.many({
         filter: {
-          user_tier: { raw_in: ['gold', 'silver'] },
+          user_tier: { in: ['gold', 'silver'] },
         },
       })
 
@@ -436,21 +436,33 @@ describe('QueryRunner with raw operators', () => {
       expect(criteria.filter).toBeDefined()
     })
 
-    it('should handle empty array in raw_in', async () => {
+    it('should handle empty array in in operator', async () => {
       const result = await runner.many({
         filter: {
-          user_tier: { raw_in: [] },
+          user_tier: { in: [] },
         },
       })
 
       expect(result.items).toHaveLength(4) // Should return all items when empty array
     })
 
-    it('should combine raw and regular operators', async () => {
+    it('should combine CASE-WHEN and regular operators', async () => {
       await runner.many({
         filter: {
-          status_display: { raw_eq: 'Active User' },
+          status_display: { eq: 'Active User' },
           name: { contains: 'User' },
+        },
+      })
+
+      expect(driver.called).toHaveLength(1)
+      const criteria = driver.called[0].args[0]
+      expect(criteria.filter).toBeDefined()
+    })
+
+    it('should handle regular field names normally', async () => {
+      await runner.many({
+        filter: {
+          name: { eq: 'User 1' },
         },
       })
 

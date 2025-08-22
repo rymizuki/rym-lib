@@ -6,22 +6,18 @@ export interface QueryResultList<D> {
 type QueryFilterOperator =
   | 'contains'
   | 'not_contains'
-  | 'eq' // =
-  | 'ne' // !=
+  | 'eq' // = (automatically handles raw SQL expressions)
+  | 'ne' // != (automatically handles raw SQL expressions)
   | 'lte' // >=
   | 'lt' // >
   | 'gte' // <=
   | 'gt' // <
-  | 'in'
-  | 'raw_eq' // For raw SQL expressions including CASE-WHEN
-  | 'raw_ne' // For raw SQL expressions not equal
-  | 'raw_in' // For raw SQL expressions with IN clause
+  | 'in' // IN (automatically handles raw SQL expressions)
 export type QueryFilter<Data extends QueryResultData> = Partial<
   Record<
     keyof Data,
-    Partial<Record<Exclude<QueryFilterOperator, 'in' | 'raw_in'>, any> & { 
+    Partial<Record<Exclude<QueryFilterOperator, 'in'>, any> & { 
       in: any[]
-      raw_in: any[]
     }>
   >
 >

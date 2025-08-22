@@ -108,18 +108,15 @@ const result = await query.many({
 
 Support operators are
 
-- eq
-- ne
+- eq (automatically handles raw SQL expressions)
+- ne (automatically handles raw SQL expressions)
 - contains
 - not_contains
 - lte
 - lt
 - gte
 - gt
-- in
-- raw_eq
-- raw_ne
-- raw_in
+- in (automatically handles raw SQL expressions)
 
 #### orderBy
 
@@ -159,9 +156,9 @@ const result = await query.many({
 
 - [sequelize](https://www.npmjs.com/package/@rym-lib/query-module-driver-sequelize)
 
-### Raw SQL Operators
+### Automatic Raw SQL Expression Support
 
-For complex expressions like CASE-WHEN statements, you can use raw SQL operators:
+The query module automatically detects and handles raw SQL expressions in filter conditions. You can use CASE-WHEN statements and other complex SQL expressions with standard operators:
 
 ```ts
 const query = defineQuery<Data, QueryDriverPrisma>(driver, {
@@ -214,36 +211,39 @@ const query = defineQuery<Data, QueryDriverPrisma>(driver, {
   },
 })
 
-// Filter by CASE-WHEN result
+// Filter by CASE-WHEN result using standard operators
 const activeUsers = await query.many({
   filter: {
-    status_display: { raw_eq: 'Active User' }, // Filter where status display is 'Active User'
+    status_display: { eq: 'Active User' }, // Automatically handles raw SQL expression
   },
 })
 
 // Filter with multiple values
 const premiumUsers = await query.many({
   filter: {
-    user_tier: { raw_in: ['gold', 'silver'] }, // Filter where user tier is 'gold' or 'silver'
+    user_tier: { in: ['gold', 'silver'] }, // Automatically handles raw SQL expression
   },
 })
 
 // Combine with regular filters
 const activeBasicUsers = await query.many({
   filter: {
-    status_display: { raw_eq: 'Active User' },
-    name: { contains: 'John' }, // Regular contains filter
+    status_display: { eq: 'Active User' }, // Raw SQL expression
+    name: { contains: 'John' }, // Regular field filter
   },
 })
 ```
 
-#### Raw Operators
+#### Automatic Detection
 
-- `raw_eq`: Raw SQL expression equals comparison
-- `raw_ne`: Raw SQL expression not equals comparison  
-- `raw_in`: Raw SQL expression IN clause comparison
+The query module automatically detects raw SQL expressions by checking for SQL keywords such as:
+- `CASE`, `WHEN`, `THEN`, `ELSE`, `END`
+- Function names like `CONCAT`, `COALESCE`, `SUBSTRING`, `LENGTH`
+- Aggregate functions like `COUNT`, `SUM`, `AVG`, `MAX`, `MIN`
+- String functions like `UPPER`, `LOWER`, `TRIM`
+- Operators and parentheses `(`, `)`, `+`, `-`, `*`, `/`
 
-**Note**: When using raw operators, the field name in the filter should contain the raw SQL expression (as defined in `rules`), and the operator will wrap it in parentheses for safe SQL generation.
+When a raw SQL expression is detected, the field is automatically wrapped in parentheses for safe SQL generation. Regular field names are handled normally without additional wrapping.
 
 ## Middleware
 

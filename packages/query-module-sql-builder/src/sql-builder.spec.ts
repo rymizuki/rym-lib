@@ -587,21 +587,21 @@ describe('query-module-sql-builder', () => {
     })
   })
 
-  // region raw operators for CASE-WHEN
-  describe('raw operators', () => {
-    describe('raw_eq', () => {
+  // region automatic raw SQL expression handling
+  describe('automatic raw SQL expression handling', () => {
+    describe('eq operator with CASE-WHEN', () => {
       describe('given CASE-WHEN expression', () => {
         let criteria: Partial<QueryCriteriaInterface>
         beforeEach(() => (criteria = { 
           filter: { 
             'CASE WHEN users.status = \'active\' THEN \'Active User\' ELSE \'Inactive User\' END': { 
-              raw_eq: 'Active User' 
+              eq: 'Active User' 
             } 
           } 
         }))
         
         describe('to SQL', () =>
-          it('should wrap expression in parentheses and use =', () => {
+          it('should automatically wrap expression in parentheses and use =', () => {
             const { sql } = execute(builder, criteria)
             expect(sql).toBe(
               'SELECT * FROM `example` WHERE (((`(CASE WHEN users`.status = \'active\' THEN \'Active User\' ELSE \'Inactive User\' END) = ?)))',
@@ -616,18 +616,18 @@ describe('query-module-sql-builder', () => {
         )
       })
 
-      describe('given null value', () => {
+      describe('given null value with CASE-WHEN', () => {
         let criteria: Partial<QueryCriteriaInterface>
         beforeEach(() => (criteria = { 
           filter: { 
             'CASE WHEN users.deleted_at IS NULL THEN \'active\' ELSE NULL END': { 
-              raw_eq: null 
+              eq: null 
             } 
           } 
         }))
         
         describe('to SQL', () =>
-          it('should use IS NULL', () => {
+          it('should automatically use IS NULL', () => {
             const { sql } = execute(builder, criteria)
             expect(sql).toBe(
               'SELECT * FROM `example` WHERE (((`(CASE WHEN users`.deleted_at IS NULL THEN \'active\' ELSE NULL END) IS NULL)))',
@@ -637,19 +637,19 @@ describe('query-module-sql-builder', () => {
       })
     })
 
-    describe('raw_ne', () => {
+    describe('ne operator with CASE-WHEN', () => {
       describe('given CASE-WHEN expression', () => {
         let criteria: Partial<QueryCriteriaInterface>
         beforeEach(() => (criteria = { 
           filter: { 
             'CASE WHEN users.status = \'active\' THEN \'Active User\' ELSE \'Inactive User\' END': { 
-              raw_ne: 'Inactive User' 
+              ne: 'Inactive User' 
             } 
           } 
         }))
         
         describe('to SQL', () =>
-          it('should wrap expression in parentheses and use !=', () => {
+          it('should automatically wrap expression in parentheses and use !=', () => {
             const { sql } = execute(builder, criteria)
             expect(sql).toBe(
               'SELECT * FROM `example` WHERE (((`(CASE WHEN users`.status = \'active\' THEN \'Active User\' ELSE \'Inactive User\' END) != ?)))',
@@ -659,19 +659,19 @@ describe('query-module-sql-builder', () => {
       })
     })
 
-    describe('raw_in', () => {
+    describe('in operator with CASE-WHEN', () => {
       describe('given CASE-WHEN expression with array', () => {
         let criteria: Partial<QueryCriteriaInterface>
         beforeEach(() => (criteria = { 
           filter: { 
             'CASE WHEN users.category = \'premium\' THEN \'gold\' WHEN users.category = \'standard\' THEN \'silver\' ELSE \'bronze\' END': { 
-              raw_in: ['gold', 'silver'] 
+              in: ['gold', 'silver'] 
             } 
           } 
         }))
         
         describe('to SQL', () =>
-          it('should wrap expression in parentheses and use IN', () => {
+          it('should automatically wrap expression in parentheses and use IN', () => {
             const { sql } = execute(builder, criteria)
             expect(sql).toBe(
               'SELECT * FROM `example` WHERE (((`(CASE WHEN users`.category = \'premium\' THEN \'gold\' WHEN users.category = \'standard\' THEN \'silver\' ELSE \'bronze\' END) IN (?,?))))',
@@ -682,6 +682,28 @@ describe('query-module-sql-builder', () => {
           it('should have the array values', () => {
             const { bindings } = execute(builder, criteria)
             expect(bindings).toStrictEqual(['gold', 'silver'])
+          }),
+        )
+      })
+    })
+
+    describe('regular field names', () => {
+      describe('should not wrap simple field names', () => {
+        let criteria: Partial<QueryCriteriaInterface>
+        beforeEach(() => (criteria = { 
+          filter: { 
+            'status': { 
+              eq: 'active' 
+            } 
+          } 
+        }))
+        
+        describe('to SQL', () =>
+          it('should not wrap simple field names in parentheses', () => {
+            const { sql } = execute(builder, criteria)
+            expect(sql).toBe(
+              'SELECT * FROM `example` WHERE (((`status` = ?)))',
+            )
           }),
         )
       })
