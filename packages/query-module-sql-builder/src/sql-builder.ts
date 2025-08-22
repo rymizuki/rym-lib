@@ -117,6 +117,34 @@ export function buildSQL(
               cond.and(name, 'in', value)
               break
             }
+            case 'raw_eq': {
+              // For raw SQL expressions (like CASE-WHEN)
+              // name should contain the raw SQL expression
+              // value is what to compare it to
+              if (value === null) {
+                cond.and(`(${name})`, is_null())
+              } else {
+                cond.and(`(${name})`, '=', value)
+              }
+              break
+            }
+            case 'raw_ne': {
+              // For raw SQL expressions not equal
+              if (value === null) {
+                cond.and(`(${name})`, is_not_null())
+              } else {
+                cond.and(`(${name})`, '!=', value)
+              }
+              break
+            }
+            case 'raw_in': {
+              // For raw SQL expressions with IN clause
+              if (!Array.isArray(value) || !value.length) {
+                break
+              }
+              cond.and(`(${name})`, 'in', value)
+              break
+            }
           }
         }
       }

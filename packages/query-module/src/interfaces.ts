@@ -13,10 +13,16 @@ type QueryFilterOperator =
   | 'gte' // <=
   | 'gt' // <
   | 'in'
+  | 'raw_eq' // For raw SQL expressions including CASE-WHEN
+  | 'raw_ne' // For raw SQL expressions not equal
+  | 'raw_in' // For raw SQL expressions with IN clause
 export type QueryFilter<Data extends QueryResultData> = Partial<
   Record<
     keyof Data,
-    Partial<Record<Exclude<QueryFilterOperator, 'in'>, any> & { in: any[] }>
+    Partial<Record<Exclude<QueryFilterOperator, 'in' | 'raw_in'>, any> & { 
+      in: any[]
+      raw_in: any[]
+    }>
   >
 >
 type QueryCriteriaOrderByRecord<

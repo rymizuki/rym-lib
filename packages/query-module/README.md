@@ -117,6 +117,9 @@ Support operators are
 - gte
 - gt
 - in
+- raw_eq
+- raw_ne
+- raw_in
 
 #### orderBy
 
@@ -155,6 +158,64 @@ const result = await query.many({
 ## Drivers
 
 - [sequelize](https://www.npmjs.com/package/@rym-lib/query-module-driver-sequelize)
+
+### Raw SQL Operators
+
+For complex expressions like CASE-WHEN statements, you can use raw SQL operators:
+
+```ts
+const query = defineQuery<Data, QueryDriverPrisma>(driver, {
+  source: (builder) =>
+    builder
+      .from('room_message', 'm')
+      .leftJoin('room_message_assistant', 'ma', 'm.id = ma.room_message_id')
+      .leftJoin('room_message_user', 'mu', 'm.id = mu.room_message_id')
+      .column('m.id')
+      .column(
+        unescape(`
+        CASE
+          WHEN ma.room_message_id IS NOT NULL THEN 'assistant'
+          WHEN mu.room_message_id IS NOT NULL THEN 'user'
+          ELSE 'developer'
+        END
+        `),
+        'role',
+      ),
+  rules: {
+    id: 'm.id',
+    // Use CASE-WHEN expression as a filter target
+    role: unescape(`
+      CASE
+        WHEN ma.room_message_id IS NOT NULL THEN 'assistant'
+        WHEN mu.room_message_id IS NOT NULL THEN 'user'
+        ELSE 'developer'
+      END
+    `),
+  },
+})
+
+// Filter by CASE-WHEN result
+const assistantMessages = await query.many({
+  filter: {
+    role: { raw_eq: 'assistant' }, // Filter where role is 'assistant'
+  },
+})
+
+// Filter with multiple values
+const activeMessages = await query.many({
+  filter: {
+    role: { raw_in: ['assistant', 'user'] }, // Filter where role is 'assistant' or 'user'
+  },
+})
+```
+
+#### Raw Operators
+
+- `raw_eq`: Raw SQL expression equals comparison
+- `raw_ne`: Raw SQL expression not equals comparison  
+- `raw_in`: Raw SQL expression IN clause comparison
+
+**Note**: When using raw operators, the field name in the filter should contain the raw SQL expression (as defined in `rules`), and the operator will wrap it in parentheses for safe SQL generation.
 
 ## Middleware
 

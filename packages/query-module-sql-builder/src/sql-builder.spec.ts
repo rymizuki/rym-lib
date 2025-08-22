@@ -586,4 +586,105 @@ describe('query-module-sql-builder', () => {
       })
     })
   })
+
+  // region raw operators for CASE-WHEN
+  describe('raw operators', () => {
+    describe('raw_eq', () => {
+      describe('given CASE-WHEN expression', () => {
+        let criteria: Partial<QueryCriteriaInterface>
+        beforeEach(() => (criteria = { 
+          filter: { 
+            'CASE WHEN status = 1 THEN \'active\' ELSE \'inactive\' END': { 
+              raw_eq: 'active' 
+            } 
+          } 
+        }))
+        
+        describe('to SQL', () =>
+          it('should wrap expression in parentheses and use =', () => {
+            const { sql } = execute(builder, criteria)
+            expect(sql).toBe(
+              'SELECT * FROM `example` WHERE ((((CASE WHEN status = 1 THEN \'active\' ELSE \'inactive\' END) = ?)))',
+            )
+          }),
+        )
+        describe('to Bindings', () =>
+          it('should have the value', () => {
+            const { bindings } = execute(builder, criteria)
+            expect(bindings).toStrictEqual(['active'])
+          }),
+        )
+      })
+
+      describe('given null value', () => {
+        let criteria: Partial<QueryCriteriaInterface>
+        beforeEach(() => (criteria = { 
+          filter: { 
+            'CASE WHEN status = 1 THEN \'active\' ELSE NULL END': { 
+              raw_eq: null 
+            } 
+          } 
+        }))
+        
+        describe('to SQL', () =>
+          it('should use IS NULL', () => {
+            const { sql } = execute(builder, criteria)
+            expect(sql).toBe(
+              'SELECT * FROM `example` WHERE ((((CASE WHEN status = 1 THEN \'active\' ELSE NULL END) IS NULL)))',
+            )
+          }),
+        )
+      })
+    })
+
+    describe('raw_ne', () => {
+      describe('given CASE-WHEN expression', () => {
+        let criteria: Partial<QueryCriteriaInterface>
+        beforeEach(() => (criteria = { 
+          filter: { 
+            'CASE WHEN status = 1 THEN \'active\' ELSE \'inactive\' END': { 
+              raw_ne: 'inactive' 
+            } 
+          } 
+        }))
+        
+        describe('to SQL', () =>
+          it('should wrap expression in parentheses and use !=', () => {
+            const { sql } = execute(builder, criteria)
+            expect(sql).toBe(
+              'SELECT * FROM `example` WHERE ((((CASE WHEN status = 1 THEN \'active\' ELSE \'inactive\' END) != ?)))',
+            )
+          }),
+        )
+      })
+    })
+
+    describe('raw_in', () => {
+      describe('given CASE-WHEN expression with array', () => {
+        let criteria: Partial<QueryCriteriaInterface>
+        beforeEach(() => (criteria = { 
+          filter: { 
+            'CASE WHEN status = 1 THEN \'active\' WHEN status = 2 THEN \'pending\' ELSE \'inactive\' END': { 
+              raw_in: ['active', 'pending'] 
+            } 
+          } 
+        }))
+        
+        describe('to SQL', () =>
+          it('should wrap expression in parentheses and use IN', () => {
+            const { sql } = execute(builder, criteria)
+            expect(sql).toBe(
+              'SELECT * FROM `example` WHERE ((((CASE WHEN status = 1 THEN \'active\' WHEN status = 2 THEN \'pending\' ELSE \'inactive\' END) IN (?,?))))',
+            )
+          }),
+        )
+        describe('to Bindings', () =>
+          it('should have the array values', () => {
+            const { bindings } = execute(builder, criteria)
+            expect(bindings).toStrictEqual(['active', 'pending'])
+          }),
+        )
+      })
+    })
+  })
 })
