@@ -352,3 +352,111 @@ function createQuery<
   })
   return runner
 }
+
+describe('QueryRunner with raw operators', () => {
+  type DataWithStatus = {
+    id: number
+    name: string
+    status: 'active' | 'inactive' | 'pending'
+    category: string
+  }
+
+  const data: DataWithStatus[] = [
+    { id: 1, name: 'User 1', status: 'active', category: 'premium' },
+    { id: 2, name: 'User 2', status: 'inactive', category: 'basic' },
+    { id: 3, name: 'User 3', status: 'pending', category: 'premium' },
+    { id: 4, name: 'User 4', status: 'active', category: 'basic' },
+  ]
+
+  let driver: TestDriver
+  let runner: QueryRunnerInterface<DataWithStatus>
+
+  beforeEach(() => {
+    driver = createDriver()
+    runner = createQuery(driver, {
+      name: 'test_raw_operators',
+      source: () => data,
+      rules: {
+        id: 'users.id',
+        name: 'users.name',
+        // Simulate CASE-WHEN for status display
+        status_display: `CASE 
+          WHEN users.status = 'active' THEN 'Active User'
+          WHEN users.status = 'pending' THEN 'Pending User'
+          ELSE 'Inactive User'
+        END`,
+        // Simulate CASE-WHEN for user tier
+        user_tier: `CASE 
+          WHEN users.category = 'premium' AND users.status = 'active' THEN 'gold'
+          WHEN users.category = 'premium' THEN 'silver'
+          ELSE 'bronze'
+        END`,
+      },
+    })
+  })
+
+  describe('raw operators support', () => {
+    it('should accept raw_eq in filter criteria', async () => {
+      const result = await runner.many({
+        filter: {
+          status_display: { raw_eq: 'Active User' },
+        },
+      })
+
+      // Test passes the criteria to driver correctly
+      expect(driver.called).toHaveLength(1)
+      expect(driver.called[0].method).toBe('execute')
+      
+      // Check that the criteria contains the raw operator
+      const criteria = driver.called[0].args[0]
+      expect(criteria.filter).toBeDefined()
+    })
+
+    it('should accept raw_ne in filter criteria', async () => {
+      await runner.many({
+        filter: {
+          status_display: { raw_ne: 'Inactive User' },
+        },
+      })
+
+      expect(driver.called).toHaveLength(1)
+      const criteria = driver.called[0].args[0]
+      expect(criteria.filter).toBeDefined()
+    })
+
+    it('should accept raw_in in filter criteria', async () => {
+      await runner.many({
+        filter: {
+          user_tier: { raw_in: ['gold', 'silver'] },
+        },
+      })
+
+      expect(driver.called).toHaveLength(1)
+      const criteria = driver.called[0].args[0]
+      expect(criteria.filter).toBeDefined()
+    })
+
+    it('should handle empty array in raw_in', async () => {
+      const result = await runner.many({
+        filter: {
+          user_tier: { raw_in: [] },
+        },
+      })
+
+      expect(result.items).toHaveLength(4) // Should return all items when empty array
+    })
+
+    it('should combine raw and regular operators', async () => {
+      await runner.many({
+        filter: {
+          status_display: { raw_eq: 'Active User' },
+          name: { contains: 'User' },
+        },
+      })
+
+      expect(driver.called).toHaveLength(1)
+      const criteria = driver.called[0].args[0]
+      expect(criteria.filter).toBeDefined()
+    })
+  })
+})

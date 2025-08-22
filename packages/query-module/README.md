@@ -167,44 +167,72 @@ For complex expressions like CASE-WHEN statements, you can use raw SQL operators
 const query = defineQuery<Data, QueryDriverPrisma>(driver, {
   source: (builder) =>
     builder
-      .from('room_message', 'm')
-      .leftJoin('room_message_assistant', 'ma', 'm.id = ma.room_message_id')
-      .leftJoin('room_message_user', 'mu', 'm.id = mu.room_message_id')
-      .column('m.id')
+      .from('users', 'u')
+      .leftJoin('user_profiles', 'p', 'u.id = p.user_id')
+      .column('u.id')
+      .column('u.name')
+      .column('u.status')
       .column(
         unescape(`
         CASE
-          WHEN ma.room_message_id IS NOT NULL THEN 'assistant'
-          WHEN mu.room_message_id IS NOT NULL THEN 'user'
-          ELSE 'developer'
+          WHEN u.status = 'active' THEN 'Active User'
+          WHEN u.status = 'pending' THEN 'Pending User'
+          ELSE 'Inactive User'
         END
         `),
-        'role',
+        'status_display',
+      )
+      .column(
+        unescape(`
+        CASE
+          WHEN p.category = 'premium' AND u.status = 'active' THEN 'gold'
+          WHEN p.category = 'premium' THEN 'silver'
+          ELSE 'bronze'
+        END
+        `),
+        'user_tier',
       ),
   rules: {
-    id: 'm.id',
-    // Use CASE-WHEN expression as a filter target
-    role: unescape(`
+    id: 'u.id',
+    name: 'u.name',
+    status: 'u.status',
+    // Use CASE-WHEN expressions as filter targets
+    status_display: unescape(`
       CASE
-        WHEN ma.room_message_id IS NOT NULL THEN 'assistant'
-        WHEN mu.room_message_id IS NOT NULL THEN 'user'
-        ELSE 'developer'
+        WHEN u.status = 'active' THEN 'Active User'
+        WHEN u.status = 'pending' THEN 'Pending User'
+        ELSE 'Inactive User'
+      END
+    `),
+    user_tier: unescape(`
+      CASE
+        WHEN p.category = 'premium' AND u.status = 'active' THEN 'gold'
+        WHEN p.category = 'premium' THEN 'silver'
+        ELSE 'bronze'
       END
     `),
   },
 })
 
 // Filter by CASE-WHEN result
-const assistantMessages = await query.many({
+const activeUsers = await query.many({
   filter: {
-    role: { raw_eq: 'assistant' }, // Filter where role is 'assistant'
+    status_display: { raw_eq: 'Active User' }, // Filter where status display is 'Active User'
   },
 })
 
 // Filter with multiple values
-const activeMessages = await query.many({
+const premiumUsers = await query.many({
   filter: {
-    role: { raw_in: ['assistant', 'user'] }, // Filter where role is 'assistant' or 'user'
+    user_tier: { raw_in: ['gold', 'silver'] }, // Filter where user tier is 'gold' or 'silver'
+  },
+})
+
+// Combine with regular filters
+const activeBasicUsers = await query.many({
+  filter: {
+    status_display: { raw_eq: 'Active User' },
+    name: { contains: 'John' }, // Regular contains filter
   },
 })
 ```

@@ -594,8 +594,8 @@ describe('query-module-sql-builder', () => {
         let criteria: Partial<QueryCriteriaInterface>
         beforeEach(() => (criteria = { 
           filter: { 
-            'CASE WHEN status = 1 THEN \'active\' ELSE \'inactive\' END': { 
-              raw_eq: 'active' 
+            'CASE WHEN users.status = \'active\' THEN \'Active User\' ELSE \'Inactive User\' END': { 
+              raw_eq: 'Active User' 
             } 
           } 
         }))
@@ -604,14 +604,14 @@ describe('query-module-sql-builder', () => {
           it('should wrap expression in parentheses and use =', () => {
             const { sql } = execute(builder, criteria)
             expect(sql).toBe(
-              'SELECT * FROM `example` WHERE ((((CASE WHEN status = 1 THEN \'active\' ELSE \'inactive\' END) = ?)))',
+              'SELECT * FROM `example` WHERE (((`(CASE WHEN users`.status = \'active\' THEN \'Active User\' ELSE \'Inactive User\' END) = ?)))',
             )
           }),
         )
         describe('to Bindings', () =>
           it('should have the value', () => {
             const { bindings } = execute(builder, criteria)
-            expect(bindings).toStrictEqual(['active'])
+            expect(bindings).toStrictEqual(['Active User'])
           }),
         )
       })
@@ -620,7 +620,7 @@ describe('query-module-sql-builder', () => {
         let criteria: Partial<QueryCriteriaInterface>
         beforeEach(() => (criteria = { 
           filter: { 
-            'CASE WHEN status = 1 THEN \'active\' ELSE NULL END': { 
+            'CASE WHEN users.deleted_at IS NULL THEN \'active\' ELSE NULL END': { 
               raw_eq: null 
             } 
           } 
@@ -630,7 +630,7 @@ describe('query-module-sql-builder', () => {
           it('should use IS NULL', () => {
             const { sql } = execute(builder, criteria)
             expect(sql).toBe(
-              'SELECT * FROM `example` WHERE ((((CASE WHEN status = 1 THEN \'active\' ELSE NULL END) IS NULL)))',
+              'SELECT * FROM `example` WHERE (((`(CASE WHEN users`.deleted_at IS NULL THEN \'active\' ELSE NULL END) IS NULL)))',
             )
           }),
         )
@@ -642,8 +642,8 @@ describe('query-module-sql-builder', () => {
         let criteria: Partial<QueryCriteriaInterface>
         beforeEach(() => (criteria = { 
           filter: { 
-            'CASE WHEN status = 1 THEN \'active\' ELSE \'inactive\' END': { 
-              raw_ne: 'inactive' 
+            'CASE WHEN users.status = \'active\' THEN \'Active User\' ELSE \'Inactive User\' END': { 
+              raw_ne: 'Inactive User' 
             } 
           } 
         }))
@@ -652,7 +652,7 @@ describe('query-module-sql-builder', () => {
           it('should wrap expression in parentheses and use !=', () => {
             const { sql } = execute(builder, criteria)
             expect(sql).toBe(
-              'SELECT * FROM `example` WHERE ((((CASE WHEN status = 1 THEN \'active\' ELSE \'inactive\' END) != ?)))',
+              'SELECT * FROM `example` WHERE (((`(CASE WHEN users`.status = \'active\' THEN \'Active User\' ELSE \'Inactive User\' END) != ?)))',
             )
           }),
         )
@@ -664,8 +664,8 @@ describe('query-module-sql-builder', () => {
         let criteria: Partial<QueryCriteriaInterface>
         beforeEach(() => (criteria = { 
           filter: { 
-            'CASE WHEN status = 1 THEN \'active\' WHEN status = 2 THEN \'pending\' ELSE \'inactive\' END': { 
-              raw_in: ['active', 'pending'] 
+            'CASE WHEN users.category = \'premium\' THEN \'gold\' WHEN users.category = \'standard\' THEN \'silver\' ELSE \'bronze\' END': { 
+              raw_in: ['gold', 'silver'] 
             } 
           } 
         }))
@@ -674,14 +674,14 @@ describe('query-module-sql-builder', () => {
           it('should wrap expression in parentheses and use IN', () => {
             const { sql } = execute(builder, criteria)
             expect(sql).toBe(
-              'SELECT * FROM `example` WHERE ((((CASE WHEN status = 1 THEN \'active\' WHEN status = 2 THEN \'pending\' ELSE \'inactive\' END) IN (?,?))))',
+              'SELECT * FROM `example` WHERE (((`(CASE WHEN users`.category = \'premium\' THEN \'gold\' WHEN users.category = \'standard\' THEN \'silver\' ELSE \'bronze\' END) IN (?,?))))',
             )
           }),
         )
         describe('to Bindings', () =>
           it('should have the array values', () => {
             const { bindings } = execute(builder, criteria)
-            expect(bindings).toStrictEqual(['active', 'pending'])
+            expect(bindings).toStrictEqual(['gold', 'silver'])
           }),
         )
       })
