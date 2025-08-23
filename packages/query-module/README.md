@@ -108,15 +108,15 @@ const result = await query.many({
 
 Support operators are
 
-- eq
-- ne
+- eq (automatically handles raw SQL expressions)
+- ne (automatically handles raw SQL expressions)
 - contains
 - not_contains
 - lte
 - lt
 - gte
 - gt
-- in
+- in (automatically handles raw SQL expressions)
 
 #### orderBy
 
@@ -155,6 +155,95 @@ const result = await query.many({
 ## Drivers
 
 - [sequelize](https://www.npmjs.com/package/@rym-lib/query-module-driver-sequelize)
+
+### Automatic Raw SQL Expression Support
+
+The query module automatically detects and handles raw SQL expressions in filter conditions. You can use CASE-WHEN statements and other complex SQL expressions with standard operators:
+
+```ts
+const query = defineQuery<Data, QueryDriverPrisma>(driver, {
+  source: (builder) =>
+    builder
+      .from('users', 'u')
+      .leftJoin('user_profiles', 'p', 'u.id = p.user_id')
+      .column('u.id')
+      .column('u.name')
+      .column('u.status')
+      .column(
+        unescape(`
+        CASE
+          WHEN u.status = 'active' THEN 'Active User'
+          WHEN u.status = 'pending' THEN 'Pending User'
+          ELSE 'Inactive User'
+        END
+        `),
+        'status_display',
+      )
+      .column(
+        unescape(`
+        CASE
+          WHEN p.category = 'premium' AND u.status = 'active' THEN 'gold'
+          WHEN p.category = 'premium' THEN 'silver'
+          ELSE 'bronze'
+        END
+        `),
+        'user_tier',
+      ),
+  rules: {
+    id: 'u.id',
+    name: 'u.name',
+    status: 'u.status',
+    // Use CASE-WHEN expressions as filter targets
+    status_display: unescape(`
+      CASE
+        WHEN u.status = 'active' THEN 'Active User'
+        WHEN u.status = 'pending' THEN 'Pending User'
+        ELSE 'Inactive User'
+      END
+    `),
+    user_tier: unescape(`
+      CASE
+        WHEN p.category = 'premium' AND u.status = 'active' THEN 'gold'
+        WHEN p.category = 'premium' THEN 'silver'
+        ELSE 'bronze'
+      END
+    `),
+  },
+})
+
+// Filter by CASE-WHEN result using standard operators
+const activeUsers = await query.many({
+  filter: {
+    status_display: { eq: 'Active User' }, // Automatically handles raw SQL expression
+  },
+})
+
+// Filter with multiple values
+const premiumUsers = await query.many({
+  filter: {
+    user_tier: { in: ['gold', 'silver'] }, // Automatically handles raw SQL expression
+  },
+})
+
+// Combine with regular filters
+const activeBasicUsers = await query.many({
+  filter: {
+    status_display: { eq: 'Active User' }, // Raw SQL expression
+    name: { contains: 'John' }, // Regular field filter
+  },
+})
+```
+
+#### Automatic Detection
+
+The query module automatically detects raw SQL expressions by checking for SQL keywords such as:
+- `CASE`, `WHEN`, `THEN`, `ELSE`, `END`
+- Function names like `CONCAT`, `COALESCE`, `SUBSTRING`, `LENGTH`
+- Aggregate functions like `COUNT`, `SUM`, `AVG`, `MAX`, `MIN`
+- String functions like `UPPER`, `LOWER`, `TRIM`
+- Operators and parentheses `(`, `)`, `+`, `-`, `*`, `/`
+
+When a raw SQL expression is detected, the field is automatically wrapped in parentheses for safe SQL generation. Regular field names are handled normally without additional wrapping.
 
 ## Middleware
 

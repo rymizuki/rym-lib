@@ -6,17 +6,19 @@ export interface QueryResultList<D> {
 type QueryFilterOperator =
   | 'contains'
   | 'not_contains'
-  | 'eq' // =
-  | 'ne' // !=
+  | 'eq' // = (automatically handles raw SQL expressions)
+  | 'ne' // != (automatically handles raw SQL expressions)
   | 'lte' // >=
   | 'lt' // >
   | 'gte' // <=
   | 'gt' // <
-  | 'in'
+  | 'in' // IN (automatically handles raw SQL expressions)
 export type QueryFilter<Data extends QueryResultData> = Partial<
   Record<
     keyof Data,
-    Partial<Record<Exclude<QueryFilterOperator, 'in'>, any> & { in: any[] }>
+    Partial<Record<Exclude<QueryFilterOperator, 'in'>, any> & { 
+      in: any[]
+    }>
   >
 >
 type QueryCriteriaOrderByRecord<
