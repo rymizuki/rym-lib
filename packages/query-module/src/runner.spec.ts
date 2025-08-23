@@ -1,5 +1,9 @@
 import { beforeEach, describe, expect, it, MockInstance, vi } from 'vitest'
-import { unescape } from '@rym-lib/query-module-sql-builder'
+
+// Local helper to simulate raw SQL expressions in tests
+const unescape = (sql: string): any => {
+  return { __raw: true, sql: sql.trim() }
+}
 
 import { QueryRunnerResourceNotFoundException } from './exceptions'
 import { defineQuery } from './functions/define-query'
