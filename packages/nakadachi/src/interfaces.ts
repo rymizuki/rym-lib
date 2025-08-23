@@ -8,8 +8,8 @@ export interface Params {
 }
 export type RequestBody = any
 
-export interface InputPort {
-  params: Params
+export interface InputPort<T = any> {
+  params: T extends { params: any } ? T['params'] : Params
   queries: Queries
   body: RequestBody
   method: Request['method']
