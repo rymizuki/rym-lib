@@ -1,5 +1,13 @@
 # @rym-lib/inversify-bundler-express
 
+## 1.2.6
+
+### Patch Changes
+
+- feat(query-module): add function-based rules support #50
+- Updated dependencies
+  - @rym-lib/inversify-bundler@1.2.6
+
 ## 1.2.5
 
 ### Patch Changes

@@ -46,7 +46,7 @@ export class QueryRunner<
 
     // Execute source function first to get the builder instance
     const sourceInstance = this.driver.source(this.spec.source)
-    
+
     const criteria = new QueryCriteria<Data>(
       this.spec.rules,
       this.spec.criteria ? this.spec.criteria(params) : params,

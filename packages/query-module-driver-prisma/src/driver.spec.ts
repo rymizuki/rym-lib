@@ -324,7 +324,7 @@ describe('query-module-driver-prisma', () => {
 describe('function-based rules support', () => {
   describe('integration with coral-sql SQLBuilder', () => {
     let driver: QueryDriverInterface
-    
+
     beforeEach(() => {
       driver = new QueryDriverPrisma(prisma, {
         logger: createLogger(),
@@ -344,37 +344,37 @@ describe('function-based rules support', () => {
       // Test function-based rules that generate dynamic SQL expressions
       const rules = {
         id: 'u.id',
-        name: 'u.name', 
+        name: 'u.name',
         // Function-based rule that receives value and uses SQLBuilder
         dynamic_status: (value, sourceInstance: SQLBuilder) => {
           // Use the filter value to generate different SQL expressions
           const targetValue = value.eq
           return `CASE WHEN u.status = '${targetValue === 'Active' ? 'active' : 'inactive'}' THEN '${targetValue}' ELSE 'Unknown' END`
-        }
+        },
       }
 
       // Execute source to get SQLBuilder instance
       const sourceInstance = driver.source(sourceFunction)
-      
+
       // Create QueryCriteria with function-based rules
       const criteria = new QueryCriteria(
         rules,
         {
           filter: {
             id: { eq: 1 },
-            dynamic_status: { eq: 'Active' }
-          }
+            dynamic_status: { eq: 'Active' },
+          },
         },
-        sourceInstance
+        sourceInstance,
       )
 
       await sourceInstance.execute(criteria)
 
       // Verify that the SQL was generated correctly with function-based rules
       expect(prismaMock.$queryRawUnsafe).toHaveBeenCalled()
-      
+
       const [sql, ...params] = prismaMock.$queryRawUnsafe.mock.lastCall || []
-      
+
       // Check that the function-based rule was executed and SQL contains the result
       expect(sql).toContain('SELECT')
       expect(sql).toContain('FROM')
@@ -400,28 +400,28 @@ describe('function-based rules support', () => {
           // Generate different SQL based on the filter value
           const threshold = value.eq === 'premium' ? 1000 : 500
           return `CASE WHEN p.price >= ${threshold} THEN '${value.eq}' ELSE 'standard' END`
-        }
+        },
       }
 
       const sourceInstance = driver.source(sourceFunction)
-      
+
       const criteria = new QueryCriteria(
         rules,
         {
           filter: {
             name: { contains: 'laptop' },
-            price_category: { eq: 'premium' }
-          }
+            price_category: { eq: 'premium' },
+          },
         },
-        sourceInstance
+        sourceInstance,
       )
 
       await sourceInstance.execute(criteria)
 
       expect(prismaMock.$queryRawUnsafe).toHaveBeenCalled()
-      
+
       const [sql, ...params] = prismaMock.$queryRawUnsafe.mock.lastCall || []
-      
+
       expect(sql).toContain('products')
       expect(params).toContain('%laptop%') // static rule filter
       expect(params).toContain('premium') // function-based rule filter

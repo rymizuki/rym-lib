@@ -1,14 +1,16 @@
-import { describe, it, expect, beforeEach, vi } from 'vitest'
 import { Sequelize } from 'sequelize'
-import { QueryDriverSequelize } from './driver'
+import { describe, it, expect, beforeEach, vi } from 'vitest'
+
 import { QueryCriteria } from '@rym-lib/query-module'
 import { SQLBuilder } from '@rym-lib/query-module-sql-builder'
+
+import { QueryDriverSequelize } from './driver'
 
 // Create a mock logger
 const createLogger = () => ({
   verbose: vi.fn(),
   info: vi.fn(),
-  error: vi.fn()
+  error: vi.fn(),
 })
 
 // Mock Sequelize
@@ -16,11 +18,11 @@ vi.mock('sequelize', () => {
   const mockQuery = vi.fn()
   return {
     Sequelize: vi.fn().mockImplementation(() => ({
-      query: mockQuery
+      query: mockQuery,
     })),
     QueryTypes: {
-      SELECT: 'SELECT'
-    }
+      SELECT: 'SELECT',
+    },
   }
 })
 
@@ -82,7 +84,7 @@ describe('query-module-driver-sequelize', () => {
             // Use the filter value to generate different SQL expressions
             const targetValue = value.eq
             return `CASE WHEN u.status = '${targetValue === 'Active' ? 'active' : 'inactive'}' THEN '${targetValue}' ELSE 'Unknown' END`
-          }
+          },
         }
 
         // Execute source to get SQLBuilder instance
@@ -94,19 +96,19 @@ describe('query-module-driver-sequelize', () => {
           {
             filter: {
               id: { eq: 1 },
-              dynamic_status: { eq: 'Active' }
-            }
+              dynamic_status: { eq: 'Active' },
+            },
           },
-          sourceInstance
+          sourceInstance,
         )
 
         await sourceInstance.execute(criteria)
 
         // Verify that the SQL was generated correctly with function-based rules
         expect(mockQuery).toHaveBeenCalled()
-        
+
         const [sql, options] = mockQuery.mock.lastCall || []
-        
+
         // Check that the function-based rule was executed and SQL contains the result
         expect(sql).toContain('SELECT')
         expect(sql).toContain('FROM')
@@ -132,7 +134,7 @@ describe('query-module-driver-sequelize', () => {
             // Generate different SQL based on the filter value
             const threshold = value.eq === 'premium' ? 1000 : 500
             return `CASE WHEN p.price >= ${threshold} THEN '${value.eq}' ELSE 'standard' END`
-          }
+          },
         }
 
         const sourceInstance = driver.source(sourceFunction)
@@ -142,10 +144,10 @@ describe('query-module-driver-sequelize', () => {
           {
             filter: {
               name: { contains: 'laptop' },
-              price_category: { eq: 'premium' }
-            }
+              price_category: { eq: 'premium' },
+            },
           },
-          sourceInstance
+          sourceInstance,
         )
 
         await sourceInstance.execute(criteria)
@@ -160,7 +162,7 @@ describe('query-module-driver-sequelize', () => {
         expect(sql).toContain('products')
         expect(sql).toContain('`p`.`name`')
         expect(sql).toContain('LIKE')
-        
+
         // Verify replacements contain expected values
         expect(options.replacements).toContain('%laptop%') // name filter with LIKE
         expect(options.replacements).toContain('premium') // price_category filter
@@ -192,7 +194,7 @@ describe('query-module-driver-sequelize', () => {
           customer_segment: (value, sourceInstance: SQLBuilder) => {
             const segment = value.eq
             return `c.segment = '${segment}' AND c.active = 1`
-          }
+          },
         }
 
         const sourceInstance = driver.source(sourceFunction)
@@ -202,10 +204,10 @@ describe('query-module-driver-sequelize', () => {
           {
             filter: {
               order_priority: { eq: 'high' },
-              customer_segment: { eq: 'enterprise' }
-            }
+              customer_segment: { eq: 'enterprise' },
+            },
           },
-          sourceInstance
+          sourceInstance,
         )
 
         await sourceInstance.execute(criteria)
@@ -254,7 +256,7 @@ describe('query-module-driver-sequelize', () => {
               return `t.amount <= ${value.lte}`
             }
             return `1=1`
-          }
+          },
         }
 
         const sourceInstance = driver.source(sourceFunction)
@@ -264,10 +266,10 @@ describe('query-module-driver-sequelize', () => {
           {
             filter: {
               transaction_period: { eq: 'this_month' },
-              amount_range: { gte: 100, lte: 1000 }
-            }
+              amount_range: { gte: 100, lte: 1000 },
+            },
           },
-          sourceInstance
+          sourceInstance,
         )
 
         await sourceInstance.execute(criteria)

@@ -112,11 +112,8 @@ export type QueryRuleFunction<
   Data extends QueryResultData,
   Driver extends QueryDriverInterface,
   FilterKey = any,
-  SourceInstance = ReturnType<Parameters<Driver['source']>[0]>
-> = (
-  value: any,
-  sourceInstance: SourceInstance
-) => string
+  SourceInstance = ReturnType<Parameters<Driver['source']>[0]>,
+> = (value: any, sourceInstance: SourceInstance) => string
 
 export interface QuerySpecification<
   Data extends QueryResultData,

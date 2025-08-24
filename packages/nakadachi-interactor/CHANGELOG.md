@@ -1,5 +1,15 @@
 # @rym-lib/nakadachi-interactor
 
+## 1.2.6
+
+### Patch Changes
+
+- feat(query-module): add function-based rules support #50
+- Updated dependencies
+  - @rym-lib/exception@1.2.6
+  - @rym-lib/inversify-bundler@1.2.6
+  - @rym-lib/nakadachi@1.2.6
+
 ## 1.2.5
 
 ### Patch Changes
