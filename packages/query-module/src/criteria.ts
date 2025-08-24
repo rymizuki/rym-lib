@@ -65,7 +65,7 @@ export class QueryCriteria<Data extends QueryResultData>
             // Skip undefined values
             if (value === undefined) continue
 
-            // If mapping value is a function, execute it and use result as field name
+            // If mapping value is a function, execute it and use result as SQL expression
             if (typeof mappingValue === 'function') {
               const operators = Object.keys(value) as QueryFilterOperator[]
               for (const operator of operators) {
@@ -75,6 +75,8 @@ export class QueryCriteria<Data extends QueryResultData>
                   operatorValue,
                   mappingValue as any,
                 )
+                console.log('Function result:', result)
+                console.log('Using as field name:', result)
                 ret[prev] = { [operator]: result }
               }
             } else {
