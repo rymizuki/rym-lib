@@ -110,7 +110,7 @@ export interface QuerySpecification<
 > {
   name?: string
   source: QuerySourceInterface<Data, Driver>
-  rules: Partial<Record<keyof NonNullable<Params['filter']>, string>>
+  rules: Partial<Record<keyof NonNullable<Params['filter']> | string, string>>
   criteria?: (params: Partial<Params>) => Partial<Params>
   middlewares?: QueryRunnerMiddleware<Data, List, Params>[]
 }
