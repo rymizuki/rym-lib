@@ -29,7 +29,7 @@ export function deflate<D, C extends Column<D> = Column<D>>(
               // eslint-disable-next-line @typescript-eslint/no-explicit-any
               const value = (element as any)[operator]
 
-              if (targets.includes(column)) {
+              if (targets.includes(column as keyof D)) {
                 if (operator === 'in' && Array.isArray(value)) {
                   // eslint-disable-next-line @typescript-eslint/no-explicit-any
                   ;(filter as any)[column][operator] = value.map((v) =>

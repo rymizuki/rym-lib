@@ -15,7 +15,7 @@ type QueryFilterOperator =
   | 'in' // IN (automatically handles raw SQL expressions)
 export type QueryFilter<Data extends QueryResultData> = Partial<
   Record<
-    keyof Data,
+    keyof Data | (string & {}),
     Partial<
       Record<Exclude<QueryFilterOperator, 'in'>, any> & {
         in: any[]
