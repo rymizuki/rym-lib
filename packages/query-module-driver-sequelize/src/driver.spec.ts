@@ -2,7 +2,7 @@ import { Sequelize } from 'sequelize'
 import { describe, it, expect, beforeEach, vi } from 'vitest'
 
 import { QueryCriteria } from '@rym-lib/query-module'
-import { SQLBuilder } from '@rym-lib/query-module-sql-builder'
+import { SQLBuilder, createBuilder } from '@rym-lib/query-module-sql-builder'
 
 import { QueryDriverSequelize } from './driver'
 
@@ -51,7 +51,7 @@ describe('query-module-driver-sequelize', () => {
       mockQuery.mockResolvedValue([{ id: 1, name: 'Test User' }])
 
       const source = driver.source(sourceFunction)
-      const criteria = new QueryCriteria({}, {})
+      const criteria = new QueryCriteria({}, {}, () => ({}))
       const result = await source.execute(criteria)
 
       expect(mockQuery).toHaveBeenCalled()
@@ -99,7 +99,7 @@ describe('query-module-driver-sequelize', () => {
               dynamic_status: { eq: 'Active' },
             },
           },
-          sourceInstance,
+          driver.customFilter.bind(driver),
         )
 
         await sourceInstance.execute(criteria)
@@ -147,7 +147,7 @@ describe('query-module-driver-sequelize', () => {
               price_category: { eq: 'premium' },
             },
           },
-          sourceInstance,
+          driver.customFilter.bind(driver),
         )
 
         await sourceInstance.execute(criteria)
@@ -207,7 +207,7 @@ describe('query-module-driver-sequelize', () => {
               customer_segment: { eq: 'enterprise' },
             },
           },
-          sourceInstance,
+          driver.customFilter.bind(driver),
         )
 
         await sourceInstance.execute(criteria)
@@ -269,7 +269,7 @@ describe('query-module-driver-sequelize', () => {
               amount_range: { gte: 100, lte: 1000 },
             },
           },
-          sourceInstance,
+          driver.customFilter.bind(driver),
         )
 
         await sourceInstance.execute(criteria)
@@ -284,6 +284,127 @@ describe('query-module-driver-sequelize', () => {
         expect(sql).toContain('YEAR')
         expect(sql).toContain('amount BETWEEN')
       })
+    })
+  })
+})
+
+describe('QueryDriverSequelize customFilter functionality', () => {
+  let mockSequelize: any
+  let driver: QueryDriverSequelize
+  let logger: QueryLoggerInterface
+
+  beforeEach(() => {
+    mockSequelize = {
+      query: vi.fn(),
+    }
+
+    logger = createLogger()
+    driver = new QueryDriverSequelize(mockSequelize, { logger })
+  })
+
+  describe('.customFilter()', () => {
+    it('should execute function with source instance', () => {
+      const sourceFunction = (builder: SQLBuilderPort) =>
+        builder.from('test_table')
+
+      driver.source(sourceFunction)
+
+      const mockFn = vi.fn().mockReturnValue('test_result')
+      const result = driver.customFilter(mockFn)
+
+      expect(mockFn).toHaveBeenCalledTimes(1)
+      expect(mockFn).toHaveBeenCalledWith(expect.any(Object))
+      expect(result).toBe('test_result')
+    })
+
+    it('should pass correctly configured source to function', () => {
+      const sourceFunction = (builder: SQLBuilderPort) =>
+        builder
+          .from('users', 'u')
+          .select('u.id')
+          .where('u.active = ?', true)
+
+      driver.source(sourceFunction)
+
+      const capturedSource = vi.fn()
+      driver.customFilter(capturedSource)
+
+      expect(capturedSource).toHaveBeenCalledTimes(1)
+      
+      // Verify that the source has the expected methods
+      const source = capturedSource.mock.calls[0][0]
+      expect(typeof source.from).toBe('function')
+      expect(typeof source.select).toBe('function')
+      expect(typeof source.where).toBe('function')
+    })
+
+    it('should throw error when source is not configured', () => {
+      const mockFn = vi.fn()
+
+      expect(() => {
+        driver.customFilter(mockFn)
+      }).toThrow('QueryDriver must be required source.')
+
+      expect(mockFn).not.toHaveBeenCalled()
+    })
+
+    it('should allow multiple customFilter calls with same source', () => {
+      const sourceFunction = (builder: SQLBuilderPort) =>
+        builder.from('test_table')
+
+      driver.source(sourceFunction)
+
+      const firstFn = vi.fn().mockReturnValue('first_result')
+      const secondFn = vi.fn().mockReturnValue('second_result')
+
+      const firstResult = driver.customFilter(firstFn)
+      const secondResult = driver.customFilter(secondFn)
+
+      expect(firstResult).toBe('first_result')
+      expect(secondResult).toBe('second_result')
+      expect(firstFn).toHaveBeenCalledTimes(1)
+      expect(secondFn).toHaveBeenCalledTimes(1)
+    })
+
+    it('should pass fresh source instance to each function call', () => {
+      const sourceFunction = (builder: SQLBuilderPort) =>
+        builder.from('test_table')
+
+      driver.source(sourceFunction)
+
+      const sources: any[] = []
+      const captureFn = (source: any) => {
+        sources.push(source)
+        return 'captured'
+      }
+
+      driver.customFilter(captureFn)
+      driver.customFilter(captureFn)
+
+      expect(sources).toHaveLength(2)
+      // Each call should get a fresh instance
+      expect(sources[0]).not.toBe(sources[1])
+    })
+
+    it('should work with custom builder setup', () => {
+      const customBuilderSetup = () => createBuilder()
+      
+      const customDriver = new QueryDriverSequelize(
+        mockSequelize,
+        { logger },
+        customBuilderSetup
+      )
+
+      const sourceFunction = (builder: SQLBuilderPort) =>
+        builder.from('test_table')
+
+      customDriver.source(sourceFunction)
+
+      const mockFn = vi.fn().mockReturnValue('custom_result')
+      const result = customDriver.customFilter(mockFn)
+
+      expect(result).toBe('custom_result')
+      expect(mockFn).toHaveBeenCalledWith(expect.any(Object))
     })
   })
 })

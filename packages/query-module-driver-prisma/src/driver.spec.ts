@@ -1,6 +1,7 @@
 import { QueryDriverPrisma } from './'
 
 import { SQLBuilder } from 'coral-sql'
+import { SQLBuilderPort } from '@rym-lib/query-module-sql-builder'
 import { beforeEach, describe, expect, it, Mock, vi } from 'vitest'
 
 import {
@@ -29,7 +30,7 @@ describe('query-module-driver-prisma', () => {
       })
 
       beforeEach(async () => {
-        await driver.source(setup).execute(new QueryCriteria({}, {}))
+        await driver.source(setup).execute(new QueryCriteria({}, {}, () => ({})))
       })
 
       it('should be called with SQLBuilder', () => {
@@ -42,7 +43,7 @@ describe('query-module-driver-prisma', () => {
     describe('missing .source() call', () => {
       it('should be throw error', async () => {
         await expect(
-          async () => await driver.execute(new QueryCriteria({}, {})),
+          async () => await driver.execute(new QueryCriteria({}, {}, () => ({}))),
         ).rejects.toThrowError(/QueryDriver must be required source\./)
       })
     })
@@ -61,7 +62,7 @@ describe('query-module-driver-prisma', () => {
 
       describe('returns', () => {
         it('should be returns prisma result rows', async () => {
-          expect(await driver.execute(new QueryCriteria({}, {}))).toStrictEqual(
+          expect(await driver.execute(new QueryCriteria({}, {}, () => ({})))).toStrictEqual(
             data,
           )
         })
@@ -70,7 +71,7 @@ describe('query-module-driver-prisma', () => {
       describe('execute prisma.$queryRawUnsafe', () => {
         describe('criteria is empty', () => {
           beforeEach(async () => {
-            await driver.execute(new QueryCriteria({}, {}))
+            await driver.execute(new QueryCriteria({}, {}, () => ({})))
           })
 
           it('should be no condition sql', () => {
@@ -332,7 +333,7 @@ describe('function-based rules support', () => {
     })
 
     it('should support function-based rules that use SQLBuilder methods', async () => {
-      const sourceFunction = (builder: SQLBuilder) => {
+      const sourceFunction = (builder: SQLBuilderPort) => {
         return builder
           .from('users', 'u')
           .leftJoin('user_profiles', 'p', 'u.id = p.user_id')
@@ -346,7 +347,7 @@ describe('function-based rules support', () => {
         id: 'u.id',
         name: 'u.name',
         // Function-based rule that receives value and uses SQLBuilder
-        dynamic_status: (value, sourceInstance: SQLBuilder) => {
+        dynamic_status: (value: { eq: string }, sourceInstance: SQLBuilderPort) => {
           // Use the filter value to generate different SQL expressions
           const targetValue = value.eq
           return `CASE WHEN u.status = '${targetValue === 'Active' ? 'active' : 'inactive'}' THEN '${targetValue}' ELSE 'Unknown' END`
@@ -365,7 +366,7 @@ describe('function-based rules support', () => {
             dynamic_status: { eq: 'Active' },
           },
         },
-        sourceInstance,
+        driver.customFilter.bind(driver),
       )
 
       await sourceInstance.execute(criteria)
@@ -384,7 +385,7 @@ describe('function-based rules support', () => {
     })
 
     it('should handle mixed static and function-based rules', async () => {
-      const sourceFunction = (builder: SQLBuilder) => {
+      const sourceFunction = (builder: SQLBuilderPort) => {
         return builder
           .from('products', 'p')
           .column('p.id')
@@ -396,7 +397,7 @@ describe('function-based rules support', () => {
         id: 'p.id', // static rule
         name: 'p.name', // static rule
         // Function-based rule that uses filter value
-        price_category: (value, sourceInstance: SQLBuilder) => {
+        price_category: (value: { eq: string }, sourceInstance: SQLBuilderPort) => {
           // Generate different SQL based on the filter value
           const threshold = value.eq === 'premium' ? 1000 : 500
           return `CASE WHEN p.price >= ${threshold} THEN '${value.eq}' ELSE 'standard' END`
@@ -413,7 +414,7 @@ describe('function-based rules support', () => {
             price_category: { eq: 'premium' },
           },
         },
-        sourceInstance,
+        driver.customFilter.bind(driver),
       )
 
       await sourceInstance.execute(criteria)
@@ -433,9 +434,135 @@ async function expectQuery<
   Data,
   Criteria extends QueryRunnerCriteria<Data> = QueryRunnerCriteria<Data>,
 >(driver: QueryDriverInterface, criteria: Criteria, expected: any[]) {
-  await driver.execute(new QueryCriteria({}, criteria))
+  await driver.execute(new QueryCriteria({}, criteria, driver.customFilter))
 
   return expect(prismaMock.$queryRawUnsafe.mock.lastCall).toStrictEqual(
     expected,
   )
 }
+
+describe('QueryDriverPrisma customFilter functionality', () => {
+  let prismaMock: any
+  let driver: QueryDriverPrisma
+  let logger: any
+
+  beforeEach(() => {
+    prismaMock = {
+      $queryRawUnsafe: vi.fn(),
+    }
+
+    logger = createLogger()
+    driver = new QueryDriverPrisma(prismaMock, { logger })
+  })
+
+  describe('.customFilter()', () => {
+    it('should execute function with source instance', () => {
+      const sourceFunction = (builder: SQLBuilderPort) =>
+        builder.from('test_table')
+
+      driver.source(sourceFunction)
+
+      const mockFn = vi.fn().mockReturnValue('test_result')
+      const result = driver.customFilter(mockFn)
+
+      expect(mockFn).toHaveBeenCalledTimes(1)
+      expect(mockFn).toHaveBeenCalledWith(expect.any(Object))
+      expect(result).toBe('test_result')
+    })
+
+    it('should pass correctly configured source to function', () => {
+      const sourceFunction = (builder: SQLBuilderPort) =>
+        builder
+          .from('users', 'u')
+          .select('u.id')
+          .where('u.active = ?', true)
+
+      driver.source(sourceFunction)
+
+      const capturedSource = vi.fn()
+      driver.customFilter(capturedSource)
+
+      expect(capturedSource).toHaveBeenCalledTimes(1)
+      
+      // Verify that the source has the expected methods
+      const source = capturedSource.mock.calls?.[0]?.[0]
+      expect(typeof source.from).toBe('function')
+      expect(typeof source.select).toBe('function')
+      expect(typeof source.where).toBe('function')
+    })
+
+    it('should throw error when source is not configured', () => {
+      const mockFn = vi.fn()
+
+      expect(() => {
+        driver.customFilter(mockFn)
+      }).toThrow('QueryDriver must be required source.')
+
+      expect(mockFn).not.toHaveBeenCalled()
+    })
+
+    it('should allow multiple customFilter calls with same source', () => {
+      const sourceFunction = (builder: SQLBuilderPort) =>
+        builder.from('test_table')
+
+      driver.source(sourceFunction)
+
+      const firstFn = vi.fn().mockReturnValue('first_result')
+      const secondFn = vi.fn().mockReturnValue('second_result')
+
+      const firstResult = driver.customFilter(firstFn)
+      const secondResult = driver.customFilter(secondFn)
+
+      expect(firstResult).toBe('first_result')
+      expect(secondResult).toBe('second_result')
+      expect(firstFn).toHaveBeenCalledTimes(1)
+      expect(secondFn).toHaveBeenCalledTimes(1)
+    })
+
+    it('should pass fresh source instance to each function call', () => {
+      const sourceFunction = (builder: SQLBuilderPort) =>
+        builder.from('test_table')
+
+      driver.source(sourceFunction)
+
+      const sources: any[] = []
+      const captureFn = (source: any) => {
+        sources.push(source)
+        return source // Return the source instead of a string
+      }
+
+      driver.customFilter(captureFn)
+      driver.customFilter(captureFn)
+
+      expect(sources).toHaveLength(2)
+      // Each call should get a fresh instance
+      expect(sources[0]).not.toBe(sources[1])
+    })
+
+    it('should work with complex SQL builder operations', () => {
+      const sourceFunction = (builder: SQLBuilderPort) =>
+        builder
+          .from('products', 'p')
+          .leftJoin('categories', 'c', 'p.category_id = c.id')
+          .select('p.id')
+          .select('p.name') 
+          .select('c.name as category_name')
+          .where('p.active = ?', [true])
+
+      driver.source(sourceFunction)
+
+      const complexOperation = (source: any) => {
+        // Simulate a complex operation that might be used in rules
+        // Note: Not all SQL builders have a clone method, so we'll just return the modified source
+        return source
+          .where('p.price > ?', [100])
+          .where('c.featured = ?', [true])
+      }
+
+      const result = driver.customFilter(complexOperation)
+
+      expect(result).toBeDefined()
+      expect(typeof (result as any).where).toBe('function')
+    })
+  })
+})

@@ -1,5 +1,6 @@
 import { beforeEach, describe, expect, it, MockInstance, vi } from 'vitest'
 
+import { QueryCriteria } from './criteria'
 import { QueryRunnerResourceNotFoundException } from './exceptions'
 import { defineQuery } from './functions/define-query'
 import {
@@ -647,6 +648,416 @@ describe('QueryRunner with function-based rules', () => {
         'users.name': { contains: 'User' },
         'dynamic_test_{"ne":"excluded"}': { ne: 'excluded' },
       })
+    })
+  })
+})
+
+describe('QueryRunner with SQL expression object returns', () => {
+  type Data = {
+    id: number
+    name: string
+  }
+
+  const data: Data[] = [
+    { id: 1, name: 'User 1' },
+    { id: 2, name: 'User 2' },
+  ]
+
+  let driver: TestDriver
+  let runner: QueryRunnerInterface<Data>
+
+  // Mock SQL expression object (similar to coral-sql's structure)
+  const createSqlExpression = (type: string, content: any) => ({
+    __type: type,
+    content,
+    toString: () => content,
+  })
+
+  beforeEach(() => {
+    driver = createDriver()
+    driver.returns(data)
+
+    const mockSourceFunction = (builder: any) => {
+      const mockBuilder = {
+        ...builder,
+        from: (table: string, alias?: string) => mockBuilder,
+        column: (col: string) => col,
+        where: (condition: any) => mockBuilder,
+      }
+      return mockBuilder
+    }
+
+    runner = createQuery(driver, {
+      name: 'test_sql_expression_rules',
+      source: mockSourceFunction,
+      rules: {
+        id: 'p.id',
+        name: 'p.name',
+        // Function that returns a SQL expression object (not a string)
+        telephone: (value, sourceInstance) => {
+          return createSqlExpression('EXISTS', {
+            subquery: `SELECT 1 FROM user_telephone ut WHERE ut.user_id = p.id AND ut.value = '${value.eq}'`,
+          })
+        },
+        // Another function returning complex SQL object
+        complex_condition: (value, sourceInstance) => {
+          return createSqlExpression('CASE', {
+            when: [
+              { condition: `status = '${value.eq}'`, then: '1' },
+              { condition: 'TRUE', then: '0' },
+            ],
+          })
+        },
+      },
+    })
+  })
+
+  describe('SQL expression object returns', () => {
+    it('should handle function rules that return SQL expression objects', async () => {
+      await runner.many({
+        filter: {
+          id: { eq: 1 },
+          telephone: { eq: '123-456-7890' },
+        },
+      })
+
+      expect(driver.called).toHaveLength(1)
+      const criteria = driver.called[0]?.args[0]
+
+      // Verify that the SQL expression object is stored as the filter value
+      expect(criteria?.filter).toMatchObject({
+        'p.id': { eq: 1 },
+        telephone: expect.objectContaining({
+          __type: 'EXISTS',
+          content: expect.objectContaining({
+            subquery: "SELECT 1 FROM user_telephone ut WHERE ut.user_id = p.id AND ut.value = '123-456-7890'",
+          }),
+        }),
+      })
+    })
+
+    it('should handle multiple SQL expression rules together', async () => {
+      await runner.many({
+        filter: {
+          telephone: { eq: '123-456-7890' },
+          complex_condition: { eq: 'active' },
+        },
+      })
+
+      expect(driver.called).toHaveLength(1)
+      const criteria = driver.called[0]?.args[0]
+
+      expect(criteria?.filter).toMatchObject({
+        telephone: expect.objectContaining({
+          __type: 'EXISTS',
+          content: expect.objectContaining({
+            subquery: "SELECT 1 FROM user_telephone ut WHERE ut.user_id = p.id AND ut.value = '123-456-7890'",
+          }),
+        }),
+        complex_condition: expect.objectContaining({
+          __type: 'CASE',
+          content: expect.objectContaining({
+            when: [
+              { condition: "status = 'active'", then: '1' },
+              { condition: 'TRUE', then: '0' },
+            ],
+          }),
+        }),
+      })
+    })
+
+    it('should work with mixed string rules and SQL expression rules', async () => {
+      await runner.many({
+        filter: {
+          id: { eq: 1 },
+          name: { contains: 'User' },
+          telephone: { eq: '123-456-7890' },
+        },
+      })
+
+      expect(driver.called).toHaveLength(1)
+      const criteria = driver.called[0]?.args[0]
+
+      expect(criteria?.filter).toMatchObject({
+        'p.id': { eq: 1 },
+        'p.name': { contains: 'User' },
+        telephone: expect.objectContaining({
+          __type: 'EXISTS',
+          content: expect.objectContaining({
+            subquery: "SELECT 1 FROM user_telephone ut WHERE ut.user_id = p.id AND ut.value = '123-456-7890'",
+          }),
+        }),
+      })
+    })
+  })
+})
+
+describe('QueryCriteria with customFilter dependency injection', () => {
+  type Data = {
+    id: number
+    name: string
+  }
+
+  const mockCustomFilter = vi.fn()
+  
+  beforeEach(() => {
+    mockCustomFilter.mockReset()
+  })
+
+  describe('dependency injection', () => {
+    it('should pass customFilter function to QueryCriteria constructor', () => {
+      const criteria = new QueryCriteria<Data>(
+        {},
+        {},
+        mockCustomFilter,
+      )
+
+      expect(criteria).toBeInstanceOf(QueryCriteria)
+    })
+
+    it('should call customFilter when processing function-based rules', () => {
+      const mockSource = { buildExpression: () => 'mock_expression' }
+      mockCustomFilter.mockImplementation((fn) => fn(mockSource))
+
+      const rules = {
+        name: (value: any, source: any) => source.buildExpression(value),
+      }
+
+      const criteria = new QueryCriteria<Data>(
+        rules,
+        {
+          filter: {
+            name: { eq: 'test' },
+          },
+        },
+        mockCustomFilter,
+      )
+
+      expect(mockCustomFilter).toHaveBeenCalledTimes(1)
+      expect(mockCustomFilter).toHaveBeenCalledWith(expect.any(Function))
+    })
+
+    it('should not call customFilter for static string rules', () => {
+      const rules = {
+        id: 'users.id',
+        name: 'users.name',
+      }
+
+      const criteria = new QueryCriteria<Data>(
+        rules,
+        {
+          filter: {
+            id: { eq: 1 },
+            name: { eq: 'test' },
+          },
+        },
+        mockCustomFilter,
+      )
+
+      expect(mockCustomFilter).not.toHaveBeenCalled()
+    })
+
+    it('should handle mixed static and function-based rules correctly', () => {
+      const mockSource = { buildExpression: () => 'dynamic_expression' }
+      mockCustomFilter.mockImplementation((fn) => fn(mockSource))
+
+      const rules = {
+        id: 'users.id', // static rule
+        dynamic_field: (value: any, source: any) => source.buildExpression(value), // function rule
+      }
+
+      const criteria = new QueryCriteria<Data>(
+        rules,
+        {
+          filter: {
+            id: { eq: 1 },
+            dynamic_field: { eq: 'test' },
+          },
+        },
+        mockCustomFilter,
+      )
+
+      expect(mockCustomFilter).toHaveBeenCalledTimes(1)
+      expect(mockCustomFilter).toHaveBeenCalledWith(expect.any(Function))
+    })
+
+    it('should properly pass value and source to rule function', () => {
+      const mockSource = { buildExpression: vi.fn().mockReturnValue('test_result') }
+      const ruleFn = vi.fn().mockImplementation((value, source) => source.buildExpression(value))
+      
+      mockCustomFilter.mockImplementation((fn) => fn(mockSource))
+
+      const rules = {
+        test_field: ruleFn,
+      }
+
+      new QueryCriteria<Data>(
+        rules,
+        {
+          filter: {
+            test_field: { eq: 'test_value' },
+          },
+        },
+        mockCustomFilter,
+      )
+
+      // Verify that the rule function was called with the correct parameters
+      expect(mockCustomFilter).toHaveBeenCalledWith(expect.any(Function))
+      expect(mockSource.buildExpression).toHaveBeenCalledWith({ eq: 'test_value' })
+    })
+
+    it('should handle function rules returning string values', () => {
+      mockCustomFilter.mockImplementation((fn) => fn({ mockSource: true }))
+
+      const rules = {
+        renamed_field: () => 'new_field_name',
+      }
+
+      const criteria = new QueryCriteria<Data>(
+        rules,
+        {
+          filter: {
+            renamed_field: { eq: 'test' },
+          },
+        },
+        mockCustomFilter,
+      )
+
+      expect(criteria.filter).toEqual({
+        new_field_name: { eq: 'test' },
+      })
+    })
+
+    it('should handle function rules returning expression objects', () => {
+      const mockExpression = { __type: 'CUSTOM', content: 'complex expression' }
+      mockCustomFilter.mockImplementation((fn) => fn({ mockSource: true }))
+
+      const rules = {
+        complex_field: () => mockExpression,
+      }
+
+      const criteria = new QueryCriteria<Data>(
+        rules,
+        {
+          filter: {
+            complex_field: { eq: 'test' },
+          },
+        },
+        mockCustomFilter,
+      )
+
+      expect(criteria.filter).toEqual({
+        complex_field: mockExpression,
+      })
+    })
+  })
+
+  describe('error handling', () => {
+    it('should handle customFilter throwing an error', () => {
+      const errorCustomFilter = vi.fn().mockImplementation(() => {
+        throw new Error('CustomFilter error')
+      })
+
+      const rules = {
+        error_field: (value: any, source: any) => 'should_not_reach',
+      }
+
+      expect(() => {
+        new QueryCriteria<Data>(
+          rules,
+          {
+            filter: {
+              error_field: { eq: 'test' },
+            },
+          },
+          errorCustomFilter,
+        )
+      }).toThrow('CustomFilter error')
+    })
+
+    it('should handle rule function throwing an error', () => {
+      const mockCustomFilter = vi.fn().mockImplementation((fn) => {
+        return fn({ mockSource: true })
+      })
+
+      const errorRule = vi.fn().mockImplementation(() => {
+        throw new Error('Rule function error')
+      })
+
+      const rules = {
+        error_field: errorRule,
+      }
+
+      expect(() => {
+        new QueryCriteria<Data>(
+          rules,
+          {
+            filter: {
+              error_field: { eq: 'test' },
+            },
+          },
+          mockCustomFilter,
+        )
+      }).toThrow('Rule function error')
+    })
+
+    it('should handle empty filter gracefully', () => {
+      const mockCustomFilter = vi.fn()
+
+      const criteria = new QueryCriteria<Data>(
+        {
+          test_field: (value: any) => 'mapped_field',
+        },
+        {
+          filter: {},
+        },
+        mockCustomFilter,
+      )
+
+      expect(criteria.filter).toEqual({})
+      expect(mockCustomFilter).not.toHaveBeenCalled()
+    })
+
+    it('should handle undefined filter properties gracefully', () => {
+      const mockCustomFilter = vi.fn().mockImplementation((fn) => fn({ mockSource: true }))
+
+      const criteria = new QueryCriteria<Data>(
+        {
+          test_field: (value: any) => 'mapped_field',
+          other_field: 'other.field',
+        },
+        {
+          filter: {
+            test_field: undefined,
+            other_field: { eq: 'test' },
+          } as any,
+        },
+        mockCustomFilter,
+      )
+
+      // Should only process non-undefined values (customFilter is NOT called for undefined values)
+      expect(mockCustomFilter).not.toHaveBeenCalled()
+      expect(criteria.filter).toEqual({
+        'other.field': { eq: 'test' },
+      })
+    })
+
+    it('should handle null customFilter gracefully', () => {
+      const rules = {
+        static_field: 'mapped.field',
+      }
+
+      expect(() => {
+        new QueryCriteria<Data>(
+          rules,
+          {
+            filter: {
+              static_field: { eq: 'test' },
+            },
+          },
+          null as any,
+        )
+      }).not.toThrow()
     })
   })
 })

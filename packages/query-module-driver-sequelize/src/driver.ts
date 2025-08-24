@@ -8,6 +8,7 @@ import {
 import {
   buildSQL,
   createBuilder,
+  SQLBuilderConditionsPort,
   SQLBuilderPort,
 } from '@rym-lib/query-module-sql-builder'
 
@@ -28,6 +29,18 @@ export class QueryDriverSequelize implements QueryDriverInterface {
   source(setup: (builder: SQLBuilderPort) => SQLBuilderPort): this {
     this.setup = setup
     return this
+  }
+
+  customFilter(
+    filter: (
+      source: SQLBuilderPort,
+    ) => SQLBuilderPort | SQLBuilderConditionsPort,
+  ): SQLBuilderPort | SQLBuilderConditionsPort {
+    if (!this.setup) {
+      throw new Error('QueryDriver must be required source.')
+    }
+    const source = this.setup(this.builderSetup())
+    return filter(source)
   }
 
   async execute(

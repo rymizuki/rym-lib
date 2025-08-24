@@ -14,6 +14,10 @@ class DummyDriver implements QueryDriverInterface {
   source(setup: (...args: any[]) => any): this {
     return this
   }
+  customFilter(fn: (source: any) => any): any {
+    // For middleware testing, just return empty object
+    return fn({})
+  }
 
   async execute<D>(
     criteria: QueryCriteriaInterface<D>,
