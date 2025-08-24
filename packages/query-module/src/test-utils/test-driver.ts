@@ -31,7 +31,11 @@ class TestDriver<Data extends Record<string, any> = Record<string, any>>
     return `CASE WHEN condition THEN 1 ELSE 0 END`
   }
 
-  customFilter(operator: string, value: any, fn: (value: any, source: any) => any): any {
+  customFilter(
+    operator: string,
+    value: any,
+    fn: (value: any, source: any) => any,
+  ): any {
     // For testing, create a mock source object
     const mockSource = {
       buildDynamicExpression: (key: string, value: any) =>

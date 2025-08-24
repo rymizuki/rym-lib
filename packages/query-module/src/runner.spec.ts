@@ -622,8 +622,8 @@ describe('QueryRunner with function-based rules', () => {
       // Verify that function-based rules are processed by customFilter
       expect(criteria?.filter).toEqual({
         'users.id': { eq: 1 },
-        'dynamic_field': { eq: expect.anything() },
-        'complex_status': { eq: expect.anything() },
+        dynamic_field: { eq: expect.anything() },
+        complex_status: { eq: expect.anything() },
       })
     })
 
@@ -640,7 +640,7 @@ describe('QueryRunner with function-based rules', () => {
 
       expect(criteria?.filter).toEqual({
         'users.name': { contains: 'User' },
-        'dynamic_field': { ne: expect.anything() },
+        dynamic_field: { ne: expect.anything() },
       })
     })
   })
@@ -692,7 +692,10 @@ describe('QueryRunner with SQL expression object returns', () => {
         complex_condition: (value, sourceInstance) => {
           return createSqlExpression('CASE', {
             when: [
-              { condition: `status = '${(value as any)?.eq || ''}'`, then: '1' },
+              {
+                condition: `status = '${(value as any)?.eq || ''}'`,
+                then: '1',
+              },
               { condition: 'TRUE', then: '0' },
             ],
           })
@@ -856,10 +859,14 @@ describe('QueryCriteria with customFilter dependency injection', () => {
       )
 
       // Mixed static and function rules - customFilter called only for function rule
-      expect(mockCustomFilter).toHaveBeenCalledWith('eq', 'test', rules.dynamic_field)
+      expect(mockCustomFilter).toHaveBeenCalledWith(
+        'eq',
+        'test',
+        rules.dynamic_field,
+      )
       expect(criteria.filter).toEqual({
         'users.id': { eq: 1 },
-        'dynamic_field': { eq: dynamicResult },
+        dynamic_field: { eq: dynamicResult },
       })
     })
 
@@ -871,7 +878,9 @@ describe('QueryCriteria with customFilter dependency injection', () => {
         .fn()
         .mockImplementation((value, source) => source.buildExpression(value))
 
-      mockCustomFilter.mockImplementation((operator: string, value: any, fn: any) => fn(value, mockSource))
+      mockCustomFilter.mockImplementation(
+        (operator: string, value: any, fn: any) => fn(value, mockSource),
+      )
 
       const rules = {
         test_field: ruleFn,
@@ -910,7 +919,11 @@ describe('QueryCriteria with customFilter dependency injection', () => {
       )
 
       // customFilter processes the function
-      expect(mockCustomFilter).toHaveBeenCalledWith('eq', 'test', rules.renamed_field)
+      expect(mockCustomFilter).toHaveBeenCalledWith(
+        'eq',
+        'test',
+        rules.renamed_field,
+      )
       expect(criteria.filter).toEqual({
         renamed_field: { eq: expectedResult },
       })
@@ -921,7 +934,8 @@ describe('QueryCriteria with customFilter dependency injection', () => {
       mockCustomFilter.mockReturnValue(mockExpression)
 
       const rules = {
-        complex_field: (value: any, sourceInstance: any) => mockExpression.content,
+        complex_field: (value: any, sourceInstance: any) =>
+          mockExpression.content,
       }
 
       const criteria = new QueryCriteria<Data>(
@@ -934,7 +948,11 @@ describe('QueryCriteria with customFilter dependency injection', () => {
         mockDriver,
       )
 
-      expect(mockCustomFilter).toHaveBeenCalledWith('eq', 'test', rules.complex_field)
+      expect(mockCustomFilter).toHaveBeenCalledWith(
+        'eq',
+        'test',
+        rules.complex_field,
+      )
       expect(criteria.filter).toEqual({
         complex_field: { eq: mockExpression },
       })
@@ -967,9 +985,11 @@ describe('QueryCriteria with customFilter dependency injection', () => {
 
     it('should handle rule function throwing an error', () => {
       // Make customFilter throw when it tries to call the rule function
-      mockCustomFilter.mockImplementation((operator: string, value: any, ruleFn: any) => {
-        throw new Error('Rule function error')
-      })
+      mockCustomFilter.mockImplementation(
+        (operator: string, value: any, ruleFn: any) => {
+          throw new Error('Rule function error')
+        },
+      )
 
       const errorRule = vi.fn()
       const rules = {

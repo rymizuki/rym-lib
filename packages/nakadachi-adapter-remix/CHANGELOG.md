@@ -1,5 +1,13 @@
 # @rym-lib/nakadachi-adapter-remix
 
+## 1.2.9
+
+### Patch Changes
+
+- feat(query-module): add comprehensive test coverage and fix function-based rules implementation #54
+- Updated dependencies
+  - @rym-lib/nakadachi@1.2.9
+
 ## 1.2.8
 
 ### Patch Changes

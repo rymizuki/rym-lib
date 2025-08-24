@@ -2,7 +2,13 @@ import { Sequelize } from 'sequelize'
 import { describe, it, expect, beforeEach, vi } from 'vitest'
 
 import { QueryCriteria, QueryLoggerInterface } from '@rym-lib/query-module'
-import { SQLBuilder, SQLBuilderPort, createBuilder, createConditions, unescape } from '@rym-lib/query-module-sql-builder'
+import {
+  SQLBuilder,
+  SQLBuilderPort,
+  createBuilder,
+  createConditions,
+  unescape,
+} from '@rym-lib/query-module-sql-builder'
 
 import { QueryDriverSequelize } from './driver'
 
@@ -269,8 +275,16 @@ describe('query-module-driver-sequelize', () => {
             if (value === 'this_month') {
               // Use unescape for SQL functions
               conditions
-                .and(unescape('MONTH(t.created_at)'), '=', unescape('MONTH(CURRENT_DATE)'))
-                .and(unescape('YEAR(t.created_at)'), '=', unescape('YEAR(CURRENT_DATE)'))
+                .and(
+                  unescape('MONTH(t.created_at)'),
+                  '=',
+                  unescape('MONTH(CURRENT_DATE)'),
+                )
+                .and(
+                  unescape('YEAR(t.created_at)'),
+                  '=',
+                  unescape('YEAR(CURRENT_DATE)'),
+                )
             } else {
               conditions.and('1', '=', '1') // fallback
             }
@@ -350,7 +364,11 @@ describe('QueryDriverSequelize customFilter functionality', () => {
       const result = driver.customFilter('eq', 'test_value', mockFn)
 
       expect(mockFn).toHaveBeenCalledTimes(1)
-      expect(mockFn).toHaveBeenCalledWith('eq', 'test_value', expect.any(Object))
+      expect(mockFn).toHaveBeenCalledWith(
+        'eq',
+        'test_value',
+        expect.any(Object),
+      )
       expect(result).toBe('test_result')
     })
 

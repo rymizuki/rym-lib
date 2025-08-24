@@ -1,6 +1,13 @@
 import { buildSQL } from './'
 
-import { createBuilder, createConditions, exists, unescape, SQLBuilderPort, SQLBuilderConditionsPort } from 'coral-sql'
+import {
+  createBuilder,
+  createConditions,
+  exists,
+  unescape,
+  SQLBuilderPort,
+  SQLBuilderConditionsPort,
+} from 'coral-sql'
 import { beforeEach, describe, expect, it } from 'vitest'
 
 import { QueryCriteriaInterface } from '@rym-lib/query-module'
@@ -184,7 +191,6 @@ describe('SQLBuilder instance handling from query-module', () => {
   })
 })
 
-
 // Test for complex SQL structure interpretation
 describe('complex SQL structure interpretation', () => {
   let builder: SQLBuilderPort
@@ -201,12 +207,12 @@ describe('complex SQL structure interpretation', () => {
         relatedConditions = createConditions()
           .and('rt.parent_id', unescape('mt.id'))
           .and('rt.value', 'lookup_value')
-        
+
         const existsExpression = exists(
           createBuilder()
             .from('related_table', 'rt')
             .column(unescape('1'))
-            .where(relatedConditions)
+            .where(relatedConditions),
         )
 
         criteria = {
@@ -238,7 +244,7 @@ describe('complex SQL structure interpretation', () => {
         const condition1 = createConditions()
           .and('field1', '=', 'value1')
           .and('field2', '>', 100)
-        
+
         const condition2 = createConditions()
           .and('field3', 'like', '%test%')
           .and('field4', 'in', ['a', 'b', 'c'])
@@ -285,7 +291,7 @@ describe('complex SQL structure interpretation', () => {
             .from('related_table', 'rt')
             .column(unescape('1'))
             .where('rt.parent_id', 'mt.id')
-            .where('rt.value', 'like', '%pattern%')
+            .where('rt.value', 'like', '%pattern%'),
         )
 
         criteria = {
@@ -324,7 +330,7 @@ describe('complex SQL structure interpretation', () => {
           createBuilder()
             .from('entity_table', 'et')
             .column(unescape('1'))
-            .where(entityConditions)
+            .where(entityConditions),
         )
 
         criteria = {

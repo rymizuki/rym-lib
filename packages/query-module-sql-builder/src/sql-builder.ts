@@ -156,7 +156,6 @@ function createCond(
       | SQLBuilderConditionsPort
       | SQLBuilderConditionExpressionPort
 
-
     if (value instanceof SQLBuilderConditions) {
       cond.and(value)
       continue

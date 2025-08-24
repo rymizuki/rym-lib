@@ -5,14 +5,13 @@ import {
   QueryDriverInterface,
   QueryLoggerInterface,
 } from '@rym-lib/query-module'
+import { QueryFilterOperator } from '@rym-lib/query-module'
 import {
   buildSQL,
   createBuilder,
   SQLBuilderConditionsPort,
   SQLBuilderPort,
 } from '@rym-lib/query-module-sql-builder'
-
-import { QueryFilterOperator } from '@rym-lib/query-module'
 
 export class QueryDriverSequelize implements QueryDriverInterface {
   private setup: ((builder: SQLBuilderPort) => SQLBuilderPort) | null = null

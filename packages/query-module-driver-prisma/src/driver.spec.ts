@@ -30,9 +30,7 @@ describe('query-module-driver-prisma', () => {
       })
 
       beforeEach(async () => {
-        await driver
-          .source(setup)
-          .execute(new QueryCriteria({}, {}, driver))
+        await driver.source(setup).execute(new QueryCriteria({}, {}, driver))
       })
 
       it('should be called with SQLBuilder', () => {
@@ -45,8 +43,7 @@ describe('query-module-driver-prisma', () => {
     describe('missing .source() call', () => {
       it('should be throw error', async () => {
         await expect(
-          async () =>
-            await driver.execute(new QueryCriteria({}, {}, driver)),
+          async () => await driver.execute(new QueryCriteria({}, {}, driver)),
         ).rejects.toThrowError(/QueryDriver must be required source\./)
       })
     })
@@ -387,10 +384,13 @@ describe('function-based rules support', () => {
       // Debug output - check actual values
       const actualValue = params[1] // second parameter
       const expectedValue = 'Active'
-      
+
       console.log('Expected:', expectedValue, 'Actual:', actualValue)
-      console.log('Value is SQL expression:', typeof actualValue === 'string' && actualValue.includes('CASE'))
-      
+      console.log(
+        'Value is SQL expression:',
+        typeof actualValue === 'string' && actualValue.includes('CASE'),
+      )
+
       // The issue is that function result is being used as value instead of field name
 
       // Check that the function-based rule was executed and SQL contains the result
@@ -487,7 +487,11 @@ describe('QueryDriverPrisma customFilter functionality', () => {
       const result = driver.customFilter('eq', 'test_value', mockFn)
 
       expect(mockFn).toHaveBeenCalledTimes(1)
-      expect(mockFn).toHaveBeenCalledWith('eq', 'test_value', expect.any(Object))
+      expect(mockFn).toHaveBeenCalledWith(
+        'eq',
+        'test_value',
+        expect.any(Object),
+      )
       expect(result).toBe('test_result')
     })
 
