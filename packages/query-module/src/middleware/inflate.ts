@@ -115,12 +115,12 @@ function parsePath(pathStr: string): PathSpec {
   const parts = pathStr.split('.')
   if (parts.length === 1) {
     // シンプルなキー（例: "id"）
-    return { path: [], key: parts[0] }
+    return { path: [], key: parts[0]! }
   }
   // ネストされたパス（例: "units.id" -> path: ["units"], key: "id"）
   return {
     path: parts.slice(0, -1),
-    key: parts[parts.length - 1],
+    key: parts[parts.length - 1]!,
   }
 }
 
@@ -277,9 +277,10 @@ function transformWithPaths(
  * }
  */
 export function inflate<D>(
-  targetPaths: string[],
+  targetPaths: string | string[],
   iteratee: IterateeFunction,
 ): QueryRunnerMiddleware<D, QueryResultList<D>, QueryRunnerCriteria<D>> {
+  const paths = Array.isArray(targetPaths) ? targetPaths : [targetPaths]
   const middleware: QueryRunnerMiddleware<
     D,
     QueryResultList<D>,
@@ -287,7 +288,7 @@ export function inflate<D>(
   > = {
     postprocess(result) {
       result.items = result.items.map((record) => {
-        return transformWithPaths(record, targetPaths, iteratee)
+        return transformWithPaths(record, paths, iteratee)
       })
     },
   }
@@ -300,11 +301,12 @@ export function inflate<D>(
  * preprocessで使用（検索条件のデコード用）
  */
 export function deflate<D>(
-  targetPaths: string[],
+  targetPaths: string | string[],
   iteratee: IterateeFunction,
 ): QueryRunnerMiddleware<D, QueryResultList<D>, QueryRunnerCriteria<D>> {
+  const paths = Array.isArray(targetPaths) ? targetPaths : [targetPaths]
   // パスを展開してoperator付きパスに変換
-  const expandedPaths = expandPathsWithOperators(targetPaths)
+  const expandedPaths = expandPathsWithOperators(paths)
 
   const middleware: QueryRunnerMiddleware<
     D,

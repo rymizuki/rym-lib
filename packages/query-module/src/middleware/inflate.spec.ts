@@ -1,9 +1,6 @@
-import { beforeEach, describe, expect, it, vi } from 'vitest'
+import type { QueryResultList, QueryRunnerCriteria } from '../'
 
-import type {
-  QueryResultList,
-  QueryRunnerCriteria,
-} from '@rym-lib/query-module'
+import { beforeEach, describe, expect, it, vi } from 'vitest'
 
 import { inflate, deflate } from './inflate'
 
@@ -63,9 +60,9 @@ describe('inflate', () => {
 
           await middleware.postprocess!(result, {} as any, {} as any)
 
-          expect(result.items[0].id).toBe('transformed_123')
-          expect(result.items[0].tenant_id).toBe('transformed_456')
-          expect(result.items[0].name).toBe('Test') // 変換されない
+          expect(result.items[0]?.id).toBe('transformed_123')
+          expect(result.items[0]?.tenant_id).toBe('transformed_456')
+          expect(result.items[0]?.name).toBe('Test') // 変換されない
           expect(mockIteratee).toHaveBeenCalledWith('123', 'id', 'id')
           expect(mockIteratee).toHaveBeenCalledWith(
             '456',
@@ -94,9 +91,9 @@ describe('inflate', () => {
 
           await middleware.postprocess!(result, {} as any, {} as any)
 
-          expect(result.items[0].id).toBe('transformed_123')
-          expect(result.items[0].tenant_id).toBe('456') // 変換されない
-          expect(result.items[0].name).toBe('Test')
+          expect(result.items[0]?.id).toBe('transformed_123')
+          expect(result.items[0]?.tenant_id).toBe('456') // 変換されない
+          expect(result.items[0]?.name).toBe('Test')
         })
       })
     })
@@ -124,10 +121,10 @@ describe('inflate', () => {
 
           await middleware.postprocess!(result, {} as any, {} as any)
 
-          expect(result.items[0].id).toBe('123') // 変換されない
-          expect(result.items[0].units[0].id).toBe('transformed_789')
-          expect(result.items[0].units[1].id).toBe('transformed_012')
-          expect(result.items[0].units[0].name).toBe('Unit1') // 変換されない
+          expect(result.items[0]?.id).toBe('123') // 変換されない
+          expect(result.items[0]?.units?.[0]?.id).toBe('transformed_789')
+          expect(result.items[0]?.units?.[1]?.id).toBe('transformed_012')
+          expect(result.items[0]?.units?.[0]?.name).toBe('Unit1') // 変換されない
           expect(mockIteratee).toHaveBeenCalledWith('789', 'id', 'units.id')
           expect(mockIteratee).toHaveBeenCalledWith('012', 'id', 'units.id')
         })
@@ -155,9 +152,9 @@ describe('inflate', () => {
 
           await middleware.postprocess!(result, {} as any, {} as any)
 
-          expect(result.items[0].staffs[0].id).toBe('345') // 変換されない
-          expect(result.items[0].staffs[0].user_id).toBe('transformed_678')
-          expect(result.items[0].staffs[1].user_id).toBe('transformed_234')
+          expect(result.items[0]?.staffs?.[0]?.id).toBe('345') // 変換されない
+          expect(result.items[0]?.staffs?.[0]?.user_id).toBe('transformed_678')
+          expect(result.items[0]?.staffs?.[1]?.user_id).toBe('transformed_234')
           expect(mockIteratee).toHaveBeenCalledWith(
             '678',
             'user_id',
@@ -201,11 +198,11 @@ describe('inflate', () => {
 
           await middleware.postprocess!(result, {} as any, {} as any)
 
-          expect(result.items[0].nested.deeply.id).toBe('999') // 変換されない
-          expect(result.items[0].nested.deeply.items[0].id).toBe(
+          expect(result.items[0]?.nested?.deeply?.id).toBe('999') // 変換されない
+          expect(result.items[0]?.nested?.deeply?.items?.[0]?.id).toBe(
             'transformed_111',
           )
-          expect(result.items[0].nested.deeply.items[1].id).toBe(
+          expect(result.items[0]?.nested?.deeply?.items?.[1]?.id).toBe(
             'transformed_222',
           )
           expect(mockIteratee).toHaveBeenCalledWith(
@@ -247,14 +244,14 @@ describe('inflate', () => {
 
           await middleware.postprocess!(result, {} as any, {} as any)
 
-          expect(result.items[0].id).toBe('transformed_123')
-          expect(result.items[0].units[0].id).toBe('transformed_789')
-          expect(result.items[0].staffs[0].id).toBe('transformed_345')
-          expect(result.items[0].nested.deeply.id).toBe('transformed_999')
-          expect(result.items[0].nested.deeply.items[0].id).toBe(
+          expect(result.items[0]?.id).toBe('transformed_123')
+          expect(result.items[0]?.units?.[0]?.id).toBe('transformed_789')
+          expect(result.items[0]?.staffs?.[0]?.id).toBe('transformed_345')
+          expect(result.items[0]?.nested?.deeply?.id).toBe('transformed_999')
+          expect(result.items[0]?.nested?.deeply?.items?.[0]?.id).toBe(
             'transformed_111',
           )
-          expect(result.items[0].staffs[0].user_id).toBe('678') // 変換されない
+          expect(result.items[0]?.staffs?.[0]?.user_id).toBe('678') // 変換されない
         })
       })
     })
@@ -282,12 +279,12 @@ describe('inflate', () => {
 
           await middleware.postprocess!(result, {} as any, {} as any)
 
-          expect(result.items[0].id).toBe('transformed_123')
-          expect(result.items[0].tenant_id).toBe('transformed_456')
-          expect(result.items[0].units[0].id).toBe('transformed_789')
-          expect(result.items[0].staffs[0].user_id).toBe('transformed_678')
-          expect(result.items[0].staffs[0].id).toBe('345') // 指定されていないので変換されない
-          expect(result.items[0].nested.deeply.id).toBe('999') // 指定されていないので変換されない
+          expect(result.items[0]?.id).toBe('transformed_123')
+          expect(result.items[0]?.tenant_id).toBe('transformed_456')
+          expect(result.items[0]?.units?.[0]?.id).toBe('transformed_789')
+          expect(result.items[0]?.staffs?.[0]?.user_id).toBe('transformed_678')
+          expect(result.items[0]?.staffs?.[0]?.id).toBe('345') // 指定されていないので変換されない
+          expect(result.items[0]?.nested?.deeply?.id).toBe('999') // 指定されていないので変換されない
         })
       })
     })
@@ -342,7 +339,7 @@ describe('inflate', () => {
 
           await middleware.postprocess!(result, {} as any, {} as any)
 
-          expect(result.items[0].units).toEqual([])
+          expect(result.items[0]?.units).toEqual([])
           expect(mockIteratee).not.toHaveBeenCalled()
         })
       })
@@ -362,8 +359,8 @@ describe('inflate', () => {
 
           await middleware.postprocess!(result, {} as any, {} as any)
 
-          expect(result.items[0].id).toBe(123)
-          expect(result.items[0].other_id).toBe(true)
+          expect(result.items[0]?.id).toBe(123)
+          expect(result.items[0]?.other_id).toBe(true)
           expect(mockIteratee).not.toHaveBeenCalled()
         })
       })
@@ -399,19 +396,19 @@ describe('inflate', () => {
           await middleware.postprocess!(result, {} as any, {} as any)
 
           // 文字列値のみ変換される
-          expect(result.items[0].id).toBe('transformed_123')
-          expect(result.items[0].nested.id).toBe('transformed_456')
+          expect(result.items[0]?.id).toBe('transformed_123')
+          expect(result.items[0]?.nested.id).toBe('transformed_456')
 
           // 特殊な型は変換されない（同じインスタンスのまま）
-          expect(result.items[0].date_field).toBe(testDate)
-          expect(result.items[0].regex_field).toBe(testRegex)
-          expect(result.items[0].error_field).toBe(testError)
-          expect(result.items[0].boolean_field).toBe(true)
-          expect(result.items[0].bigint_field).toBe(BigInt(9007199254740991))
-          expect(result.items[0].number_field).toBe(42)
-          expect(result.items[0].null_field).toBe(null)
-          expect(result.items[0].undefined_field).toBe(undefined)
-          expect(result.items[0].nested.date).toBe(testDate)
+          expect(result.items[0]?.date_field).toBe(testDate)
+          expect(result.items[0]?.regex_field).toBe(testRegex)
+          expect(result.items[0]?.error_field).toBe(testError)
+          expect(result.items[0]?.boolean_field).toBe(true)
+          expect(result.items[0]?.bigint_field).toBe(BigInt(9007199254740991))
+          expect(result.items[0]?.number_field).toBe(42)
+          expect(result.items[0]?.null_field).toBe(null)
+          expect(result.items[0]?.undefined_field).toBe(undefined)
+          expect(result.items[0]?.nested.date).toBe(testDate)
 
           // mockIterateeは文字列値に対してのみ呼ばれる
           expect(mockIteratee).toHaveBeenCalledWith('123', 'id', '*.id')
@@ -454,12 +451,12 @@ describe('inflate', () => {
           await middleware.postprocess!(result, {} as any, {} as any)
 
           // 文字列値のみ変換される
-          expect(result.items[0].id).toBe('transformed_123')
+          expect(result.items[0]?.id).toBe('transformed_123')
 
           // 組み込みオブジェクトは変換されない（同じインスタンスのまま）
-          expect(result.items[0].map_field).toBe(testMap)
-          expect(result.items[0].set_field).toBe(testSet)
-          expect(result.items[0].typed_array_field).toBe(testUint8Array)
+          expect(result.items[0]?.map_field).toBe(testMap)
+          expect(result.items[0]?.set_field).toBe(testSet)
+          expect(result.items[0]?.typed_array_field).toBe(testUint8Array)
 
           // mockIterateeは文字列値に対してのみ呼ばれる
           expect(mockIteratee).toHaveBeenCalledWith('123', 'id', 'id')
@@ -645,8 +642,8 @@ describe('inflate', () => {
 
         middleware.preprocess!(criteria, {} as any)
 
-        expect(criteria.filter[0].id.eq).toBe('transformed_encoded_123')
-        expect(criteria.filter[1].id.in).toEqual([
+        expect(criteria.filter?.[0]?.id?.eq).toBe('transformed_encoded_123')
+        expect(criteria.filter?.[1]?.id?.in).toEqual([
           'transformed_encoded_456',
           'transformed_encoded_789',
         ])
@@ -668,11 +665,11 @@ describe('inflate', () => {
 
         await middleware.postprocess!(result, {} as any, {} as any)
 
-        expect(result.items[0].id).toEqual([
+        expect(result.items[0]?.id).toEqual([
           'transformed_123',
           'transformed_456',
         ])
-        expect(result.items[0].staff.id).toEqual([
+        expect(result.items[0]?.staff.id).toEqual([
           'transformed_789',
           'transformed_012',
         ])
