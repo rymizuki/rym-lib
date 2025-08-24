@@ -105,6 +105,21 @@ export interface QueryRunnerMiddleware<
   ) => void | Promise<void>
 }
 
+/**
+ * Type for function-based rules that provides type safety for both value and sourceInstance parameters
+ */
+export type QueryRuleFunction<
+  Data extends QueryResultData,
+  Driver extends QueryDriverInterface,
+  FilterKey extends keyof NonNullable<QueryRunnerCriteria<Data>['filter']> | string,
+  SourceInstance = ReturnType<Parameters<Driver['source']>[0]>
+> = (
+  value: FilterKey extends keyof NonNullable<QueryRunnerCriteria<Data>['filter']>
+    ? NonNullable<QueryRunnerCriteria<Data>['filter']>[FilterKey]
+    : any,
+  sourceInstance: SourceInstance
+) => string
+
 export interface QuerySpecification<
   Data extends QueryResultData,
   Driver extends QueryDriverInterface,
@@ -116,7 +131,7 @@ export interface QuerySpecification<
   rules: Partial<
     Record<
       keyof NonNullable<Params['filter']> | string,
-      string | ReturnType<Parameters<Driver['source']>[0]>
+      string | QueryRuleFunction<Data, Driver, keyof NonNullable<Params['filter']> | string>
     >
   >
   criteria?: (params: Partial<Params>) => Partial<Params>

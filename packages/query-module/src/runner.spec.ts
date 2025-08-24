@@ -597,10 +597,10 @@ describe('QueryRunner with function-based rules', () => {
         id: 'users.id',
         name: 'users.name',
         // Test function-based rule that receives value and sourceInstance
-        dynamic_field: (value: any, sourceInstance: any) => {
+        dynamic_field: (value, sourceInstance) => {
           return sourceInstance.buildDynamicExpression('test', value)
         },
-        complex_status: (value: any, sourceInstance: any) => {
+        complex_status: (value, sourceInstance) => {
           return sourceInstance.buildComplexQuery(value)
         }
       }

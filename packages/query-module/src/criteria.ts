@@ -6,6 +6,7 @@ import {
   QueryCriteriaSkip,
   QueryCriteriaTake,
   QueryFilter,
+  QueryRunnerCriteria,
 } from './interfaces'
 
 export class QueryCriteria<Data extends QueryResultData>
@@ -19,7 +20,10 @@ export class QueryCriteria<Data extends QueryResultData>
   }
 
   constructor(
-    private mapping: QuerySpecification<Data, any>['rules'],
+    private mapping: Partial<Record<
+      keyof NonNullable<QueryRunnerCriteria<Data>['filter']> | string,
+      string | ((value: any, sourceInstance: any) => string)
+    >>,
     input: Partial<typeof this.attr>,
     private sourceInstance?: any,
   ) {
@@ -58,7 +62,7 @@ export class QueryCriteria<Data extends QueryResultData>
           for (const prev in f) {
             if (!Object.prototype.hasOwnProperty.call(f, prev)) continue
             const value = f[prev]
-            const mappingValue = (this.mapping as any)[prev]
+            const mappingValue = this.mapping[prev]
             
             // If mapping value is a function, execute it with value and sourceInstance
             const rename = typeof mappingValue === 'function' 

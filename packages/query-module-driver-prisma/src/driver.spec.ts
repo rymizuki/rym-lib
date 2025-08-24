@@ -346,7 +346,7 @@ describe('function-based rules support', () => {
         id: 'u.id',
         name: 'u.name', 
         // Function-based rule that receives value and uses SQLBuilder
-        dynamic_status: (value: any, sourceInstance: SQLBuilder) => {
+        dynamic_status: (value, sourceInstance: SQLBuilder) => {
           // Use the filter value to generate different SQL expressions
           const targetValue = value.eq
           return `CASE WHEN u.status = '${targetValue === 'Active' ? 'active' : 'inactive'}' THEN '${targetValue}' ELSE 'Unknown' END`
@@ -396,7 +396,7 @@ describe('function-based rules support', () => {
         id: 'p.id', // static rule
         name: 'p.name', // static rule
         // Function-based rule that uses filter value
-        price_category: (value: any, sourceInstance: SQLBuilder) => {
+        price_category: (value, sourceInstance: SQLBuilder) => {
           // Generate different SQL based on the filter value
           const threshold = value.eq === 'premium' ? 1000 : 500
           return `CASE WHEN p.price >= ${threshold} THEN '${value.eq}' ELSE 'standard' END`
