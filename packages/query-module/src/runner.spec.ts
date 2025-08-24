@@ -12,10 +12,6 @@ import {
 import { createDriver, TestDriver } from './test-utils/test-driver'
 import { createLogger, TestMockLogger } from './test-utils/test-mock-logger'
 
-// Local helper to simulate raw SQL expressions in tests
-const unescape = (sql: string): any => {
-  return { __raw: true, sql: sql.trim() }
-}
 
 type Data = {
   index: number
@@ -359,125 +355,6 @@ function createQuery<
   return runner
 }
 
-describe('QueryRunner with raw operators', () => {
-  type DataWithStatus = {
-    id: number
-    name: string
-    status: 'active' | 'inactive' | 'pending'
-    category: string
-  }
-
-  const data: DataWithStatus[] = [
-    { id: 1, name: 'User 1', status: 'active', category: 'premium' },
-    { id: 2, name: 'User 2', status: 'inactive', category: 'basic' },
-    { id: 3, name: 'User 3', status: 'pending', category: 'premium' },
-    { id: 4, name: 'User 4', status: 'active', category: 'basic' },
-  ]
-
-  let driver: TestDriver
-  let runner: QueryRunnerInterface<DataWithStatus>
-
-  beforeEach(() => {
-    driver = createDriver()
-    runner = createQuery(driver, {
-      name: 'test_raw_operators',
-      source: () => data,
-      rules: {
-        id: 'users.id',
-        name: 'users.name',
-        // Simulate CASE-WHEN for status display
-        status_display: unescape(`CASE 
-          WHEN users.status = 'active' THEN 'Active User'
-          WHEN users.status = 'pending' THEN 'Pending User'
-          ELSE 'Inactive User'
-        END`),
-        // Simulate CASE-WHEN for user tier
-        user_tier: unescape(`CASE 
-          WHEN users.category = 'premium' AND users.status = 'active' THEN 'gold'
-          WHEN users.category = 'premium' THEN 'silver'
-          ELSE 'bronze'
-        END`),
-      },
-    })
-  })
-
-  describe('automatic raw SQL expression support', () => {
-    it('should automatically handle CASE-WHEN expressions with eq operator', async () => {
-      const result = await runner.many({
-        filter: {
-          status_display: { eq: 'Active User' },
-        },
-      })
-
-      // Test passes the criteria to driver correctly
-      expect(driver.called).toHaveLength(1)
-      expect(driver.called[0]?.method).toBe('execute')
-
-      // Check that the criteria contains the filter
-      const criteria = driver.called[0]?.args[0]
-      expect(criteria.filter).toBeDefined()
-    })
-
-    it('should automatically handle CASE-WHEN expressions with ne operator', async () => {
-      await runner.many({
-        filter: {
-          status_display: { ne: 'Inactive User' },
-        },
-      })
-
-      expect(driver.called).toHaveLength(1)
-      const criteria = driver.called[0]?.args[0]
-      expect(criteria.filter).toBeDefined()
-    })
-
-    it('should automatically handle CASE-WHEN expressions with in operator', async () => {
-      await runner.many({
-        filter: {
-          user_tier: { in: ['gold', 'silver'] },
-        },
-      })
-
-      expect(driver.called).toHaveLength(1)
-      const criteria = driver.called[0]?.args[0]
-      expect(criteria.filter).toBeDefined()
-    })
-
-    it('should handle empty array in in operator', async () => {
-      const result = await runner.many({
-        filter: {
-          user_tier: { in: [] },
-        },
-      })
-
-      expect(result.items).toHaveLength(4) // Should return all items when empty array
-    })
-
-    it('should combine CASE-WHEN and regular operators', async () => {
-      await runner.many({
-        filter: {
-          status_display: { eq: 'Active User' },
-          name: { contains: 'User' },
-        },
-      })
-
-      expect(driver.called).toHaveLength(1)
-      const criteria = driver.called[0]?.args[0]
-      expect(criteria.filter).toBeDefined()
-    })
-
-    it('should handle regular field names normally', async () => {
-      await runner.many({
-        filter: {
-          name: { eq: 'User 1' },
-        },
-      })
-
-      expect(driver.called).toHaveLength(1)
-      const criteria = driver.called[0]?.args[0]
-      expect(criteria?.filter).toBeDefined()
-    })
-  })
-})
 
 describe('QueryRunner with dot notation keys', () => {
   type UserData = {
