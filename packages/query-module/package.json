@@ -59,7 +59,7 @@
   "scripts": {
     "build": "tsup",
     "test": "vitest run --coverage",
-    "lint": "eslint --max-warnings 0 .",
+    "lint": "eslint --max-warnings 0 . && tsc --noEmit",
     "format": "prettier -w './**/*.{ts,tsx,js,json,css}' --check",
     "ncu": "npm-check-updates"
   },
