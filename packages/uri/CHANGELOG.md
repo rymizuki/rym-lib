@@ -1,5 +1,11 @@
 # @rym-lib/uri
 
+## 1.2.3
+
+### Patch Changes
+
+- update query-module
+
 ## 1.2.2
 
 ### Patch Changes

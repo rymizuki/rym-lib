@@ -1,5 +1,13 @@
 # @rym-lib/query-module
 
+## 1.2.3
+
+### Patch Changes
+
+- update query-module
+- Updated dependencies
+  - @rym-lib/exception@1.2.3
+
 ## 1.2.2
 
 ### Patch Changes

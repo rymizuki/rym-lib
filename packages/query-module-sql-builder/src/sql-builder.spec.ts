@@ -730,15 +730,17 @@ describe('query-module-sql-builder', () => {
             beforeEach(() => {
               criteria = {
                 filter: {
-                  'having:COUNT(*)': { gt: 10 }
-                }
+                  'having:COUNT(*)': { gt: 10 },
+                },
               }
             })
 
             describe('to SQL', () => {
               it('HAVING COUNT(*) > ? が生成される', () => {
                 const { sql } = execute(builder, criteria)
-                expect(sql).toBe('SELECT * FROM `example` HAVING (((COUNT(*) > ?)))')
+                expect(sql).toBe(
+                  'SELECT * FROM `example` HAVING (((COUNT(*) > ?)))',
+                )
               })
             })
 
@@ -757,15 +759,17 @@ describe('query-module-sql-builder', () => {
             beforeEach(() => {
               criteria = {
                 filter: {
-                  'having:SUM(amount)': { gte: 1000 }
-                }
+                  'having:SUM(amount)': { gte: 1000 },
+                },
               }
             })
 
             describe('to SQL', () => {
               it('HAVING SUM(amount) >= ? が生成される', () => {
                 const { sql } = execute(builder, criteria)
-                expect(sql).toBe('SELECT * FROM `example` HAVING (((SUM(amount) >= ?)))')
+                expect(sql).toBe(
+                  'SELECT * FROM `example` HAVING (((SUM(amount) >= ?)))',
+                )
               })
             })
 
@@ -784,15 +788,17 @@ describe('query-module-sql-builder', () => {
             beforeEach(() => {
               criteria = {
                 filter: {
-                  'having:AVG(score)': { lt: 80 }
-                }
+                  'having:AVG(score)': { lt: 80 },
+                },
               }
             })
 
             describe('to SQL', () => {
               it('HAVING AVG(score) < ? が生成される', () => {
                 const { sql } = execute(builder, criteria)
-                expect(sql).toBe('SELECT * FROM `example` HAVING (((AVG(score) < ?)))')
+                expect(sql).toBe(
+                  'SELECT * FROM `example` HAVING (((AVG(score) < ?)))',
+                )
               })
             })
 
@@ -812,15 +818,17 @@ describe('query-module-sql-builder', () => {
           criteria = {
             filter: {
               'having:COUNT(*)': { gt: 5 },
-              'having:SUM(amount)': { lte: 10000 }
-            }
+              'having:SUM(amount)': { lte: 10000 },
+            },
           }
         })
 
         describe('to SQL', () => {
           it('COUNT(*) > ? AND SUM(amount) <= ? がHAVING句に生成される', () => {
             const { sql } = execute(builder, criteria)
-            expect(sql).toBe('SELECT * FROM `example` HAVING (((COUNT(*) > ?) AND (SUM(amount) <= ?)))')
+            expect(sql).toBe(
+              'SELECT * FROM `example` HAVING (((COUNT(*) > ?) AND (SUM(amount) <= ?)))',
+            )
           })
         })
 
@@ -838,15 +846,17 @@ describe('query-module-sql-builder', () => {
           criteria = {
             filter: [
               { 'having:COUNT(*)': { gt: 5 } },
-              { 'having:COUNT(*)': { lt: 3 } }
-            ]
+              { 'having:COUNT(*)': { lt: 3 } },
+            ],
           }
         })
 
         describe('to SQL', () => {
           it('COUNT(*) > ? OR COUNT(*) < ? がHAVING句に生成される', () => {
             const { sql } = execute(builder, criteria)
-            expect(sql).toBe('SELECT * FROM `example` HAVING (((COUNT(*) > ?)) OR ((COUNT(*) < ?)))')
+            expect(sql).toBe(
+              'SELECT * FROM `example` HAVING (((COUNT(*) > ?)) OR ((COUNT(*) < ?)))',
+            )
           })
         })
 
@@ -867,8 +877,8 @@ describe('query-module-sql-builder', () => {
             status: { eq: 'active' },
             category: { in: ['A', 'B'] },
             'having:COUNT(*)': { gt: 10 },
-            'having:AVG(price)': { gte: 100 }
-          }
+            'having:AVG(price)': { gte: 100 },
+          },
         }
       })
 
@@ -881,12 +891,14 @@ describe('query-module-sql-builder', () => {
 
         it('WHERE句が先、HAVING句が後の順序で生成される', () => {
           const { sql } = execute(builder, criteria)
-          expect(sql).toBe('SELECT * FROM `example` WHERE (((`status` = ?) AND (`category` IN (?,?)))) HAVING (((COUNT(*) > ?) AND (AVG(price) >= ?)))')
+          expect(sql).toBe(
+            'SELECT * FROM `example` WHERE (((`status` = ?) AND (`category` IN (?,?)))) HAVING (((COUNT(*) > ?) AND (AVG(price) >= ?)))',
+          )
         })
       })
 
       describe('to Bindings', () => {
-        it('[\'active\', \'A\', \'B\', 10, 100]がWHERE句、HAVING句の順で設定される', () => {
+        it("['active', 'A', 'B', 10, 100]がWHERE句、HAVING句の順で設定される", () => {
           const { bindings } = execute(builder, criteria)
           expect(bindings).toEqual(['active', 'A', 'B', 10, 100])
         })
@@ -900,15 +912,17 @@ describe('query-module-sql-builder', () => {
           beforeEach(() => {
             criteria = {
               filter: {
-                'having:MAX(id)': { eq: 100 }
-              }
+                'having:MAX(id)': { eq: 100 },
+              },
             }
           })
 
           describe('to SQL', () => {
             it('MAX(id) = ? が生成される', () => {
               const { sql } = execute(builder, criteria)
-              expect(sql).toBe('SELECT * FROM `example` HAVING (((MAX(id) = ?)))')
+              expect(sql).toBe(
+                'SELECT * FROM `example` HAVING (((MAX(id) = ?)))',
+              )
             })
           })
         })
@@ -918,15 +932,17 @@ describe('query-module-sql-builder', () => {
           beforeEach(() => {
             criteria = {
               filter: {
-                'having:MAX(id)': { eq: null }
-              }
+                'having:MAX(id)': { eq: null },
+              },
             }
           })
 
           describe('to SQL', () => {
             it('MAX(id) IS NULL が生成される', () => {
               const { sql } = execute(builder, criteria)
-              expect(sql).toBe('SELECT * FROM `example` HAVING (((MAX(id) IS NULL)))')
+              expect(sql).toBe(
+                'SELECT * FROM `example` HAVING (((MAX(id) IS NULL)))',
+              )
             })
           })
         })
@@ -938,15 +954,17 @@ describe('query-module-sql-builder', () => {
           beforeEach(() => {
             criteria = {
               filter: {
-                'having:MIN(id)': { ne: 1 }
-              }
+                'having:MIN(id)': { ne: 1 },
+              },
             }
           })
 
           describe('to SQL', () => {
             it('MIN(id) != ? が生成される', () => {
               const { sql } = execute(builder, criteria)
-              expect(sql).toBe('SELECT * FROM `example` HAVING (((MIN(id) != ?)))')
+              expect(sql).toBe(
+                'SELECT * FROM `example` HAVING (((MIN(id) != ?)))',
+              )
             })
           })
         })
@@ -956,15 +974,17 @@ describe('query-module-sql-builder', () => {
           beforeEach(() => {
             criteria = {
               filter: {
-                'having:MIN(id)': { ne: null }
-              }
+                'having:MIN(id)': { ne: null },
+              },
             }
           })
 
           describe('to SQL', () => {
             it('MIN(id) IS NOT NULL が生成される', () => {
               const { sql } = execute(builder, criteria)
-              expect(sql).toBe('SELECT * FROM `example` HAVING (((MIN(id) IS NOT NULL)))')
+              expect(sql).toBe(
+                'SELECT * FROM `example` HAVING (((MIN(id) IS NOT NULL)))',
+              )
             })
           })
         })
@@ -976,15 +996,17 @@ describe('query-module-sql-builder', () => {
           beforeEach(() => {
             criteria = {
               filter: {
-                'having:COUNT(*)': { lt: 5 }
-              }
+                'having:COUNT(*)': { lt: 5 },
+              },
             }
           })
 
           describe('to SQL', () => {
             it('COUNT(*) < ? が生成される', () => {
               const { sql } = execute(builder, criteria)
-              expect(sql).toBe('SELECT * FROM `example` HAVING (((COUNT(*) < ?)))')
+              expect(sql).toBe(
+                'SELECT * FROM `example` HAVING (((COUNT(*) < ?)))',
+              )
             })
           })
         })
@@ -994,15 +1016,17 @@ describe('query-module-sql-builder', () => {
           beforeEach(() => {
             criteria = {
               filter: {
-                'having:COUNT(*)': { lte: 5 }
-              }
+                'having:COUNT(*)': { lte: 5 },
+              },
             }
           })
 
           describe('to SQL', () => {
             it('COUNT(*) <= ? が生成される', () => {
               const { sql } = execute(builder, criteria)
-              expect(sql).toBe('SELECT * FROM `example` HAVING (((COUNT(*) <= ?)))')
+              expect(sql).toBe(
+                'SELECT * FROM `example` HAVING (((COUNT(*) <= ?)))',
+              )
             })
           })
         })
@@ -1012,15 +1036,17 @@ describe('query-module-sql-builder', () => {
           beforeEach(() => {
             criteria = {
               filter: {
-                'having:COUNT(*)': { gt: 5 }
-              }
+                'having:COUNT(*)': { gt: 5 },
+              },
             }
           })
 
           describe('to SQL', () => {
             it('COUNT(*) > ? が生成される', () => {
               const { sql } = execute(builder, criteria)
-              expect(sql).toBe('SELECT * FROM `example` HAVING (((COUNT(*) > ?)))')
+              expect(sql).toBe(
+                'SELECT * FROM `example` HAVING (((COUNT(*) > ?)))',
+              )
             })
           })
         })
@@ -1030,15 +1056,17 @@ describe('query-module-sql-builder', () => {
           beforeEach(() => {
             criteria = {
               filter: {
-                'having:COUNT(*)': { gte: 5 }
-              }
+                'having:COUNT(*)': { gte: 5 },
+              },
             }
           })
 
           describe('to SQL', () => {
             it('COUNT(*) >= ? が生成される', () => {
               const { sql } = execute(builder, criteria)
-              expect(sql).toBe('SELECT * FROM `example` HAVING (((COUNT(*) >= ?)))')
+              expect(sql).toBe(
+                'SELECT * FROM `example` HAVING (((COUNT(*) >= ?)))',
+              )
             })
           })
         })
@@ -1050,20 +1078,22 @@ describe('query-module-sql-builder', () => {
           beforeEach(() => {
             criteria = {
               filter: {
-                'having:GROUP_CONCAT(name)': { contains: 'test' }
-              }
+                'having:GROUP_CONCAT(name)': { contains: 'test' },
+              },
             }
           })
 
           describe('to SQL', () => {
             it('GROUP_CONCAT(name) LIKE ? が生成される', () => {
               const { sql } = execute(builder, criteria)
-              expect(sql).toBe('SELECT * FROM `example` HAVING (((GROUP_CONCAT(name) LIKE ?)))')
+              expect(sql).toBe(
+                'SELECT * FROM `example` HAVING (((GROUP_CONCAT(name) LIKE ?)))',
+              )
             })
           })
 
           describe('to Bindings', () => {
-            it('[\'%test%\']が設定される', () => {
+            it("['%test%']が設定される", () => {
               const { bindings } = execute(builder, criteria)
               expect(bindings).toEqual(['%test%'])
             })
@@ -1075,20 +1105,22 @@ describe('query-module-sql-builder', () => {
           beforeEach(() => {
             criteria = {
               filter: {
-                'having:GROUP_CONCAT(name)': { not_contains: 'test' }
-              }
+                'having:GROUP_CONCAT(name)': { not_contains: 'test' },
+              },
             }
           })
 
           describe('to SQL', () => {
             it('GROUP_CONCAT(name) NOT LIKE ? が生成される', () => {
               const { sql } = execute(builder, criteria)
-              expect(sql).toBe('SELECT * FROM `example` HAVING (((GROUP_CONCAT(name) NOT LIKE ?)))')
+              expect(sql).toBe(
+                'SELECT * FROM `example` HAVING (((GROUP_CONCAT(name) NOT LIKE ?)))',
+              )
             })
           })
 
           describe('to Bindings', () => {
-            it('[\'%test%\']が設定される', () => {
+            it("['%test%']が設定される", () => {
               const { bindings } = execute(builder, criteria)
               expect(bindings).toEqual(['%test%'])
             })
@@ -1102,15 +1134,17 @@ describe('query-module-sql-builder', () => {
           beforeEach(() => {
             criteria = {
               filter: {
-                'having:COUNT(*)': { in: [1, 2, 3] }
-              }
+                'having:COUNT(*)': { in: [1, 2, 3] },
+              },
             }
           })
 
           describe('to SQL', () => {
             it('COUNT(*) IN (?,?,?) が生成される', () => {
               const { sql } = execute(builder, criteria)
-              expect(sql).toBe('SELECT * FROM `example` HAVING (((COUNT(*) IN (?,?,?))))')
+              expect(sql).toBe(
+                'SELECT * FROM `example` HAVING (((COUNT(*) IN (?,?,?))))',
+              )
             })
           })
 
@@ -1127,8 +1161,8 @@ describe('query-module-sql-builder', () => {
           beforeEach(() => {
             criteria = {
               filter: {
-                'having:COUNT(*)': { in: [] }
-              }
+                'having:COUNT(*)': { in: [] },
+              },
             }
           })
 
@@ -1142,15 +1176,14 @@ describe('query-module-sql-builder', () => {
       })
     })
 
-
     describe('エッジケース', () => {
       describe('having:プレフィックスなし', () => {
         let criteria: Partial<QueryCriteriaInterface>
         beforeEach(() => {
           criteria = {
             filter: {
-              status: { eq: 'active' }
-            }
+              status: { eq: 'active' },
+            },
           }
         })
 
@@ -1172,15 +1205,17 @@ describe('query-module-sql-builder', () => {
         beforeEach(() => {
           criteria = {
             filter: {
-              'having:COUNT(*)': { gt: 0 }
-            }
+              'having:COUNT(*)': { gt: 0 },
+            },
           }
         })
 
         describe('to SQL', () => {
           it('HAVING句のみが生成される', () => {
             const { sql } = execute(builder, criteria)
-            expect(sql).toBe('SELECT * FROM `example` HAVING (((COUNT(*) > ?)))')
+            expect(sql).toBe(
+              'SELECT * FROM `example` HAVING (((COUNT(*) > ?)))',
+            )
           })
 
           it('WHEREが含まれない', () => {
@@ -1194,7 +1229,7 @@ describe('query-module-sql-builder', () => {
         let criteria: Partial<QueryCriteriaInterface>
         beforeEach(() => {
           criteria = {
-            filter: {}
+            filter: {},
           }
         })
 

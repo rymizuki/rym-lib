@@ -524,7 +524,7 @@ describe('QueryRunner with dot notation keys', () => {
 
       expect(driver.called).toHaveLength(1)
       const criteria = driver.called[0]?.args[0]
-      
+
       // マッピングが正しく適用されることを確認
       expect(criteria?.filter).toEqual({
         'users.id': { eq: 1 },
@@ -543,7 +543,7 @@ describe('QueryRunner with dot notation keys', () => {
 
       expect(driver.called).toHaveLength(1)
       const criteria = driver.called[0]?.args[0]
-      
+
       expect(criteria?.filter).toEqual({
         'users.name': { contains: 'User' },
         'user_profile.city_name': { ne: 'Kyoto' },

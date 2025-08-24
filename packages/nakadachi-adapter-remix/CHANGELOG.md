@@ -1,5 +1,13 @@
 # @rym-lib/nakadachi-adapter-remix
 
+## 1.2.3
+
+### Patch Changes
+
+- update query-module
+- Updated dependencies
+  - @rym-lib/nakadachi@1.2.3
+
 ## 1.2.2
 
 ### Patch Changes
