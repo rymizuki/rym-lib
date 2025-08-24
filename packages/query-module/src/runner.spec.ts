@@ -730,7 +730,8 @@ describe('QueryRunner with SQL expression object returns', () => {
         telephone: expect.objectContaining({
           __type: 'EXISTS',
           content: expect.objectContaining({
-            subquery: "SELECT 1 FROM user_telephone ut WHERE ut.user_id = p.id AND ut.value = '123-456-7890'",
+            subquery:
+              "SELECT 1 FROM user_telephone ut WHERE ut.user_id = p.id AND ut.value = '123-456-7890'",
           }),
         }),
       })
@@ -751,7 +752,8 @@ describe('QueryRunner with SQL expression object returns', () => {
         telephone: expect.objectContaining({
           __type: 'EXISTS',
           content: expect.objectContaining({
-            subquery: "SELECT 1 FROM user_telephone ut WHERE ut.user_id = p.id AND ut.value = '123-456-7890'",
+            subquery:
+              "SELECT 1 FROM user_telephone ut WHERE ut.user_id = p.id AND ut.value = '123-456-7890'",
           }),
         }),
         complex_condition: expect.objectContaining({
@@ -784,7 +786,8 @@ describe('QueryRunner with SQL expression object returns', () => {
         telephone: expect.objectContaining({
           __type: 'EXISTS',
           content: expect.objectContaining({
-            subquery: "SELECT 1 FROM user_telephone ut WHERE ut.user_id = p.id AND ut.value = '123-456-7890'",
+            subquery:
+              "SELECT 1 FROM user_telephone ut WHERE ut.user_id = p.id AND ut.value = '123-456-7890'",
           }),
         }),
       })
@@ -799,18 +802,14 @@ describe('QueryCriteria with customFilter dependency injection', () => {
   }
 
   const mockCustomFilter = vi.fn()
-  
+
   beforeEach(() => {
     mockCustomFilter.mockReset()
   })
 
   describe('dependency injection', () => {
     it('should pass customFilter function to QueryCriteria constructor', () => {
-      const criteria = new QueryCriteria<Data>(
-        {},
-        {},
-        mockCustomFilter,
-      )
+      const criteria = new QueryCriteria<Data>({}, {}, mockCustomFilter)
 
       expect(criteria).toBeInstanceOf(QueryCriteria)
     })
@@ -863,7 +862,8 @@ describe('QueryCriteria with customFilter dependency injection', () => {
 
       const rules = {
         id: 'users.id', // static rule
-        dynamic_field: (value: any, source: any) => source.buildExpression(value), // function rule
+        dynamic_field: (value: any, source: any) =>
+          source.buildExpression(value), // function rule
       }
 
       const criteria = new QueryCriteria<Data>(
@@ -882,9 +882,13 @@ describe('QueryCriteria with customFilter dependency injection', () => {
     })
 
     it('should properly pass value and source to rule function', () => {
-      const mockSource = { buildExpression: vi.fn().mockReturnValue('test_result') }
-      const ruleFn = vi.fn().mockImplementation((value, source) => source.buildExpression(value))
-      
+      const mockSource = {
+        buildExpression: vi.fn().mockReturnValue('test_result'),
+      }
+      const ruleFn = vi
+        .fn()
+        .mockImplementation((value, source) => source.buildExpression(value))
+
       mockCustomFilter.mockImplementation((fn) => fn(mockSource))
 
       const rules = {
@@ -903,7 +907,9 @@ describe('QueryCriteria with customFilter dependency injection', () => {
 
       // Verify that the rule function was called with the correct parameters
       expect(mockCustomFilter).toHaveBeenCalledWith(expect.any(Function))
-      expect(mockSource.buildExpression).toHaveBeenCalledWith({ eq: 'test_value' })
+      expect(mockSource.buildExpression).toHaveBeenCalledWith({
+        eq: 'test_value',
+      })
     })
 
     it('should handle function rules returning string values', () => {
@@ -1019,7 +1025,9 @@ describe('QueryCriteria with customFilter dependency injection', () => {
     })
 
     it('should handle undefined filter properties gracefully', () => {
-      const mockCustomFilter = vi.fn().mockImplementation((fn) => fn({ mockSource: true }))
+      const mockCustomFilter = vi
+        .fn()
+        .mockImplementation((fn) => fn({ mockSource: true }))
 
       const criteria = new QueryCriteria<Data>(
         {

@@ -23,9 +23,9 @@ class TestDriver<Data extends Record<string, any> = Record<string, any>>
   customFilter(fn: (source: any) => any): any {
     // For testing, create a mock source object
     const mockSource = {
-      buildDynamicExpression: (key: string, value: any) => 
+      buildDynamicExpression: (key: string, value: any) =>
         `dynamic_${key}_${JSON.stringify(value)}`,
-      buildComplexQuery: (value: any) => 
+      buildComplexQuery: (value: any) =>
         `CASE WHEN status = "${value.eq}" THEN 1 ELSE 0 END`,
       from: (table: string, alias?: string) => mockSource,
       column: (col: string) => col,

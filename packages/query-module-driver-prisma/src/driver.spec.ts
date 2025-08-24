@@ -1,7 +1,6 @@
 import { QueryDriverPrisma } from './'
 
 import { SQLBuilder } from 'coral-sql'
-import { SQLBuilderPort } from '@rym-lib/query-module-sql-builder'
 import { beforeEach, describe, expect, it, Mock, vi } from 'vitest'
 
 import {
@@ -9,6 +8,7 @@ import {
   QueryDriverInterface,
   QueryRunnerCriteria,
 } from '@rym-lib/query-module'
+import { SQLBuilderPort } from '@rym-lib/query-module-sql-builder'
 import { createLogger } from '@rym-lib/query-module/test-utils'
 
 import prisma from './test-utils/prisma'
@@ -30,7 +30,9 @@ describe('query-module-driver-prisma', () => {
       })
 
       beforeEach(async () => {
-        await driver.source(setup).execute(new QueryCriteria({}, {}, () => ({})))
+        await driver
+          .source(setup)
+          .execute(new QueryCriteria({}, {}, () => ({})))
       })
 
       it('should be called with SQLBuilder', () => {
@@ -43,7 +45,8 @@ describe('query-module-driver-prisma', () => {
     describe('missing .source() call', () => {
       it('should be throw error', async () => {
         await expect(
-          async () => await driver.execute(new QueryCriteria({}, {}, () => ({}))),
+          async () =>
+            await driver.execute(new QueryCriteria({}, {}, () => ({}))),
         ).rejects.toThrowError(/QueryDriver must be required source\./)
       })
     })
@@ -62,9 +65,9 @@ describe('query-module-driver-prisma', () => {
 
       describe('returns', () => {
         it('should be returns prisma result rows', async () => {
-          expect(await driver.execute(new QueryCriteria({}, {}, () => ({})))).toStrictEqual(
-            data,
-          )
+          expect(
+            await driver.execute(new QueryCriteria({}, {}, () => ({}))),
+          ).toStrictEqual(data)
         })
       })
 
@@ -347,7 +350,10 @@ describe('function-based rules support', () => {
         id: 'u.id',
         name: 'u.name',
         // Function-based rule that receives value and uses SQLBuilder
-        dynamic_status: (value: { eq: string }, sourceInstance: SQLBuilderPort) => {
+        dynamic_status: (
+          value: { eq: string },
+          sourceInstance: SQLBuilderPort,
+        ) => {
           // Use the filter value to generate different SQL expressions
           const targetValue = value.eq
           return `CASE WHEN u.status = '${targetValue === 'Active' ? 'active' : 'inactive'}' THEN '${targetValue}' ELSE 'Unknown' END`
@@ -397,7 +403,10 @@ describe('function-based rules support', () => {
         id: 'p.id', // static rule
         name: 'p.name', // static rule
         // Function-based rule that uses filter value
-        price_category: (value: { eq: string }, sourceInstance: SQLBuilderPort) => {
+        price_category: (
+          value: { eq: string },
+          sourceInstance: SQLBuilderPort,
+        ) => {
           // Generate different SQL based on the filter value
           const threshold = value.eq === 'premium' ? 1000 : 500
           return `CASE WHEN p.price >= ${threshold} THEN '${value.eq}' ELSE 'standard' END`
@@ -472,10 +481,7 @@ describe('QueryDriverPrisma customFilter functionality', () => {
 
     it('should pass correctly configured source to function', () => {
       const sourceFunction = (builder: SQLBuilderPort) =>
-        builder
-          .from('users', 'u')
-          .select('u.id')
-          .where('u.active = ?', true)
+        builder.from('users', 'u').select('u.id').where('u.active = ?', true)
 
       driver.source(sourceFunction)
 
@@ -483,7 +489,7 @@ describe('QueryDriverPrisma customFilter functionality', () => {
       driver.customFilter(capturedSource)
 
       expect(capturedSource).toHaveBeenCalledTimes(1)
-      
+
       // Verify that the source has the expected methods
       const source = capturedSource.mock.calls?.[0]?.[0]
       expect(typeof source.from).toBe('function')
@@ -545,7 +551,7 @@ describe('QueryDriverPrisma customFilter functionality', () => {
           .from('products', 'p')
           .leftJoin('categories', 'c', 'p.category_id = c.id')
           .select('p.id')
-          .select('p.name') 
+          .select('p.name')
           .select('c.name as category_name')
           .where('p.active = ?', [true])
 

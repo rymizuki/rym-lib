@@ -1,5 +1,11 @@
 # @rym-lib/nakadachi
 
+## 1.2.7
+
+### Patch Changes
+
+- feat(query-module): support SQL expression objects in function-based rules #51
+
 ## 1.2.6
 
 ### Patch Changes

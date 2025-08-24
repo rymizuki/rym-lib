@@ -319,10 +319,7 @@ describe('QueryDriverSequelize customFilter functionality', () => {
 
     it('should pass correctly configured source to function', () => {
       const sourceFunction = (builder: SQLBuilderPort) =>
-        builder
-          .from('users', 'u')
-          .select('u.id')
-          .where('u.active = ?', true)
+        builder.from('users', 'u').select('u.id').where('u.active = ?', true)
 
       driver.source(sourceFunction)
 
@@ -330,7 +327,7 @@ describe('QueryDriverSequelize customFilter functionality', () => {
       driver.customFilter(capturedSource)
 
       expect(capturedSource).toHaveBeenCalledTimes(1)
-      
+
       // Verify that the source has the expected methods
       const source = capturedSource.mock.calls[0][0]
       expect(typeof source.from).toBe('function')
@@ -388,11 +385,11 @@ describe('QueryDriverSequelize customFilter functionality', () => {
 
     it('should work with custom builder setup', () => {
       const customBuilderSetup = () => createBuilder()
-      
+
       const customDriver = new QueryDriverSequelize(
         mockSequelize,
         { logger },
-        customBuilderSetup
+        customBuilderSetup,
       )
 
       const sourceFunction = (builder: SQLBuilderPort) =>

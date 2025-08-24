@@ -1,7 +1,7 @@
 {
   "name": "@rym-lib/uri",
   "type": "module",
-  "version": "1.2.6",
+  "version": "1.2.7",
   "private": false,
   "author": {
     "name": "mizuki_r",

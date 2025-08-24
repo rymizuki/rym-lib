@@ -1,5 +1,13 @@
 # @rym-lib/inversify-bundler-express
 
+## 1.2.7
+
+### Patch Changes
+
+- feat(query-module): support SQL expression objects in function-based rules #51
+- Updated dependencies
+  - @rym-lib/inversify-bundler@1.2.7
+
 ## 1.2.6
 
 ### Patch Changes
