@@ -43,12 +43,17 @@ export class QueryRunner<
       if (!preprocess) continue
       await preprocess(params, { ...this.context, pid, runner: this })
     }
+
+    // Execute source function first to get the builder instance
+    const sourceInstance = this.driver.source(this.spec.source)
+    
     const criteria = new QueryCriteria<Data>(
       this.spec.rules,
       this.spec.criteria ? this.spec.criteria(params) : params,
+      sourceInstance, // Pass sourceInstance to QueryCriteria
     )
 
-    const items = await this.driver.source(this.spec.source).execute(criteria)
+    const items = await sourceInstance.execute(criteria)
     const result = {
       items: items as Data[],
     } as any
