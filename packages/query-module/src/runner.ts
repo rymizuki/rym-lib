@@ -50,7 +50,7 @@ export class QueryRunner<
     const criteria = new QueryCriteria<Data>(
       this.spec.rules,
       this.spec.criteria ? this.spec.criteria(params) : params,
-      this.driver.customFilter,
+      this.driver.customFilter.bind(this.driver),
     )
 
     const items = await source.execute(criteria)
