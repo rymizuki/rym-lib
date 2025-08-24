@@ -1,6 +1,6 @@
 {
   "name": "@rym-lib/nakadachi-adapter-react-router",
-  "version": "0.0.0",
+  "version": "1.0.0",
   "private": false,
   "main": "build/index.js",
   "types": "build/index.d.ts",
