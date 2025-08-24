@@ -1,5 +1,13 @@
 # @rym-lib/query-module-driver-prisma
 
+## 1.2.4
+
+### Patch Changes
+
+- fix query-module filter type missmatch
+- Updated dependencies
+  - @rym-lib/query-module-sql-builder@1.2.4
+
 ## 1.2.3
 
 ### Patch Changes

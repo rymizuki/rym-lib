@@ -1,5 +1,11 @@
 # @rym-lib/nakadachi-interactor-mixin-validator
 
+## 1.2.4
+
+### Patch Changes
+
+- fix query-module filter type missmatch
+
 ## 1.2.3
 
 ### Patch Changes

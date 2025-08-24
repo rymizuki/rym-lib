@@ -1,9 +1,10 @@
 import { describe, it, expectTypeOf } from 'vitest'
+
 import type {
   QueryFilter,
   QueryRunnerCriteria,
   QueryRunnerInterface,
-  QueryResultList
+  QueryResultList,
 } from './interfaces'
 
 // テスト用のデータ型定義
@@ -23,7 +24,7 @@ describe('QueryFilter Type Extensions', () => {
         name: { contains: 'john' },
         age: { gte: 18 },
         email: { ne: null },
-        created_at: { lt: new Date() }
+        created_at: { lt: new Date() },
       }
 
       // 型チェック: 元のプロパティは正常に型推論される
@@ -47,12 +48,12 @@ describe('QueryFilter Type Extensions', () => {
       const filter: QueryFilter<TestData> = {
         // 元のプロパティ
         name: { eq: 'test' },
-        
+
         // 拡張されたプロパティ（型エラーにならない）
         telephone: { eq: '080-1234-5678' },
         custom_field: { ne: null },
         'user.profile.bio': { contains: 'developer' },
-        search_query: { in: ['keyword1', 'keyword2'] }
+        search_query: { in: ['keyword1', 'keyword2'] },
       }
 
       // ランタイムでのプロパティ存在チェック
@@ -70,7 +71,7 @@ describe('QueryFilter Type Extensions', () => {
         'having:COUNT(*)': { gt: 10 },
         'having:SUM(amount)': { gte: 1000 },
         'having:AVG(score)': { lt: 80 },
-        'having:MAX(created_at)': { ne: null }
+        'having:MAX(created_at)': { ne: null },
       }
 
       expect(filter['having:COUNT(*)']).toEqual({ gt: 10 })
@@ -86,7 +87,7 @@ describe('QueryFilter Type Extensions', () => {
         id: { eq: '123' },
         'orders.total_amount': { gte: 10000 },
         'user_profiles.bio': { contains: 'engineer' },
-        'categories.name': { in: ['tech', 'business'] }
+        'categories.name': { in: ['tech', 'business'] },
       }
 
       expect(filter['orders.total_amount']).toEqual({ gte: 10000 })
@@ -99,10 +100,12 @@ describe('QueryFilter Type Extensions', () => {
         name: { eq: 'test' },
         "CONCAT(first_name, ' ', last_name)": { eq: 'John Doe' },
         'YEAR(created_at)': { eq: 2024 },
-        'LOWER(email)': { contains: '@example.com' }
+        'LOWER(email)': { contains: '@example.com' },
       }
 
-      expect(filter["CONCAT(first_name, ' ', last_name)"]).toEqual({ eq: 'John Doe' })
+      expect(filter["CONCAT(first_name, ' ', last_name)"]).toEqual({
+        eq: 'John Doe',
+      })
       expect(filter['YEAR(created_at)']).toEqual({ eq: 2024 })
       expect(filter['LOWER(email)']).toEqual({ contains: '@example.com' })
     })
@@ -115,26 +118,28 @@ describe('QueryFilter Type Extensions', () => {
           // 元のプロパティ
           name: { contains: 'john' },
           age: { gte: 18 },
-          
+
           // 拡張プロパティ
           telephone: { eq: '080-1234-5678' },
           'having:COUNT(orders.id)': { gte: 5 },
-          'user_profiles.location': { eq: 'Tokyo' }
+          'user_profiles.location': { eq: 'Tokyo' },
         },
         orderBy: 'name:asc',
         take: 10,
-        skip: 0
+        skip: 0,
       }
 
       expect(criteria.filter).toBeDefined()
       expect(typeof criteria.filter).toBe('object')
-      
+
       // フィルタープロパティの存在確認
       if (criteria.filter && !Array.isArray(criteria.filter)) {
         expect(criteria.filter.name).toEqual({ contains: 'john' })
         expect(criteria.filter.telephone).toEqual({ eq: '080-1234-5678' })
         expect(criteria.filter['having:COUNT(orders.id)']).toEqual({ gte: 5 })
-        expect(criteria.filter['user_profiles.location']).toEqual({ eq: 'Tokyo' })
+        expect(criteria.filter['user_profiles.location']).toEqual({
+          eq: 'Tokyo',
+        })
       }
     })
 
@@ -143,20 +148,20 @@ describe('QueryFilter Type Extensions', () => {
         filter: [
           {
             name: { eq: 'john' },
-            telephone: { eq: '080-1111-2222' }
+            telephone: { eq: '080-1111-2222' },
           },
           {
             age: { gte: 25 },
             'having:COUNT(*)': { gt: 0 },
-            custom_status: { ne: 'inactive' }
-          }
+            custom_status: { ne: 'inactive' },
+          },
         ],
-        take: 5
+        take: 5,
       }
 
       expect(Array.isArray(criteria.filter)).toBe(true)
       expect(criteria.filter).toHaveLength(2)
-      
+
       if (Array.isArray(criteria.filter)) {
         expect(criteria.filter[0].telephone).toEqual({ eq: '080-1111-2222' })
         expect(criteria.filter[1]['having:COUNT(*)']).toEqual({ gt: 0 })
@@ -181,7 +186,7 @@ describe('QueryFilter Type Extensions', () => {
           }
           return null
         },
-        
+
         async many(params?: ExtendedParams): Promise<TestList> {
           // 拡張プロパティが使用可能であることを確認
           if (params?.filter && !Array.isArray(params.filter)) {
@@ -189,14 +194,14 @@ describe('QueryFilter Type Extensions', () => {
           }
           return { items: [] }
         },
-        
+
         async find(params: ExtendedParams): Promise<TestData> {
           // 必須パラメータでも拡張プロパティが使用可能
           if (!Array.isArray(params.filter) && params.filter) {
             expect(params.filter.custom_field).toBeDefined()
           }
           throw new Error('Not found')
-        }
+        },
       }
 
       expect(mockRunner).toBeDefined()
@@ -213,7 +218,7 @@ describe('QueryFilter Type Extensions', () => {
       const filter: QueryFilter<TestData> = {
         name: { eq: null },
         age: { ne: null },
-        custom_field: undefined
+        custom_field: undefined,
       }
 
       expect(filter.name).toEqual({ eq: null })
@@ -225,7 +230,7 @@ describe('QueryFilter Type Extensions', () => {
       const filter: QueryFilter<TestData> = {
         'deep.nested.property.with.dots': { eq: 'value' },
         'table_name.column_name': { in: [1, 2, 3] },
-        'CASE WHEN x THEN y ELSE z END': { ne: null }
+        'CASE WHEN x THEN y ELSE z END': { ne: null },
       }
 
       expect(filter['deep.nested.property.with.dots']).toEqual({ eq: 'value' })
@@ -240,13 +245,13 @@ describe('QueryFilter Type Extensions', () => {
       const oldStyleFilter: QueryFilter<TestData> = {
         id: { eq: '123' },
         name: { contains: 'test' },
-        age: { gte: 18 }
+        age: { gte: 18 },
       }
 
       const oldStyleCriteria: QueryRunnerCriteria<TestData> = {
         filter: oldStyleFilter,
         orderBy: 'name:asc',
-        take: 10
+        take: 10,
       }
 
       expect(oldStyleCriteria.filter).toBeDefined()

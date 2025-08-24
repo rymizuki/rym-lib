@@ -1,5 +1,13 @@
 # @rym-lib/query-module
 
+## 1.2.4
+
+### Patch Changes
+
+- fix query-module filter type missmatch
+- Updated dependencies
+  - @rym-lib/exception@1.2.4
+
 ## 1.2.3
 
 ### Patch Changes

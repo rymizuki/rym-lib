@@ -1,5 +1,11 @@
 # @rym-lib/inversify-bundler
 
+## 1.2.4
+
+### Patch Changes
+
+- fix query-module filter type missmatch
+
 ## 1.2.3
 
 ### Patch Changes
