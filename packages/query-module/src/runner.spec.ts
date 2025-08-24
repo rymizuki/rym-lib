@@ -472,8 +472,82 @@ describe('QueryRunner with raw operators', () => {
       })
 
       expect(driver.called).toHaveLength(1)
-      const criteria = driver.called[0].args[0]
-      expect(criteria.filter).toBeDefined()
+      const criteria = driver.called[0]?.args[0]
+      expect(criteria?.filter).toBeDefined()
+    })
+  })
+})
+
+describe('QueryRunner with dot notation keys', () => {
+  type UserData = {
+    id: number
+    name: string
+    profile: {
+      city: string
+      zipCode: string
+    }
+  }
+
+  const data: UserData[] = [
+    { id: 1, name: 'User 1', profile: { city: 'Tokyo', zipCode: '100-0001' } },
+    { id: 2, name: 'User 2', profile: { city: 'Osaka', zipCode: '530-0001' } },
+  ]
+
+  let driver: TestDriver
+  let runner: QueryRunnerInterface<UserData>
+
+  beforeEach(() => {
+    driver = createDriver()
+    runner = createQuery(driver, {
+      name: 'test_dot_keys',
+      source: () => data,
+      rules: {
+        // 通常のキー
+        id: 'users.id',
+        name: 'users.name',
+        // dot記法のキー（型エラーなしで使用可能になった）
+        'profile.city': 'user_profile.city_name',
+        'profile.zipCode': 'user_profile.zip_code',
+      },
+    })
+  })
+
+  describe('dot notation keys support', () => {
+    it('should map dot notation keys correctly', async () => {
+      await runner.many({
+        filter: {
+          id: { eq: 1 },
+          'profile.city': { eq: 'Tokyo' },
+          'profile.zipCode': { eq: '100-0001' },
+        } as any, // フィルターの型は別途対応が必要
+      })
+
+      expect(driver.called).toHaveLength(1)
+      const criteria = driver.called[0]?.args[0]
+      
+      // マッピングが正しく適用されることを確認
+      expect(criteria?.filter).toEqual({
+        'users.id': { eq: 1 },
+        'user_profile.city_name': { eq: 'Tokyo' },
+        'user_profile.zip_code': { eq: '100-0001' },
+      })
+    })
+
+    it('should handle mixed regular and dot notation keys', async () => {
+      await runner.many({
+        filter: {
+          name: { contains: 'User' },
+          'profile.city': { ne: 'Kyoto' },
+        } as any,
+      })
+
+      expect(driver.called).toHaveLength(1)
+      const criteria = driver.called[0]?.args[0]
+      
+      expect(criteria?.filter).toEqual({
+        'users.name': { contains: 'User' },
+        'user_profile.city_name': { ne: 'Kyoto' },
+      })
     })
   })
 })

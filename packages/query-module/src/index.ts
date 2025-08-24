@@ -14,4 +14,5 @@ export type {
   QueryRunnerInterface,
   QueryRunnerMiddleware,
   QuerySpecification,
+  QueryFilter,
 } from './interfaces'

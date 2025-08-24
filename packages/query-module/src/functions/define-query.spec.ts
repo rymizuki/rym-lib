@@ -63,7 +63,7 @@ describe('query-module / defineQuery', () => {
         {
           name: 'test',
           source: () => [],
-          rules: [],
+          rules: {},
         },
         {},
         {
