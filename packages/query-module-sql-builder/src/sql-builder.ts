@@ -26,39 +26,6 @@ function keys<T extends Record<string, unknown>>(value: T) {
   return Object.keys(value) as (keyof T)[]
 }
 
-function isRawSqlExpression(fieldName: string): boolean {
-  // Check if the field name contains SQL keywords or complex expressions
-  const sqlKeywords = [
-    'CASE',
-    'WHEN',
-    'THEN',
-    'ELSE',
-    'END',
-    'CONCAT',
-    'COALESCE',
-    'SUBSTRING',
-    'LENGTH',
-    'COUNT',
-    'SUM',
-    'AVG',
-    'MAX',
-    'MIN',
-    'UPPER',
-    'LOWER',
-    'TRIM',
-    '(',
-    ')',
-    '+',
-    '-',
-    '*',
-    '/',
-  ]
-
-  const upperFieldName = fieldName.toUpperCase()
-
-  // Check for SQL keywords or complex expressions
-  return sqlKeywords.some((keyword) => upperFieldName.includes(keyword))
-}
 
 const defaults: BuildSqlOptions = {
   containsSplitSpaces: true,
@@ -165,63 +132,25 @@ function createCond(
       continue
     }
 
-    // Check if value is a raw SQL expression (from function-based rules)
-    if (typeof value === 'string' && isRawSqlExpression(value)) {
-      // Use the SQL expression as the field name
-      switch (operator) {
-        case 'eq': {
-          cond.and(`(${value})`, '=', '?')
-          break
-        }
-        case 'ne': {
-          cond.and(`(${value})`, '!=', '?')
-          break
-        }
-        default: {
-          cond.and(`(${value})`, operator as any, '?')
-        }
-      }
-      continue
-    }
 
     switch (operator) {
       case 'eq': {
         if (value === null) {
-          if (!useUnescape && isRawSqlExpression(name)) {
-            // (raw_expression) IS NULL
-            cond.and(`(${name})`, is_null())
-          } else {
-            // field IS NULL
-            cond.and(field, is_null())
-          }
+          // field IS NULL
+          cond.and(field, is_null())
         } else {
-          if (!useUnescape && isRawSqlExpression(name)) {
-            // (raw_expression) = value
-            cond.and(`(${name})`, '=', value)
-          } else {
-            // field = value
-            cond.and(field, value)
-          }
+          // field = value
+          cond.and(field, value)
         }
         break
       }
       case 'ne': {
         if (value === null) {
-          if (!useUnescape && isRawSqlExpression(name)) {
-            // (raw_expression) IS NOT NULL
-            cond.and(`(${name})`, is_not_null())
-          } else {
-            // field IS NOT NULL
-            cond.and(field, is_not_null())
-          }
+          // field IS NOT NULL
+          cond.and(field, is_not_null())
         } else {
-          if (!useUnescape && isRawSqlExpression(name)) {
-            // (raw_expression) != value
-            cond.and(`(${name})`, '!=', value)
-          } else {
-            // field != value
-            cond.and(field, '!=', value)
-          }
+          // field != value
+          cond.and(field, '!=', value)
         }
         break
       }
@@ -275,13 +204,8 @@ function createCond(
         if (!Array.isArray(value) || !value.length) {
           break
         }
-        if (!useUnescape && isRawSqlExpression(name)) {
-          // (raw_expression) IN value
-          cond.and(`(${name})`, 'in', value)
-        } else {
-          // field IN value
-          cond.and(field, 'in', value)
-        }
+        // field IN value
+        cond.and(field, 'in', value)
         break
       }
     }
