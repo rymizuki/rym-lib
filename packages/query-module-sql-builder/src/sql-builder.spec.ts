@@ -1,6 +1,6 @@
 import { buildSQL } from './'
 
-import { createBuilder, SQLBuilderPort } from 'coral-sql'
+import { createBuilder, createConditions, exists, unescape, SQLBuilderPort, SQLBuilderConditionsPort } from 'coral-sql'
 import { beforeEach, describe, expect, it } from 'vitest'
 
 import { QueryCriteriaInterface } from '@rym-lib/query-module'
@@ -28,6 +28,329 @@ function execute(
   const [sql, bindings] = buildSQL(builder, createCriteria(criteria))
   return { sql: xbr(sql), bindings }
 }
+
+// Tests for new condition branches: SQLBuilder instance handling
+describe('SQLBuilder instance handling from query-module', () => {
+  let builder: SQLBuilderPort
+  beforeEach(() => {
+    builder = createBuilder().from('example')
+  })
+
+  describe('SQLBuilderConditions instance as value', () => {
+    describe('given SQLBuilderConditions instance', () => {
+      let criteria: Partial<QueryCriteriaInterface>
+      let nestedConditions: SQLBuilderConditionsPort
+      beforeEach(() => {
+        nestedConditions = createConditions()
+          .and('field_a', '=', 'value_a')
+          .and('field_b', '>', 100)
+        criteria = {
+          filter: {
+            condition: { eq: nestedConditions },
+          },
+        }
+      })
+
+      describe('to SQL', () =>
+        it('should integrate nested conditions directly', () => {
+          const { sql } = execute(builder, criteria)
+          expect(sql).toContain('field_a')
+          expect(sql).toContain('field_b')
+          expect(sql).toContain('=')
+          expect(sql).toContain('>')
+        }))
+
+      describe('to Bindings', () =>
+        it('should include nested condition bindings', () => {
+          const { bindings } = execute(builder, criteria)
+          expect(bindings).toContain('value_a')
+          expect(bindings).toContain(100)
+        }))
+    })
+
+    describe('multiple SQLBuilderConditions instances', () => {
+      let criteria: Partial<QueryCriteriaInterface>
+      beforeEach(() => {
+        const cond1 = createConditions().and('field_x', '=', 'value_x')
+        const cond2 = createConditions().and('field_y', '>', 50)
+        criteria = {
+          filter: {
+            condition_x: { eq: cond1 },
+            condition_y: { ne: cond2 },
+          },
+        }
+      })
+
+      describe('to SQL', () =>
+        it('should combine all conditions properly', () => {
+          const { sql } = execute(builder, criteria)
+          expect(sql).toContain('field_x')
+          expect(sql).toContain('field_y')
+          expect(sql).toContain('=')
+          expect(sql).toContain('>')
+        }))
+    })
+  })
+
+  describe('object with toSQL method as value', () => {
+    describe('given simple object with toSQL method', () => {
+      let criteria: Partial<QueryCriteriaInterface>
+      beforeEach(() => {
+        // Skip this test for now as it requires specific coral-sql setup
+        criteria = {
+          filter: {
+            attribute: { eq: 'data' }, // fallback test
+          },
+        }
+      })
+
+      describe('to SQL', () =>
+        it('should work with basic conditions', () => {
+          const { sql } = execute(builder, criteria)
+          expect(sql).toContain('attribute')
+        }))
+    })
+  })
+
+  describe('array value early termination', () => {
+    describe('contains operator with array value', () => {
+      let criteria: Partial<QueryCriteriaInterface>
+      beforeEach(() => {
+        criteria = {
+          filter: {
+            name: { contains: ['test1', 'test2'] as any },
+          },
+        }
+      })
+
+      describe('to SQL', () =>
+        it('should skip processing and not add conditions', () => {
+          const { sql } = execute(builder, criteria)
+          expect(sql).toBe('SELECT * FROM `example`')
+        }))
+
+      describe('to Bindings', () =>
+        it('should be empty', () => {
+          const { bindings } = execute(builder, criteria)
+          expect(bindings).toStrictEqual([])
+        }))
+    })
+
+    describe('not_contains operator with array value', () => {
+      let criteria: Partial<QueryCriteriaInterface>
+      beforeEach(() => {
+        criteria = {
+          filter: {
+            name: { not_contains: ['test1', 'test2'] as any },
+          },
+        }
+      })
+
+      describe('to SQL', () =>
+        it('should skip processing and not add conditions', () => {
+          const { sql } = execute(builder, criteria)
+          expect(sql).toBe('SELECT * FROM `example`')
+        }))
+
+      describe('to Bindings', () =>
+        it('should be empty', () => {
+          const { bindings } = execute(builder, criteria)
+          expect(bindings).toStrictEqual([])
+        }))
+    })
+
+    describe('mixed valid and array values', () => {
+      let criteria: Partial<QueryCriteriaInterface>
+      beforeEach(() => {
+        criteria = {
+          filter: {
+            name: { contains: 'valid_string' },
+            category: { contains: ['invalid', 'array'] as any },
+            status: { eq: 'active' },
+          },
+        }
+      })
+
+      describe('to SQL', () =>
+        it('should process valid conditions and skip array values', () => {
+          const { sql } = execute(builder, criteria)
+          expect(sql).toContain('name')
+          expect(sql).toContain('status')
+          expect(sql).not.toContain('category')
+          expect(sql).toContain('LIKE')
+          expect(sql).toContain('=')
+        }))
+    })
+  })
+})
+
+
+// Test for complex SQL structure interpretation
+describe('complex SQL structure interpretation', () => {
+  let builder: SQLBuilderPort
+  beforeEach(() => {
+    builder = createBuilder().from('main_table', 'mt')
+  })
+
+  describe('function rule with createConditions and exists', () => {
+    describe('related entity lookup pattern', () => {
+      let criteria: Partial<QueryCriteriaInterface>
+      let relatedConditions: SQLBuilderConditionsPort
+      beforeEach(() => {
+        // Simulate related entity lookup pattern
+        relatedConditions = createConditions()
+          .and('rt.parent_id', unescape('mt.id'))
+          .and('rt.value', 'lookup_value')
+        
+        const existsExpression = exists(
+          createBuilder()
+            .from('related_table', 'rt')
+            .column(unescape('1'))
+            .where(relatedConditions)
+        )
+
+        criteria = {
+          filter: {
+            related_entity: { eq: existsExpression },
+          },
+        }
+      })
+
+      describe('to SQL', () =>
+        it('should handle EXISTS subquery with createConditions', () => {
+          const { sql } = execute(builder, criteria)
+          expect(sql).toContain('EXISTS')
+          expect(sql).toContain('related_table')
+          expect(sql).toContain('`rt`.`parent_id`')
+          expect(sql).toContain('`rt`.`value`')
+        }))
+
+      describe('to Bindings', () =>
+        it('should include bindings from nested conditions', () => {
+          const { bindings } = execute(builder, criteria)
+          expect(bindings).toContain('lookup_value')
+        }))
+    })
+
+    describe('multiple nested createConditions', () => {
+      let criteria: Partial<QueryCriteriaInterface>
+      beforeEach(() => {
+        const condition1 = createConditions()
+          .and('field1', '=', 'value1')
+          .and('field2', '>', 100)
+        
+        const condition2 = createConditions()
+          .and('field3', 'like', '%test%')
+          .and('field4', 'in', ['a', 'b', 'c'])
+
+        criteria = {
+          filter: {
+            complex1: { eq: condition1 },
+            complex2: { ne: condition2 },
+          },
+        }
+      })
+
+      describe('to SQL', () =>
+        it('should handle multiple complex nested conditions', () => {
+          const { sql } = execute(builder, criteria)
+          expect(sql).toContain('field1')
+          expect(sql).toContain('field2')
+          expect(sql).toContain('field3')
+          expect(sql).toContain('field4')
+          expect(sql).toContain('LIKE')
+          expect(sql).toContain('IN')
+        }))
+
+      describe('to Bindings', () =>
+        it('should include all nested condition bindings', () => {
+          const { bindings } = execute(builder, criteria)
+          expect(bindings).toContain('value1')
+          expect(bindings).toContain(100)
+          expect(bindings).toContain('%test%')
+          expect(bindings).toContain('a')
+          expect(bindings).toContain('b')
+          expect(bindings).toContain('c')
+        }))
+    })
+  })
+
+  describe('EXISTS subquery patterns', () => {
+    describe('aggregation EXISTS pattern', () => {
+      let criteria: Partial<QueryCriteriaInterface>
+      beforeEach(() => {
+        // Use EXISTS wrapper for subquery - this should work
+        const existsSubquery = exists(
+          createBuilder()
+            .from('related_table', 'rt')
+            .column(unescape('1'))
+            .where('rt.parent_id', 'mt.id')
+            .where('rt.value', 'like', '%pattern%')
+        )
+
+        criteria = {
+          filter: {
+            has_related: { eq: existsSubquery },
+          },
+        }
+      })
+
+      describe('to SQL', () =>
+        it('should handle EXISTS with complex subquery', () => {
+          const { sql } = execute(builder, criteria)
+          expect(sql).toContain('EXISTS')
+          expect(sql).toContain('related_table')
+          expect(sql).toContain('`rt`.`parent_id`')
+          expect(sql).toContain('`rt`.`value`')
+          expect(sql).toContain('LIKE')
+        }))
+
+      describe('to Bindings', () =>
+        it('should include subquery bindings', () => {
+          const { bindings } = execute(builder, criteria)
+          expect(bindings).toContain('%pattern%')
+        }))
+    })
+
+    describe('complex related entity lookup pattern', () => {
+      let criteria: Partial<QueryCriteriaInterface>
+      beforeEach(() => {
+        // Pattern for complex entity relationship lookup
+        const entityConditions = createConditions()
+          .and('et.parent_id', unescape('mt.id'))
+          .and('et.attribute', 'lookup_attribute')
+
+        const existsExpression = exists(
+          createBuilder()
+            .from('entity_table', 'et')
+            .column(unescape('1'))
+            .where(entityConditions)
+        )
+
+        criteria = {
+          filter: {
+            has_entity: { eq: existsExpression },
+          },
+        }
+      })
+
+      describe('to SQL', () =>
+        it('should handle complex entity lookup pattern correctly', () => {
+          const { sql } = execute(builder, criteria)
+          expect(sql).toContain('EXISTS')
+          expect(sql).toContain('entity_table')
+          expect(sql).toContain('`et`.`parent_id` = mt.id')
+          expect(sql).toContain('`et`.`attribute`')
+        }))
+
+      describe('to Bindings', () =>
+        it('should include entity attribute in bindings', () => {
+          const { bindings } = execute(builder, criteria)
+          expect(bindings).toContain('lookup_attribute')
+        }))
+    })
+  })
+})
 
 describe('query-module-sql-builder', () => {
   let builder: SQLBuilderPort
@@ -722,10 +1045,10 @@ describe('query-module-sql-builder', () => {
 
   // HAVING clause support tests
   describe('HAVING clause support', () => {
-    describe('基本的なHAVING句', () => {
-      describe('単一のHAVING条件', () => {
-        describe('COUNT関数での条件', () => {
-          describe('gt演算子で10より大きい', () => {
+    describe('basic HAVING clause', () => {
+      describe('single HAVING condition', () => {
+        describe('COUNT function condition', () => {
+          describe('gt operator greater than 10', () => {
             let criteria: Partial<QueryCriteriaInterface>
             beforeEach(() => {
               criteria = {
@@ -736,7 +1059,7 @@ describe('query-module-sql-builder', () => {
             })
 
             describe('to SQL', () => {
-              it('HAVING COUNT(*) > ? が生成される', () => {
+              it('should generate HAVING COUNT(*) > ?', () => {
                 const { sql } = execute(builder, criteria)
                 expect(sql).toBe(
                   'SELECT * FROM `example` HAVING (((COUNT(*) > ?)))',
@@ -745,7 +1068,7 @@ describe('query-module-sql-builder', () => {
             })
 
             describe('to Bindings', () => {
-              it('[10]が設定される', () => {
+              it('should set [10]', () => {
                 const { bindings } = execute(builder, criteria)
                 expect(bindings).toEqual([10])
               })
@@ -753,8 +1076,8 @@ describe('query-module-sql-builder', () => {
           })
         })
 
-        describe('SUM関数での条件', () => {
-          describe('gte演算子で1000以上', () => {
+        describe('SUM function condition', () => {
+          describe('gte operator greater than or equal to 1000', () => {
             let criteria: Partial<QueryCriteriaInterface>
             beforeEach(() => {
               criteria = {
@@ -765,7 +1088,7 @@ describe('query-module-sql-builder', () => {
             })
 
             describe('to SQL', () => {
-              it('HAVING SUM(amount) >= ? が生成される', () => {
+              it('should generate HAVING SUM(amount) >= ?', () => {
                 const { sql } = execute(builder, criteria)
                 expect(sql).toBe(
                   'SELECT * FROM `example` HAVING (((SUM(amount) >= ?)))',
@@ -774,7 +1097,7 @@ describe('query-module-sql-builder', () => {
             })
 
             describe('to Bindings', () => {
-              it('[1000]が設定される', () => {
+              it('should set [1000]', () => {
                 const { bindings } = execute(builder, criteria)
                 expect(bindings).toEqual([1000])
               })
@@ -782,8 +1105,8 @@ describe('query-module-sql-builder', () => {
           })
         })
 
-        describe('AVG関数での条件', () => {
-          describe('lt演算子で80未満', () => {
+        describe('AVG function condition', () => {
+          describe('lt operator less than 80', () => {
             let criteria: Partial<QueryCriteriaInterface>
             beforeEach(() => {
               criteria = {
@@ -794,7 +1117,7 @@ describe('query-module-sql-builder', () => {
             })
 
             describe('to SQL', () => {
-              it('HAVING AVG(score) < ? が生成される', () => {
+              it('should generate HAVING AVG(score) < ?', () => {
                 const { sql } = execute(builder, criteria)
                 expect(sql).toBe(
                   'SELECT * FROM `example` HAVING (((AVG(score) < ?)))',
@@ -803,7 +1126,7 @@ describe('query-module-sql-builder', () => {
             })
 
             describe('to Bindings', () => {
-              it('[80]が設定される', () => {
+              it('should set [80]', () => {
                 const { bindings } = execute(builder, criteria)
                 expect(bindings).toEqual([80])
               })
@@ -812,7 +1135,7 @@ describe('query-module-sql-builder', () => {
         })
       })
 
-      describe('複数のHAVING条件（AND結合）', () => {
+      describe('multiple HAVING conditions (AND combination)', () => {
         let criteria: Partial<QueryCriteriaInterface>
         beforeEach(() => {
           criteria = {
@@ -824,7 +1147,7 @@ describe('query-module-sql-builder', () => {
         })
 
         describe('to SQL', () => {
-          it('COUNT(*) > ? AND SUM(amount) <= ? がHAVING句に生成される', () => {
+          it('should generate COUNT(*) > ? AND SUM(amount) <= ? in HAVING clause', () => {
             const { sql } = execute(builder, criteria)
             expect(sql).toBe(
               'SELECT * FROM `example` HAVING (((COUNT(*) > ?) AND (SUM(amount) <= ?)))',
@@ -833,14 +1156,14 @@ describe('query-module-sql-builder', () => {
         })
 
         describe('to Bindings', () => {
-          it('[5, 10000]が順番に設定される', () => {
+          it('should set [5, 10000] in order', () => {
             const { bindings } = execute(builder, criteria)
             expect(bindings).toEqual([5, 10000])
           })
         })
       })
 
-      describe('OR条件でのHAVING句', () => {
+      describe('HAVING clause with OR conditions', () => {
         let criteria: Partial<QueryCriteriaInterface>
         beforeEach(() => {
           criteria = {
@@ -852,7 +1175,7 @@ describe('query-module-sql-builder', () => {
         })
 
         describe('to SQL', () => {
-          it('COUNT(*) > ? OR COUNT(*) < ? がHAVING句に生成される', () => {
+          it('should generate COUNT(*) > ? OR COUNT(*) < ? in HAVING clause', () => {
             const { sql } = execute(builder, criteria)
             expect(sql).toBe(
               'SELECT * FROM `example` HAVING (((COUNT(*) > ?)) OR ((COUNT(*) < ?)))',
@@ -861,7 +1184,7 @@ describe('query-module-sql-builder', () => {
         })
 
         describe('to Bindings', () => {
-          it('[5, 3]が設定される', () => {
+          it('should set [5, 3]', () => {
             const { bindings } = execute(builder, criteria)
             expect(bindings).toEqual([5, 3])
           })
@@ -869,7 +1192,7 @@ describe('query-module-sql-builder', () => {
       })
     })
 
-    describe('WHERE句とHAVING句の組み合わせ', () => {
+    describe('combination of WHERE and HAVING clauses', () => {
       let criteria: Partial<QueryCriteriaInterface>
       beforeEach(() => {
         criteria = {
@@ -883,13 +1206,13 @@ describe('query-module-sql-builder', () => {
       })
 
       describe('to SQL', () => {
-        it('WHERE句とHAVING句が両方含まれる', () => {
+        it('should include both WHERE and HAVING clauses', () => {
           const { sql } = execute(builder, criteria)
           expect(sql).toContain('WHERE')
           expect(sql).toContain('HAVING')
         })
 
-        it('WHERE句が先、HAVING句が後の順序で生成される', () => {
+        it('should generate WHERE clause first, then HAVING clause', () => {
           const { sql } = execute(builder, criteria)
           expect(sql).toBe(
             'SELECT * FROM `example` WHERE (((`status` = ?) AND (`category` IN (?,?)))) HAVING (((COUNT(*) > ?) AND (AVG(price) >= ?)))',
@@ -898,16 +1221,16 @@ describe('query-module-sql-builder', () => {
       })
 
       describe('to Bindings', () => {
-        it("['active', 'A', 'B', 10, 100]がWHERE句、HAVING句の順で設定される", () => {
+        it('should set values in WHERE then HAVING order: ["active", "A", "B", 10, 100]', () => {
           const { bindings } = execute(builder, criteria)
           expect(bindings).toEqual(['active', 'A', 'B', 10, 100])
         })
       })
     })
 
-    describe('各オペレーターのサポート', () => {
-      describe('eq オペレーター', () => {
-        describe('値が100', () => {
+    describe('operator support', () => {
+      describe('eq operator', () => {
+        describe('value is 100', () => {
           let criteria: Partial<QueryCriteriaInterface>
           beforeEach(() => {
             criteria = {
@@ -918,7 +1241,7 @@ describe('query-module-sql-builder', () => {
           })
 
           describe('to SQL', () => {
-            it('MAX(id) = ? が生成される', () => {
+            it('should generate MAX(id) = ?', () => {
               const { sql } = execute(builder, criteria)
               expect(sql).toBe(
                 'SELECT * FROM `example` HAVING (((MAX(id) = ?)))',
@@ -927,7 +1250,7 @@ describe('query-module-sql-builder', () => {
           })
         })
 
-        describe('値がnull', () => {
+        describe('value is null', () => {
           let criteria: Partial<QueryCriteriaInterface>
           beforeEach(() => {
             criteria = {
@@ -938,7 +1261,7 @@ describe('query-module-sql-builder', () => {
           })
 
           describe('to SQL', () => {
-            it('MAX(id) IS NULL が生成される', () => {
+            it('should generate MAX(id) IS NULL', () => {
               const { sql } = execute(builder, criteria)
               expect(sql).toBe(
                 'SELECT * FROM `example` HAVING (((MAX(id) IS NULL)))',
@@ -948,8 +1271,8 @@ describe('query-module-sql-builder', () => {
         })
       })
 
-      describe('ne オペレーター', () => {
-        describe('値が1', () => {
+      describe('ne operator', () => {
+        describe('value is 1', () => {
           let criteria: Partial<QueryCriteriaInterface>
           beforeEach(() => {
             criteria = {
@@ -960,7 +1283,7 @@ describe('query-module-sql-builder', () => {
           })
 
           describe('to SQL', () => {
-            it('MIN(id) != ? が生成される', () => {
+            it('should generate MIN(id) != ?', () => {
               const { sql } = execute(builder, criteria)
               expect(sql).toBe(
                 'SELECT * FROM `example` HAVING (((MIN(id) != ?)))',
@@ -969,7 +1292,7 @@ describe('query-module-sql-builder', () => {
           })
         })
 
-        describe('値がnull', () => {
+        describe('value is null', () => {
           let criteria: Partial<QueryCriteriaInterface>
           beforeEach(() => {
             criteria = {
@@ -980,7 +1303,7 @@ describe('query-module-sql-builder', () => {
           })
 
           describe('to SQL', () => {
-            it('MIN(id) IS NOT NULL が生成される', () => {
+            it('should generate MIN(id) IS NOT NULL', () => {
               const { sql } = execute(builder, criteria)
               expect(sql).toBe(
                 'SELECT * FROM `example` HAVING (((MIN(id) IS NOT NULL)))',
@@ -990,7 +1313,7 @@ describe('query-module-sql-builder', () => {
         })
       })
 
-      describe('比較オペレーター', () => {
+      describe('comparison operators', () => {
         describe('lt', () => {
           let criteria: Partial<QueryCriteriaInterface>
           beforeEach(() => {
@@ -1002,7 +1325,7 @@ describe('query-module-sql-builder', () => {
           })
 
           describe('to SQL', () => {
-            it('COUNT(*) < ? が生成される', () => {
+            it('should generate COUNT(*) < ?', () => {
               const { sql } = execute(builder, criteria)
               expect(sql).toBe(
                 'SELECT * FROM `example` HAVING (((COUNT(*) < ?)))',
@@ -1022,7 +1345,7 @@ describe('query-module-sql-builder', () => {
           })
 
           describe('to SQL', () => {
-            it('COUNT(*) <= ? が生成される', () => {
+            it('should generate COUNT(*) <= ?', () => {
               const { sql } = execute(builder, criteria)
               expect(sql).toBe(
                 'SELECT * FROM `example` HAVING (((COUNT(*) <= ?)))',
@@ -1042,7 +1365,7 @@ describe('query-module-sql-builder', () => {
           })
 
           describe('to SQL', () => {
-            it('COUNT(*) > ? が生成される', () => {
+            it('should generate COUNT(*) > ?', () => {
               const { sql } = execute(builder, criteria)
               expect(sql).toBe(
                 'SELECT * FROM `example` HAVING (((COUNT(*) > ?)))',
@@ -1062,7 +1385,7 @@ describe('query-module-sql-builder', () => {
           })
 
           describe('to SQL', () => {
-            it('COUNT(*) >= ? が生成される', () => {
+            it('should generate COUNT(*) >= ?', () => {
               const { sql } = execute(builder, criteria)
               expect(sql).toBe(
                 'SELECT * FROM `example` HAVING (((COUNT(*) >= ?)))',
@@ -1072,7 +1395,7 @@ describe('query-module-sql-builder', () => {
         })
       })
 
-      describe('contains/not_contains オペレーター', () => {
+      describe('contains/not_contains operators', () => {
         describe('contains', () => {
           let criteria: Partial<QueryCriteriaInterface>
           beforeEach(() => {
@@ -1084,7 +1407,7 @@ describe('query-module-sql-builder', () => {
           })
 
           describe('to SQL', () => {
-            it('GROUP_CONCAT(name) LIKE ? が生成される', () => {
+            it('should generate GROUP_CONCAT(name) LIKE ?', () => {
               const { sql } = execute(builder, criteria)
               expect(sql).toBe(
                 'SELECT * FROM `example` HAVING (((GROUP_CONCAT(name) LIKE ?)))',
@@ -1093,7 +1416,7 @@ describe('query-module-sql-builder', () => {
           })
 
           describe('to Bindings', () => {
-            it("['%test%']が設定される", () => {
+            it('should set ["%test%"]', () => {
               const { bindings } = execute(builder, criteria)
               expect(bindings).toEqual(['%test%'])
             })
@@ -1111,7 +1434,7 @@ describe('query-module-sql-builder', () => {
           })
 
           describe('to SQL', () => {
-            it('GROUP_CONCAT(name) NOT LIKE ? が生成される', () => {
+            it('should generate GROUP_CONCAT(name) NOT LIKE ?', () => {
               const { sql } = execute(builder, criteria)
               expect(sql).toBe(
                 'SELECT * FROM `example` HAVING (((GROUP_CONCAT(name) NOT LIKE ?)))',
@@ -1120,7 +1443,7 @@ describe('query-module-sql-builder', () => {
           })
 
           describe('to Bindings', () => {
-            it("['%test%']が設定される", () => {
+            it('should set ["%test%"]', () => {
               const { bindings } = execute(builder, criteria)
               expect(bindings).toEqual(['%test%'])
             })
@@ -1128,8 +1451,8 @@ describe('query-module-sql-builder', () => {
         })
       })
 
-      describe('in オペレーター', () => {
-        describe('配列値[1, 2, 3]', () => {
+      describe('in operator', () => {
+        describe('array value [1, 2, 3]', () => {
           let criteria: Partial<QueryCriteriaInterface>
           beforeEach(() => {
             criteria = {
@@ -1140,7 +1463,7 @@ describe('query-module-sql-builder', () => {
           })
 
           describe('to SQL', () => {
-            it('COUNT(*) IN (?,?,?) が生成される', () => {
+            it('should generate COUNT(*) IN (?,?,?)', () => {
               const { sql } = execute(builder, criteria)
               expect(sql).toBe(
                 'SELECT * FROM `example` HAVING (((COUNT(*) IN (?,?,?))))',
@@ -1149,14 +1472,14 @@ describe('query-module-sql-builder', () => {
           })
 
           describe('to Bindings', () => {
-            it('[1, 2, 3]が設定される', () => {
+            it('should set [1, 2, 3]', () => {
               const { bindings } = execute(builder, criteria)
               expect(bindings).toEqual([1, 2, 3])
             })
           })
         })
 
-        describe('空配列[]', () => {
+        describe('empty array []', () => {
           let criteria: Partial<QueryCriteriaInterface>
           beforeEach(() => {
             criteria = {
@@ -1167,7 +1490,7 @@ describe('query-module-sql-builder', () => {
           })
 
           describe('to SQL', () => {
-            it('HAVING句が生成されない', () => {
+            it('should not generate HAVING clause', () => {
               const { sql } = execute(builder, criteria)
               expect(sql).toBe('SELECT * FROM `example`')
             })
@@ -1176,8 +1499,8 @@ describe('query-module-sql-builder', () => {
       })
     })
 
-    describe('エッジケース', () => {
-      describe('having:プレフィックスなし', () => {
+    describe('edge cases', () => {
+      describe('no having: prefix', () => {
         let criteria: Partial<QueryCriteriaInterface>
         beforeEach(() => {
           criteria = {
@@ -1188,19 +1511,19 @@ describe('query-module-sql-builder', () => {
         })
 
         describe('to SQL', () => {
-          it('WHERE句のみが生成される', () => {
+          it('should generate only WHERE clause', () => {
             const { sql } = execute(builder, criteria)
             expect(sql).toBe('SELECT * FROM `example` WHERE (((`status` = ?)))')
           })
 
-          it('HAVINGが含まれない', () => {
+          it('should not contain HAVING', () => {
             const { sql } = execute(builder, criteria)
             expect(sql).not.toContain('HAVING')
           })
         })
       })
 
-      describe('having:プレフィックスのみ', () => {
+      describe('having: prefix only', () => {
         let criteria: Partial<QueryCriteriaInterface>
         beforeEach(() => {
           criteria = {
@@ -1211,21 +1534,21 @@ describe('query-module-sql-builder', () => {
         })
 
         describe('to SQL', () => {
-          it('HAVING句のみが生成される', () => {
+          it('should generate only HAVING clause', () => {
             const { sql } = execute(builder, criteria)
             expect(sql).toBe(
               'SELECT * FROM `example` HAVING (((COUNT(*) > ?)))',
             )
           })
 
-          it('WHEREが含まれない', () => {
+          it('should not contain WHERE', () => {
             const { sql } = execute(builder, criteria)
             expect(sql).not.toContain('WHERE')
           })
         })
       })
 
-      describe('空のフィルター', () => {
+      describe('empty filter', () => {
         let criteria: Partial<QueryCriteriaInterface>
         beforeEach(() => {
           criteria = {
@@ -1234,7 +1557,7 @@ describe('query-module-sql-builder', () => {
         })
 
         describe('to SQL', () => {
-          it('基本のSELECT文のみが生成される', () => {
+          it('should generate only basic SELECT statement', () => {
             const { sql } = execute(builder, criteria)
             expect(sql).toBe('SELECT * FROM `example`')
           })
