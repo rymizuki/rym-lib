@@ -2,7 +2,7 @@ import { Sequelize } from 'sequelize'
 import { describe, it, expect, beforeEach, vi } from 'vitest'
 
 import { QueryCriteria, QueryLoggerInterface } from '@rym-lib/query-module'
-import { SQLBuilder, SQLBuilderPort, createBuilder } from '@rym-lib/query-module-sql-builder'
+import { SQLBuilder, SQLBuilderPort, createBuilder, createConditions, unescape } from '@rym-lib/query-module-sql-builder'
 
 import { QueryDriverSequelize } from './driver'
 
@@ -256,14 +256,18 @@ describe('query-module-driver-sequelize', () => {
             value: string,
             sourceInstance: SQLBuilderPort,
           ) => {
-            if (value === 'today') {
-              return `DATE(t.created_at) = CURRENT_DATE`
-            } else if (value === 'this_week') {
-              return `t.created_at >= DATE_SUB(CURRENT_DATE, INTERVAL 7 DAY)`
-            } else if (value === 'this_month') {
-              return `MONTH(t.created_at) = MONTH(CURRENT_DATE) AND YEAR(t.created_at) = YEAR(CURRENT_DATE)`
+            console.log('transaction_period function called with:', operator, value)
+            // Return SQLBuilderConditions instance that sql-builder can recognize
+            const conditions = createConditions()
+            if (value === 'this_month') {
+              // Use unescape for SQL functions
+              conditions
+                .and(unescape('MONTH(t.created_at)'), '=', unescape('MONTH(CURRENT_DATE)'))
+                .and(unescape('YEAR(t.created_at)'), '=', unescape('YEAR(CURRENT_DATE)'))
+            } else {
+              conditions.and('1', '=', '1') // fallback
             }
-            return `1=1` // default: all periods
+            return conditions
           },
           // Function rule for amount ranges
           amount_range: (
@@ -271,12 +275,15 @@ describe('query-module-driver-sequelize', () => {
             value: string,
             sourceInstance: SQLBuilderPort,
           ) => {
+            const conditions = createConditions()
             if (operator === 'gte') {
-              return `t.amount >= ${value}`
+              conditions.and('t.amount', '>=', value)
             } else if (operator === 'lte') {
-              return `t.amount <= ${value}`
+              conditions.and('t.amount', '<=', value)
+            } else {
+              conditions.and('1', '=', '1') // fallback
             }
-            return `1=1`
+            return conditions
           },
         }
 
@@ -298,12 +305,15 @@ describe('query-module-driver-sequelize', () => {
         expect(mockQuery).toHaveBeenCalled()
 
         const [sql] = mockQuery.mock.lastCall || []
+        console.log('Generated SQL:', sql)
 
-        // Verify that function-based rules are treated as field names in WHERE clause
+        // Verify that function-based rules return SQLBuilderConditions and generate proper SQL expressions
         expect(sql).toContain('created_at')
         expect(sql).toContain('transactions')
-        expect(sql).toContain('transaction_period')
-        expect(sql).toContain('amount_range')
+        expect(sql).toContain('MONTH(t')
+        expect(sql).toContain('YEAR(t')
+        expect(sql).toContain('amount')
+        expect(sql).toContain('>=')
       })
     })
   })
