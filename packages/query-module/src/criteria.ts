@@ -67,12 +67,21 @@ export class QueryCriteria<Data extends QueryResultData>
             const mappingValue = this.mapping[prev]
 
             // If mapping value is a function, execute it with value and sourceInstance
-            const rename =
-              typeof mappingValue === 'function'
-                ? mappingValue(value, this.sourceInstance)
-                : mappingValue
-
-            ret[rename ? rename : prev] = value
+            if (typeof mappingValue === 'function') {
+              const result = mappingValue(value, this.sourceInstance)
+              // If the result is a string, use it as the renamed key
+              if (typeof result === 'string') {
+                ret[result] = value
+              } else {
+                // For SQL expressions, use the expression as the value for the original key
+                // This allows the SQL builder to handle the expression directly
+                ret[prev] = result
+              }
+            } else {
+              // Static string mapping (rename)
+              const rename = mappingValue
+              ret[rename ? rename : prev] = value
+            }
           }
           results.push(ret)
         }

@@ -650,3 +650,143 @@ describe('QueryRunner with function-based rules', () => {
     })
   })
 })
+
+describe('QueryRunner with SQL expression object returns', () => {
+  type Data = {
+    id: number
+    name: string
+  }
+
+  const data: Data[] = [
+    { id: 1, name: 'User 1' },
+    { id: 2, name: 'User 2' },
+  ]
+
+  let driver: TestDriver
+  let runner: QueryRunnerInterface<Data>
+
+  // Mock SQL expression object (similar to coral-sql's structure)
+  const createSqlExpression = (type: string, content: any) => ({
+    __type: type,
+    content,
+    toString: () => content,
+  })
+
+  beforeEach(() => {
+    driver = createDriver()
+    driver.returns(data)
+
+    const mockSourceFunction = (builder: any) => {
+      const mockBuilder = {
+        ...builder,
+        from: (table: string, alias?: string) => mockBuilder,
+        column: (col: string) => col,
+        where: (condition: any) => mockBuilder,
+      }
+      return mockBuilder
+    }
+
+    runner = createQuery(driver, {
+      name: 'test_sql_expression_rules',
+      source: mockSourceFunction,
+      rules: {
+        id: 'p.id',
+        name: 'p.name',
+        // Function that returns a SQL expression object (not a string)
+        telephone: (value, sourceInstance) => {
+          return createSqlExpression('EXISTS', {
+            subquery: `SELECT 1 FROM user_telephone ut WHERE ut.user_id = p.id AND ut.value = '${value.eq}'`,
+          })
+        },
+        // Another function returning complex SQL object
+        complex_condition: (value, sourceInstance) => {
+          return createSqlExpression('CASE', {
+            when: [
+              { condition: `status = '${value.eq}'`, then: '1' },
+              { condition: 'TRUE', then: '0' },
+            ],
+          })
+        },
+      },
+    })
+  })
+
+  describe('SQL expression object returns', () => {
+    it('should handle function rules that return SQL expression objects', async () => {
+      await runner.many({
+        filter: {
+          id: { eq: 1 },
+          telephone: { eq: '123-456-7890' },
+        },
+      })
+
+      expect(driver.called).toHaveLength(1)
+      const criteria = driver.called[0]?.args[0]
+
+      // Verify that the SQL expression object is stored as the filter value
+      expect(criteria?.filter).toMatchObject({
+        'p.id': { eq: 1 },
+        telephone: expect.objectContaining({
+          __type: 'EXISTS',
+          content: expect.objectContaining({
+            subquery: "SELECT 1 FROM user_telephone ut WHERE ut.user_id = p.id AND ut.value = '123-456-7890'",
+          }),
+        }),
+      })
+    })
+
+    it('should handle multiple SQL expression rules together', async () => {
+      await runner.many({
+        filter: {
+          telephone: { eq: '123-456-7890' },
+          complex_condition: { eq: 'active' },
+        },
+      })
+
+      expect(driver.called).toHaveLength(1)
+      const criteria = driver.called[0]?.args[0]
+
+      expect(criteria?.filter).toMatchObject({
+        telephone: expect.objectContaining({
+          __type: 'EXISTS',
+          content: expect.objectContaining({
+            subquery: "SELECT 1 FROM user_telephone ut WHERE ut.user_id = p.id AND ut.value = '123-456-7890'",
+          }),
+        }),
+        complex_condition: expect.objectContaining({
+          __type: 'CASE',
+          content: expect.objectContaining({
+            when: [
+              { condition: "status = 'active'", then: '1' },
+              { condition: 'TRUE', then: '0' },
+            ],
+          }),
+        }),
+      })
+    })
+
+    it('should work with mixed string rules and SQL expression rules', async () => {
+      await runner.many({
+        filter: {
+          id: { eq: 1 },
+          name: { contains: 'User' },
+          telephone: { eq: '123-456-7890' },
+        },
+      })
+
+      expect(driver.called).toHaveLength(1)
+      const criteria = driver.called[0]?.args[0]
+
+      expect(criteria?.filter).toMatchObject({
+        'p.id': { eq: 1 },
+        'p.name': { contains: 'User' },
+        telephone: expect.objectContaining({
+          __type: 'EXISTS',
+          content: expect.objectContaining({
+            subquery: "SELECT 1 FROM user_telephone ut WHERE ut.user_id = p.id AND ut.value = '123-456-7890'",
+          }),
+        }),
+      })
+    })
+  })
+})
