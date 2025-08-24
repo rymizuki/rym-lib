@@ -21,6 +21,7 @@ export class QueryCriteria<Data extends QueryResultData>
   constructor(
     private mapping: QuerySpecification<Data, any>['rules'],
     input: Partial<typeof this.attr>,
+    private sourceInstance?: any,
   ) {
     this.attr = this.remap({
       filter: input.filter ?? {},
@@ -57,7 +58,13 @@ export class QueryCriteria<Data extends QueryResultData>
           for (const prev in f) {
             if (!Object.prototype.hasOwnProperty.call(f, prev)) continue
             const value = f[prev]
-            const rename = (this.mapping as any)[prev]
+            const mappingValue = (this.mapping as any)[prev]
+            
+            // If mapping value is a function, execute it with sourceInstance and input
+            const rename = typeof mappingValue === 'function' 
+              ? mappingValue(this.sourceInstance, input, prev)
+              : mappingValue
+              
             ret[rename ? rename : prev] = value
           }
           results.push(ret)

@@ -551,3 +551,83 @@ describe('QueryRunner with dot notation keys', () => {
     })
   })
 })
+
+describe('QueryRunner with function-based rules', () => {
+  type Data = {
+    id: number
+    name: string
+  }
+
+  const data: Data[] = [
+    { id: 1, name: 'User 1' },
+    { id: 2, name: 'User 2' },
+  ]
+
+  let driver: TestDriver
+  let runner: QueryRunnerInterface<Data>
+
+  beforeEach(() => {
+    driver = createDriver()
+    driver.returns(data) // Set test data for the driver
+    
+    // Create a mock source function that returns a builder-like object
+    const mockSourceFunction = (builder: any) => {
+      return {
+        ...builder,
+        buildDynamicExpression: (key: string) => `dynamic_${key}`,
+        buildComplexQuery: () => 'CASE WHEN status = "active" THEN 1 ELSE 0 END'
+      }
+    }
+
+    runner = createQuery(driver, {
+      name: 'test_function_rules',
+      source: mockSourceFunction,
+      rules: {
+        id: 'users.id',
+        name: 'users.name',
+        // Test function-based rule that uses source result
+        dynamic_field: mockSourceFunction(null).buildDynamicExpression('test'),
+        complex_status: mockSourceFunction(null).buildComplexQuery()
+      }
+    })
+  })
+
+  describe('function-based rules support', () => {
+    it('should handle rules with source-generated expressions', async () => {
+      await runner.many({
+        filter: {
+          id: { eq: 1 },
+          dynamic_field: { eq: 'some_value' },
+          complex_status: { eq: 1 }
+        }
+      })
+
+      expect(driver.called).toHaveLength(1)
+      const criteria = driver.called[0]?.args[0]
+      
+      // Verify that function-based rules are properly mapped
+      expect(criteria?.filter).toEqual({
+        'users.id': { eq: 1 },
+        'dynamic_test': { eq: 'some_value' },
+        'CASE WHEN status = "active" THEN 1 ELSE 0 END': { eq: 1 }
+      })
+    })
+
+    it('should work with mixed static and function-based rules', async () => {
+      await runner.many({
+        filter: {
+          name: { contains: 'User' },  // static rule
+          dynamic_field: { ne: 'excluded' }  // function-based rule
+        }
+      })
+
+      expect(driver.called).toHaveLength(1)
+      const criteria = driver.called[0]?.args[0]
+      
+      expect(criteria?.filter).toEqual({
+        'users.name': { contains: 'User' },
+        'dynamic_test': { ne: 'excluded' }
+      })
+    })
+  })
+})
