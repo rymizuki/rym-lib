@@ -1,5 +1,13 @@
 # @rym-lib/query-module-driver-prisma
 
+## 1.2.8
+
+### Patch Changes
+
+- fix: correct customFilter test expectations #52
+- Updated dependencies
+  - @rym-lib/query-module-sql-builder@1.2.8
+
 ## 1.2.7
 
 ### Patch Changes

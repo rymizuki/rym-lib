@@ -1,5 +1,13 @@
 # @rym-lib/remix-helper
 
+## 1.2.8
+
+### Patch Changes
+
+- fix: correct customFilter test expectations #52
+- Updated dependencies
+  - @rym-lib/utilities@1.2.8
+
 ## 1.2.7
 
 ### Patch Changes

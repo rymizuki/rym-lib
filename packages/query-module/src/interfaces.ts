@@ -114,7 +114,7 @@ export type QueryRuleFunction<
   Driver extends QueryDriverInterface,
   Filter extends QueryFilter<any> = QueryFilter<Data>,
   FilterKey extends keyof Filter = keyof Filter,
-  SourceInstance = Parameters<Driver['customFilter']>[0],
+  SourceInstance = Parameters<Parameters<Driver['customFilter']>[0]>[0],
 > = (value: Filter[FilterKey], sourceInstance: SourceInstance) => string | any
 
 export interface QuerySpecification<

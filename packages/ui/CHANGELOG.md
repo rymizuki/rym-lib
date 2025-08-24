@@ -1,5 +1,11 @@
 # @rym-lib/ui
 
+## 1.2.8
+
+### Patch Changes
+
+- fix: correct customFilter test expectations #52
+
 ## 1.2.7
 
 ### Patch Changes
