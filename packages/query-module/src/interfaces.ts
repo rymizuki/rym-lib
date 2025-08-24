@@ -69,7 +69,7 @@ export interface QueryDriverInterface {
   execute<D>(
     criteria: QueryCriteriaInterface<D>,
   ): Promise<Record<string, any>[]>
-  customFilter<TSource = any>(fn: (source: TSource) => any): any
+  customFilter(fn: (source: any) => any): any
 }
 
 interface QuerySourceInterface<
@@ -114,7 +114,7 @@ export type QueryRuleFunction<
   Driver extends QueryDriverInterface,
   Filter extends QueryFilter<any> = QueryFilter<Data>,
   FilterKey extends keyof Filter = keyof Filter,
-  SourceInstance = any,
+  SourceInstance = Parameters<Parameters<Driver['customFilter']>[0]>[0],
 > = (value: Filter[FilterKey], sourceInstance: SourceInstance) => string | any
 
 export interface QuerySpecification<
