@@ -156,16 +156,6 @@ function createCond(
       | SQLBuilderConditionsPort
       | SQLBuilderConditionExpressionPort
 
-    console.log(
-      'Checking value:',
-      value,
-      'type:',
-      typeof value,
-      'instanceof SQLBuilderConditions:',
-      value instanceof SQLBuilderConditions,
-      'has toSQL:',
-      value !== null && typeof value === 'object' && 'toSQL' in value,
-    )
 
     if (value instanceof SQLBuilderConditions) {
       cond.and(value)
@@ -177,14 +167,7 @@ function createCond(
     }
 
     // Check if value is a raw SQL expression (from function-based rules)
-    console.log(
-      'Checking if value is SQL expression:',
-      value,
-      'isRawSql:',
-      typeof value === 'string' ? isRawSqlExpression(value) : false,
-    )
     if (typeof value === 'string' && isRawSqlExpression(value)) {
-      console.log('Using SQL expression as field!')
       // Use the SQL expression as the field name
       switch (operator) {
         case 'eq': {

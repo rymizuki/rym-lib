@@ -75,8 +75,6 @@ export class QueryCriteria<Data extends QueryResultData>
                   operatorValue,
                   mappingValue as any,
                 )
-                console.log('Function result:', result)
-                console.log('Using as field name:', result)
                 ret[prev] = { [operator]: result }
               }
             } else {

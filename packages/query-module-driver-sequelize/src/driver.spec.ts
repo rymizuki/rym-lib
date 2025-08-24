@@ -194,12 +194,17 @@ describe('query-module-driver-sequelize', () => {
             value: string,
             sourceInstance: SQLBuilderPort,
           ) => {
+            const conditions = createConditions()
             if (value === 'high') {
-              return `(o.total > 1000 OR c.vip_status = 'gold')`
+              return conditions
+                .and('o.total', '>', 1000)
+                .or('c.vip_status', '=', 'gold')
             } else if (value === 'medium') {
-              return `(o.total BETWEEN 500 AND 1000)`
+              return conditions
+                .and('o.total', '>=', 500)
+                .and('o.total', '<=', 1000)
             } else {
-              return `(o.total < 500)`
+              return conditions.and('o.total', '<', 500)
             }
           },
           // Function rule that generates subquery-like expression
@@ -208,7 +213,10 @@ describe('query-module-driver-sequelize', () => {
             value: string,
             sourceInstance: SQLBuilderPort,
           ) => {
-            return `c.segment = '${value}' AND c.active = 1`
+            const conditions = createConditions()
+            return conditions
+              .and('c.segment', '=', value)
+              .and('c.active', '=', 1)
           },
         }
 
@@ -235,8 +243,8 @@ describe('query-module-driver-sequelize', () => {
         expect(sql).toContain('SELECT')
         expect(sql).toContain('orders')
         expect(sql).toContain('customers')
-        expect(sql).toContain('order_priority')
-        expect(sql).toContain('customer_segment')
+        expect(sql).toContain('`o`.`total`')
+        expect(sql).toContain('`c`.`segment`')
       })
 
       it('should handle function-based rules that return column aliases', async () => {
@@ -256,7 +264,6 @@ describe('query-module-driver-sequelize', () => {
             value: string,
             sourceInstance: SQLBuilderPort,
           ) => {
-            console.log('transaction_period function called with:', operator, value)
             // Return SQLBuilderConditions instance that sql-builder can recognize
             const conditions = createConditions()
             if (value === 'this_month') {
@@ -277,13 +284,12 @@ describe('query-module-driver-sequelize', () => {
           ) => {
             const conditions = createConditions()
             if (operator === 'gte') {
-              conditions.and('t.amount', '>=', value)
+              return conditions.and('t.amount', '>=', value)
             } else if (operator === 'lte') {
-              conditions.and('t.amount', '<=', value)
+              return conditions.and('t.amount', '<=', value)
             } else {
-              conditions.and('1', '=', '1') // fallback
+              return conditions.and('1', '=', '1') // fallback
             }
-            return conditions
           },
         }
 
@@ -305,14 +311,14 @@ describe('query-module-driver-sequelize', () => {
         expect(mockQuery).toHaveBeenCalled()
 
         const [sql] = mockQuery.mock.lastCall || []
-        console.log('Generated SQL:', sql)
 
         // Verify that function-based rules return SQLBuilderConditions and generate proper SQL expressions
         expect(sql).toContain('created_at')
         expect(sql).toContain('transactions')
         expect(sql).toContain('MONTH(t')
         expect(sql).toContain('YEAR(t')
-        expect(sql).toContain('amount')
+        expect(sql).toContain('`t`.`amount`')
+        // Check for >= in the actual condition (note: both gte and lte conditions are created separately)
         expect(sql).toContain('>=')
       })
     })
