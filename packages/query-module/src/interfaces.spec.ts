@@ -1,4 +1,4 @@
-import { describe, it, expectTypeOf } from 'vitest'
+import { describe, it, expect, expectTypeOf } from 'vitest'
 
 import type {
   QueryFilter,
@@ -162,10 +162,10 @@ describe('QueryFilter Type Extensions', () => {
       expect(Array.isArray(criteria.filter)).toBe(true)
       expect(criteria.filter).toHaveLength(2)
 
-      if (Array.isArray(criteria.filter)) {
-        expect(criteria.filter[0].telephone).toEqual({ eq: '080-1111-2222' })
-        expect(criteria.filter[1]['having:COUNT(*)']).toEqual({ gt: 0 })
-        expect(criteria.filter[1].custom_status).toEqual({ ne: 'inactive' })
+      if (Array.isArray(criteria.filter) && criteria.filter.length >= 2) {
+        expect(criteria.filter[0]?.telephone).toEqual({ eq: '080-1111-2222' })
+        expect(criteria.filter[1]?.['having:COUNT(*)']).toEqual({ gt: 0 })
+        expect(criteria.filter[1]?.custom_status).toEqual({ ne: 'inactive' })
       }
     })
   })

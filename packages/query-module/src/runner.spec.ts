@@ -411,10 +411,10 @@ describe('QueryRunner with raw operators', () => {
 
       // Test passes the criteria to driver correctly
       expect(driver.called).toHaveLength(1)
-      expect(driver.called[0].method).toBe('execute')
+      expect(driver.called[0]?.method).toBe('execute')
 
       // Check that the criteria contains the filter
-      const criteria = driver.called[0].args[0]
+      const criteria = driver.called[0]?.args[0]
       expect(criteria.filter).toBeDefined()
     })
 
@@ -426,7 +426,7 @@ describe('QueryRunner with raw operators', () => {
       })
 
       expect(driver.called).toHaveLength(1)
-      const criteria = driver.called[0].args[0]
+      const criteria = driver.called[0]?.args[0]
       expect(criteria.filter).toBeDefined()
     })
 
@@ -438,7 +438,7 @@ describe('QueryRunner with raw operators', () => {
       })
 
       expect(driver.called).toHaveLength(1)
-      const criteria = driver.called[0].args[0]
+      const criteria = driver.called[0]?.args[0]
       expect(criteria.filter).toBeDefined()
     })
 
@@ -461,7 +461,7 @@ describe('QueryRunner with raw operators', () => {
       })
 
       expect(driver.called).toHaveLength(1)
-      const criteria = driver.called[0].args[0]
+      const criteria = driver.called[0]?.args[0]
       expect(criteria.filter).toBeDefined()
     })
 
@@ -572,15 +572,9 @@ describe('QueryRunner with function-based rules', () => {
     driver.returns(data) // Set test data for the driver
 
     // Create a mock source function that returns a builder-like object
-    const mockSourceFunction = (builder: any) => {
-      const mockBuilder = {
-        ...builder,
-        buildDynamicExpression: (key: string, value: any) =>
-          `dynamic_${key}_${JSON.stringify(value)}`,
-        buildComplexQuery: (value: any) =>
-          `CASE WHEN status = "${value.eq}" THEN 1 ELSE 0 END`,
-      }
-      return mockBuilder
+    const mockSourceFunction = (): Record<string, any>[] => {
+      // Return test data that matches the TestDriver's data structure
+      return data
     }
 
     // Patch the driver to return our mock builder
@@ -677,14 +671,9 @@ describe('QueryRunner with SQL expression object returns', () => {
     driver = createDriver()
     driver.returns(data)
 
-    const mockSourceFunction = (builder: any) => {
-      const mockBuilder = {
-        ...builder,
-        from: (table: string, alias?: string) => mockBuilder,
-        column: (col: string) => col,
-        where: (condition: any) => mockBuilder,
-      }
-      return mockBuilder
+    const mockSourceFunction = (): Record<string, any>[] => {
+      // Return test data that matches the TestDriver's data structure
+      return data
     }
 
     runner = createQuery(driver, {
@@ -696,14 +685,14 @@ describe('QueryRunner with SQL expression object returns', () => {
         // Function that returns a SQL expression object (not a string)
         telephone: (value, sourceInstance) => {
           return createSqlExpression('EXISTS', {
-            subquery: `SELECT 1 FROM user_telephone ut WHERE ut.user_id = p.id AND ut.value = '${value.eq}'`,
+            subquery: `SELECT 1 FROM user_telephone ut WHERE ut.user_id = p.id AND ut.value = '${(value as any)?.eq || ''}'`,
           })
         },
         // Another function returning complex SQL object
         complex_condition: (value, sourceInstance) => {
           return createSqlExpression('CASE', {
             when: [
-              { condition: `status = '${value.eq}'`, then: '1' },
+              { condition: `status = '${(value as any)?.eq || ''}'`, then: '1' },
               { condition: 'TRUE', then: '0' },
             ],
           })
@@ -939,7 +928,7 @@ describe('QueryCriteria with customFilter dependency injection', () => {
       mockCustomFilter.mockImplementation((fn) => fn({ mockSource: true }))
 
       const rules = {
-        complex_field: () => mockExpression,
+        complex_field: (value: any, sourceInstance: any) => mockExpression.content,
       }
 
       const criteria = new QueryCriteria<Data>(
@@ -953,7 +942,7 @@ describe('QueryCriteria with customFilter dependency injection', () => {
       )
 
       expect(criteria.filter).toEqual({
-        complex_field: mockExpression,
+        complex_field: mockExpression.content,
       })
     })
   })
