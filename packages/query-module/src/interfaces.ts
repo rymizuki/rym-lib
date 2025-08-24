@@ -111,12 +111,10 @@ export interface QueryRunnerMiddleware<
 export type QueryRuleFunction<
   Data extends QueryResultData,
   Driver extends QueryDriverInterface,
-  FilterKey extends keyof NonNullable<QueryRunnerCriteria<Data>['filter']> | string,
+  FilterKey = any,
   SourceInstance = ReturnType<Parameters<Driver['source']>[0]>
 > = (
-  value: FilterKey extends keyof NonNullable<QueryRunnerCriteria<Data>['filter']>
-    ? NonNullable<QueryRunnerCriteria<Data>['filter']>[FilterKey]
-    : any,
+  value: any,
   sourceInstance: SourceInstance
 ) => string
 
@@ -131,7 +129,7 @@ export interface QuerySpecification<
   rules: Partial<
     Record<
       keyof NonNullable<Params['filter']> | string,
-      string | QueryRuleFunction<Data, Driver, keyof NonNullable<Params['filter']> | string>
+      string | QueryRuleFunction<Data, Driver>
     >
   >
   criteria?: (params: Partial<Params>) => Partial<Params>
