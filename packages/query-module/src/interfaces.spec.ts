@@ -170,6 +170,160 @@ describe('QueryFilter Type Extensions', () => {
     })
   })
 
+  describe('QueryCriteriaOrderBy拡張テスト', () => {
+    it('元のDataフィールドでorderByが使用可能', () => {
+      const criteria: QueryRunnerCriteria<TestData> = {
+        orderBy: 'name:asc',
+        take: 10,
+      }
+
+      expect(criteria.orderBy).toBe('name:asc')
+
+      // 他の基本フィールドでも確認
+      const criteria2: QueryRunnerCriteria<TestData> = {
+        orderBy: ['id:desc', 'age:asc'],
+        take: 5,
+      }
+
+      expect(criteria2.orderBy).toEqual(['id:desc', 'age:asc'])
+    })
+
+    it('拡張された任意の文字列フィールドでorderByが使用可能', () => {
+      // 拡張されたフィールドを含む型
+      type ExtendedData = TestData & {
+        telephone: string
+        custom_field: string
+      }
+
+      const criteria: QueryRunnerCriteria<ExtendedData> = {
+        filter: {
+          name: { contains: 'john' },
+          telephone: { eq: '080-1234-5678' },
+        },
+        orderBy: 'telephone:desc', // 拡張フィールドでソート
+        take: 10,
+      }
+
+      expect(criteria.orderBy).toBe('telephone:desc')
+    })
+
+    it('JOIN結果やRAW SQLフィールドでorderByが使用可能', () => {
+      const criteria: QueryRunnerCriteria<TestData> = {
+        filter: {
+          'orders.total_amount': { gte: 1000 },
+          'user_profiles.location': { eq: 'Tokyo' },
+        },
+        orderBy: [
+          'orders.total_amount:desc',  // JOINフィールド
+          'user_profiles.created_at:asc',
+          'YEAR(created_at):desc',     // SQL関数
+        ],
+        take: 20,
+      }
+
+      expect(criteria.orderBy).toEqual([
+        'orders.total_amount:desc',
+        'user_profiles.created_at:asc',
+        'YEAR(created_at):desc',
+      ])
+    })
+
+    it('HAVING句の結果でorderByが使用可能', () => {
+      const criteria: QueryRunnerCriteria<TestData> = {
+        filter: {
+          'having:COUNT(orders.id)': { gte: 5 },
+        },
+        orderBy: [
+          'having:COUNT(orders.id):desc',
+          'having:SUM(orders.amount):asc',
+          'having:AVG(reviews.rating):desc',
+        ],
+        take: 10,
+      }
+
+      expect(criteria.orderBy).toEqual([
+        'having:COUNT(orders.id):desc',
+        'having:SUM(orders.amount):asc',
+        'having:AVG(reviews.rating):desc',
+      ])
+    })
+
+    it('複雑なネストしたプロパティでorderByが使用可能', () => {
+      const criteria: QueryRunnerCriteria<TestData> = {
+        filter: {
+          'deep.nested.property.with.dots': { eq: 'value' },
+          'CASE WHEN x THEN y ELSE z END': { ne: null },
+        },
+        orderBy: [
+          'deep.nested.property.with.dots:asc',
+          'CASE WHEN x THEN y ELSE z END:desc',
+        ],
+        take: 5,
+      }
+
+      expect(criteria.orderBy).toEqual([
+        'deep.nested.property.with.dots:asc',
+        'CASE WHEN x THEN y ELSE z END:desc',
+      ])
+    })
+
+    it('orderByなしの場合でも正常動作する', () => {
+      const criteria: QueryRunnerCriteria<TestData> = {
+        filter: {
+          name: { contains: 'test' },
+        },
+        take: 10,
+      }
+
+      expect(criteria.orderBy).toBeUndefined()
+    })
+
+    it('元のユーザー提供例のような型構造が正常動作する', () => {
+      // ユーザーが提示したような型構造をテスト
+      type Data = {
+        id: string
+        tenant_id: string
+        display_name: string
+        display_name_kana: string
+        code: string | null
+        gender: 'male' | 'female' | null
+        birthdate: Date | null
+        note: string | null
+        telephones: {
+          id: string
+          type: 'unknown' | 'landline' | 'mobile'
+          value: string
+        }[]
+      }
+
+      type Params = QueryRunnerCriteria<
+        Data & {
+          telephone: string
+        }
+      >
+
+      const params: Params = {
+        filter: {
+          display_name: { contains: 'john' },
+          telephone: { eq: '080-1234-5678' },
+        },
+        orderBy: [
+          'display_name:asc',
+          'telephone:desc',  // 拡張フィールドでのソート
+          'tenant_id:asc',
+        ],
+        take: 20,
+        skip: 0,
+      }
+
+      expect(params.orderBy).toEqual([
+        'display_name:asc',
+        'telephone:desc',
+        'tenant_id:asc',
+      ])
+    })
+  })
+
   describe('QueryRunnerInterface統合テスト', () => {
     it('拡張されたParamsがQueryRunnerInterfaceで使用可能', () => {
       // 拡張されたQueryRunnerCriteriaを定義
