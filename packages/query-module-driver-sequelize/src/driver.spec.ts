@@ -335,14 +335,14 @@ describe('QueryDriverSequelize customFilter functionality', () => {
       expect(typeof source.where).toBe('function')
     })
 
-    it('should throw error when source is not configured', () => {
-      const mockFn = vi.fn()
+    it('should work without source configuration', () => {
+      const mockFn = vi.fn().mockReturnValue('result_without_source')
 
-      expect(() => {
-        driver.customFilter(mockFn)
-      }).toThrow('QueryDriver must be required source.')
+      const result = driver.customFilter(mockFn)
 
-      expect(mockFn).not.toHaveBeenCalled()
+      expect(mockFn).toHaveBeenCalledTimes(1)
+      expect(mockFn).toHaveBeenCalledWith(expect.any(Object))
+      expect(result).toBe('result_without_source')
     })
 
     it('should allow multiple customFilter calls with same source', () => {
