@@ -3,10 +3,12 @@ import {
   createConditions,
   is_not_null,
   is_null,
+  unescape,
+  SQLBuilderConditionsPort,
   SQLBuilderPort,
 } from 'coral-sql'
 
-import type { QueryCriteriaInterface } from '@rym-lib/query-module'
+import type { QueryCriteriaInterface, QueryFilter } from '@rym-lib/query-module'
 
 export { createBuilder }
 
@@ -72,117 +74,39 @@ export function buildSQL(
       // filter -> where
       for (const name of keys(filter)) {
         if (typeof name !== 'string') continue
+        if (/^having:/.test(name)) continue
 
         const property = filter[name]
         if (!property) continue
 
-        for (const operator of keys(property)) {
-          const value = property[operator]
-          switch (operator) {
-            case 'eq': {
-              if (value === null) {
-                if (isRawSqlExpression(name)) {
-                  // (raw_expression) IS NULL
-                  cond.and(`(${name})`, is_null())
-                } else {
-                  // name IS NULL
-                  cond.and(name, is_null())
-                }
-              } else {
-                if (isRawSqlExpression(name)) {
-                  // (raw_expression) = value
-                  cond.and(`(${name})`, '=', value)
-                } else {
-                  // name = value
-                  cond.and(name, value)
-                }
-              }
-              break
-            }
-            case 'ne': {
-              if (value === null) {
-                if (isRawSqlExpression(name)) {
-                  // (raw_expression) IS NOT NULL
-                  cond.and(`(${name})`, is_not_null())
-                } else {
-                  // name IS NOT NULL
-                  cond.and(name, is_not_null())
-                }
-              } else {
-                if (isRawSqlExpression(name)) {
-                  // (raw_expression) != value
-                  cond.and(`(${name})`, '!=', value)
-                } else {
-                  // name != value
-                  cond.and(name, '!=', value)
-                }
-              }
-              break
-            }
-            case 'lt': {
-              // name < value
-              cond.and(name, '<', value)
-              break
-            }
-            case 'lte': {
-              // name <= value
-              cond.and(name, '<=', value)
-              break
-            }
-            case 'gt': {
-              // name > value
-              cond.and(name, '>', value)
-              break
-            }
-            case 'gte': {
-              // name >= value
-              cond.and(name, '>=', value)
-              break
-            }
-            case 'contains': {
-              if (!value) break
-              const values =
-                o.containsSplitSpaces && /\x20/.test(value)
-                  ? value.split(/\x20+/)
-                  : [value]
-              for (const value of values) {
-                // name LIKE `%${value}%`
-                cond.and(name, 'like', `%${value}%`)
-              }
-              break
-            }
-            case 'not_contains': {
-              if (!value) break
-              const values =
-                o.containsSplitSpaces && /\x20/.test(value)
-                  ? value.split(/\x20+/)
-                  : [value]
-              for (const value of values) {
-                // name LIKE `%${value}%`
-                cond.and(name, 'not like', `%${value}%`)
-              }
-              break
-            }
-            case 'in': {
-              if (!Array.isArray(value) || !value.length) {
-                break
-              }
-              if (isRawSqlExpression(name)) {
-                // (raw_expression) IN value
-                cond.and(`(${name})`, 'in', value)
-              } else {
-                // name IN value
-                cond.and(name, 'in', value)
-              }
-              break
-            }
-          }
-        }
+        createCond(cond, name, property as QueryFilter<any>, o)
       }
 
       whole.or(cond)
     }
     builder.where(whole)
+
+    const whole_having = createConditions()
+    for (const filter of Array.isArray(criteria.filter)
+      ? criteria.filter
+      : [criteria.filter]) {
+      const cond = createConditions()
+
+      // filter -> where
+      for (const name of keys(filter)) {
+        if (typeof name !== 'string') continue
+        if (!/^having:/.test(name)) continue
+
+        const property = filter[name]
+        if (!property) continue
+
+        const column_name = name.replace(/^having:/, '')
+        createCond(cond, column_name, property as QueryFilter<any>, o, true)
+      }
+
+      whole_having.or(cond)
+    }
+    builder.having(whole_having)
   }
 
   // orderBy
@@ -207,4 +131,117 @@ export function buildSQL(
   }
 
   return builder.toSQL()
+}
+
+function createCond(
+  cond: SQLBuilderConditionsPort,
+  name: string,
+  property: QueryFilter<any>,
+  options: BuildSqlOptions,
+  useUnescape = false,
+) {
+  // If useUnescape is true, use unescape to avoid backticks for SQL functions
+  const field = useUnescape ? unescape(name) : name
+  for (const operator of keys(property)) {
+    const value = property[operator] as string
+    switch (operator) {
+      case 'eq': {
+        if (value === null) {
+          if (!useUnescape && isRawSqlExpression(name)) {
+            // (raw_expression) IS NULL
+            cond.and(`(${name})`, is_null())
+          } else {
+            // field IS NULL
+            cond.and(field, is_null())
+          }
+        } else {
+          if (!useUnescape && isRawSqlExpression(name)) {
+            // (raw_expression) = value
+            cond.and(`(${name})`, '=', value)
+          } else {
+            // field = value
+            cond.and(field, value)
+          }
+        }
+        break
+      }
+      case 'ne': {
+        if (value === null) {
+          if (!useUnescape && isRawSqlExpression(name)) {
+            // (raw_expression) IS NOT NULL
+            cond.and(`(${name})`, is_not_null())
+          } else {
+            // field IS NOT NULL
+            cond.and(field, is_not_null())
+          }
+        } else {
+          if (!useUnescape && isRawSqlExpression(name)) {
+            // (raw_expression) != value
+            cond.and(`(${name})`, '!=', value)
+          } else {
+            // field != value
+            cond.and(field, '!=', value)
+          }
+        }
+        break
+      }
+      case 'lt': {
+        // field < value
+        cond.and(field, '<', value)
+        break
+      }
+      case 'lte': {
+        // field <= value
+        cond.and(field, '<=', value)
+        break
+      }
+      case 'gt': {
+        // field > value
+        cond.and(field, '>', value)
+        break
+      }
+      case 'gte': {
+        // field >= value
+        cond.and(field, '>=', value)
+        break
+      }
+      case 'contains': {
+        if (!value) break
+        const values =
+          options.containsSplitSpaces && /\x20/.test(value)
+            ? value.split(/\x20+/)
+            : [value]
+        for (const value of values) {
+          // field LIKE `%${value}%`
+          cond.and(field, 'like', `%${value}%`)
+        }
+        break
+      }
+      case 'not_contains': {
+        if (!value) break
+        const values =
+          options.containsSplitSpaces && /\x20/.test(value)
+            ? value.split(/\x20+/)
+            : [value]
+        for (const value of values) {
+          // field NOT LIKE `%${value}%`
+          cond.and(field, 'not like', `%${value}%`)
+        }
+        break
+      }
+      case 'in': {
+        if (!Array.isArray(value) || !value.length) {
+          break
+        }
+        if (!useUnescape && isRawSqlExpression(name)) {
+          // (raw_expression) IN value
+          cond.and(`(${name})`, 'in', value)
+        } else {
+          // field IN value
+          cond.and(field, 'in', value)
+        }
+        break
+      }
+    }
+  }
 }
