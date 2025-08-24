@@ -1,6 +1,6 @@
 {
   "name": "@rym-lib/query-module",
-  "version": "1.2.4",
+  "version": "1.2.5",
   "private": false,
   "author": {
     "name": "mizuki_r",
@@ -65,7 +65,7 @@
   },
   "devDependencies": {
     "@rym-lib/dev-config": "*",
-    "@rym-lib/utilities": "1.2.4",
+    "@rym-lib/utilities": "1.2.5",
     "@types/node": "^22.4.1",
     "@vitest/coverage-v8": "^3.0.3",
     "npm-check-updates": "^17.0.6",
@@ -73,6 +73,6 @@
     "vitest": "^3.0.3"
   },
   "dependencies": {
-    "@rym-lib/exception": "^1.2.4"
+    "@rym-lib/exception": "^1.2.5"
   }
 }

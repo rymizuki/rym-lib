@@ -1,5 +1,13 @@
 # @rym-lib/remix-helper
 
+## 1.2.5
+
+### Patch Changes
+
+- fix query-module bugs
+- Updated dependencies
+  - @rym-lib/utilities@1.2.5
+
 ## 1.2.4
 
 ### Patch Changes

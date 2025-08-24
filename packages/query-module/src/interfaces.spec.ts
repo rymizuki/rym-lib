@@ -214,9 +214,9 @@ describe('QueryFilter Type Extensions', () => {
           'user_profiles.location': { eq: 'Tokyo' },
         },
         orderBy: [
-          'orders.total_amount:desc',  // JOINフィールド
+          'orders.total_amount:desc', // JOINフィールド
           'user_profiles.created_at:asc',
-          'YEAR(created_at):desc',     // SQL関数
+          'YEAR(created_at):desc', // SQL関数
         ],
         take: 20,
       }
@@ -309,7 +309,7 @@ describe('QueryFilter Type Extensions', () => {
         },
         orderBy: [
           'display_name:asc',
-          'telephone:desc',  // 拡張フィールドでのソート
+          'telephone:desc', // 拡張フィールドでのソート
           'tenant_id:asc',
         ],
         take: 20,
