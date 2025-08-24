@@ -67,6 +67,9 @@ export class QueryCriteria<Data extends QueryResultData>
             const value = f[prev]
             const mappingValue = this.mapping[prev]
 
+            // Skip undefined values
+            if (value === undefined) continue
+
             // If mapping value is a function, execute it with value and sourceInstance
             if (typeof mappingValue === 'function') {
               const result = this.customFilter((source) =>

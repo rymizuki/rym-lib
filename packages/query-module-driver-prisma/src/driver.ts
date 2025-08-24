@@ -30,12 +30,16 @@ export class QueryDriverPrisma implements QueryDriverInterface {
     return this
   }
 
-  customFilter(fn: (source: any) => any): any {
+  customFilter(
+    filter: (
+      source: SQLBuilderPort,
+    ) => SQLBuilderPort | SQLBuilderConditionsPort,
+  ): SQLBuilderPort | SQLBuilderConditionsPort {
     if (!this.setup) {
       throw new Error('QueryDriver must be required source.')
     }
     const source = this.setup(this.builderSetup())
-    return fn(source)
+    return filter(source)
   }
 
   async execute<D>(criteria: QueryCriteriaInterface<D>): Promise<
