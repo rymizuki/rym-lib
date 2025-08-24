@@ -12,7 +12,6 @@ import {
 import { createDriver, TestDriver } from './test-utils/test-driver'
 import { createLogger, TestMockLogger } from './test-utils/test-mock-logger'
 
-
 type Data = {
   index: number
   value: string
@@ -354,7 +353,6 @@ function createQuery<
   })
   return runner
 }
-
 
 describe('QueryRunner with dot notation keys', () => {
   type UserData = {

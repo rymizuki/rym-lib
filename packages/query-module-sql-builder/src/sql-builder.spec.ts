@@ -916,7 +916,6 @@ describe('query-module-sql-builder', () => {
     })
   })
 
-
   // HAVING clause support tests
   describe('HAVING clause support', () => {
     describe('basic HAVING clause', () => {

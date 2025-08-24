@@ -1,5 +1,15 @@
 # @rym-lib/nakadachi-interactor-mixin-validator
 
+## 1.2.10
+
+### Patch Changes
+
+- fix: remove isRawSqlExpression to prevent incorrect field name handling #55
+- Updated dependencies
+  - @rym-lib/exception@1.2.10
+  - @rym-lib/inversify-bundler@1.2.10
+  - @rym-lib/nakadachi@1.2.10
+
 ## 1.2.9
 
 ### Patch Changes

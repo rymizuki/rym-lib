@@ -26,7 +26,6 @@ function keys<T extends Record<string, unknown>>(value: T) {
   return Object.keys(value) as (keyof T)[]
 }
 
-
 const defaults: BuildSqlOptions = {
   containsSplitSpaces: true,
 }
@@ -131,7 +130,6 @@ function createCond(
       cond.and(value as Exclude<typeof value, SQLBuilderConditionsPort>)
       continue
     }
-
 
     switch (operator) {
       case 'eq': {

@@ -1,5 +1,13 @@
 # @rym-lib/nakadachi-adapter-react-router
 
+## 1.2.10
+
+### Patch Changes
+
+- fix: remove isRawSqlExpression to prevent incorrect field name handling #55
+- Updated dependencies
+  - @rym-lib/nakadachi@1.2.10
+
 ## 1.2.9
 
 ### Patch Changes
