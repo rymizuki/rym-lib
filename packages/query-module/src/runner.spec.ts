@@ -366,6 +366,12 @@ describe('QueryRunner with raw operators', () => {
     category: string
   }
 
+  // Extended type for computed fields from CASE-WHEN expressions
+  type DataWithComputedFields = DataWithStatus & {
+    status_display?: { __raw: true; sql: string }  // raw SQL expression
+    user_tier?: { __raw: true; sql: string }       // raw SQL expression
+  }
+
   const data: DataWithStatus[] = [
     { id: 1, name: 'User 1', status: 'active', category: 'premium' },
     { id: 2, name: 'User 2', status: 'inactive', category: 'basic' },
@@ -374,13 +380,13 @@ describe('QueryRunner with raw operators', () => {
   ]
 
   let driver: TestDriver
-  let runner: QueryRunnerInterface<DataWithStatus>
+  let runner: QueryRunnerInterface<DataWithComputedFields>
 
   beforeEach(() => {
     driver = createDriver()
     runner = createQuery(driver, {
       name: 'test_raw_operators',
-      source: () => data,
+      source: () => data as DataWithComputedFields[],
       rules: {
         id: 'users.id',
         name: 'users.name',
@@ -397,7 +403,7 @@ describe('QueryRunner with raw operators', () => {
           ELSE 'bronze'
         END`),
       },
-    })
+    }) as QueryRunnerInterface<DataWithComputedFields>
   })
 
   describe('automatic raw SQL expression support', () => {
@@ -410,11 +416,11 @@ describe('QueryRunner with raw operators', () => {
 
       // Test passes the criteria to driver correctly
       expect(driver.called).toHaveLength(1)
-      expect(driver.called[0].method).toBe('execute')
+      expect(driver.called[0]?.method).toBe('execute')
 
       // Check that the criteria contains the filter
-      const criteria = driver.called[0].args[0]
-      expect(criteria.filter).toBeDefined()
+      const criteria = driver.called[0]?.args[0]
+      expect(criteria?.filter).toBeDefined()
     })
 
     it('should automatically handle CASE-WHEN expressions with ne operator', async () => {
@@ -425,8 +431,8 @@ describe('QueryRunner with raw operators', () => {
       })
 
       expect(driver.called).toHaveLength(1)
-      const criteria = driver.called[0].args[0]
-      expect(criteria.filter).toBeDefined()
+      const criteria = driver.called[0]?.args[0]
+      expect(criteria?.filter).toBeDefined()
     })
 
     it('should automatically handle CASE-WHEN expressions with in operator', async () => {
@@ -437,8 +443,8 @@ describe('QueryRunner with raw operators', () => {
       })
 
       expect(driver.called).toHaveLength(1)
-      const criteria = driver.called[0].args[0]
-      expect(criteria.filter).toBeDefined()
+      const criteria = driver.called[0]?.args[0]
+      expect(criteria?.filter).toBeDefined()
     })
 
     it('should handle empty array in in operator', async () => {
@@ -460,8 +466,8 @@ describe('QueryRunner with raw operators', () => {
       })
 
       expect(driver.called).toHaveLength(1)
-      const criteria = driver.called[0].args[0]
-      expect(criteria.filter).toBeDefined()
+      const criteria = driver.called[0]?.args[0]
+      expect(criteria?.filter).toBeDefined()
     })
 
     it('should handle regular field names normally', async () => {
@@ -472,8 +478,8 @@ describe('QueryRunner with raw operators', () => {
       })
 
       expect(driver.called).toHaveLength(1)
-      const criteria = driver.called[0].args[0]
-      expect(criteria.filter).toBeDefined()
+      const criteria = driver.called[0]?.args[0]
+      expect(criteria?.filter).toBeDefined()
     })
   })
 })
