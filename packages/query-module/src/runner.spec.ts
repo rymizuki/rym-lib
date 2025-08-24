@@ -572,11 +572,22 @@ describe('QueryRunner with function-based rules', () => {
     
     // Create a mock source function that returns a builder-like object
     const mockSourceFunction = (builder: any) => {
-      return {
+      const mockBuilder = {
         ...builder,
-        buildDynamicExpression: (key: string) => `dynamic_${key}`,
-        buildComplexQuery: () => 'CASE WHEN status = "active" THEN 1 ELSE 0 END'
+        buildDynamicExpression: (key: string, value: any) => `dynamic_${key}_${JSON.stringify(value)}`,
+        buildComplexQuery: (value: any) => `CASE WHEN status = "${value.eq}" THEN 1 ELSE 0 END`
       }
+      return mockBuilder
+    }
+
+    // Patch the driver to return our mock builder
+    const originalSource = driver.source.bind(driver)
+    driver.source = (fn: any) => {
+      const result = originalSource(fn)
+      // Add our mock methods to the result
+      result.buildDynamicExpression = (key: string, value: any) => `dynamic_${key}_${JSON.stringify(value)}`
+      result.buildComplexQuery = (value: any) => `CASE WHEN status = "${value.eq}" THEN 1 ELSE 0 END`
+      return result
     }
 
     runner = createQuery(driver, {
@@ -585,9 +596,13 @@ describe('QueryRunner with function-based rules', () => {
       rules: {
         id: 'users.id',
         name: 'users.name',
-        // Test function-based rule that uses source result
-        dynamic_field: mockSourceFunction(null).buildDynamicExpression('test'),
-        complex_status: mockSourceFunction(null).buildComplexQuery()
+        // Test function-based rule that receives value and sourceInstance
+        dynamic_field: (value: any, sourceInstance: any) => {
+          return sourceInstance.buildDynamicExpression('test', value)
+        },
+        complex_status: (value: any, sourceInstance: any) => {
+          return sourceInstance.buildComplexQuery(value)
+        }
       }
     })
   })
@@ -605,11 +620,11 @@ describe('QueryRunner with function-based rules', () => {
       expect(driver.called).toHaveLength(1)
       const criteria = driver.called[0]?.args[0]
       
-      // Verify that function-based rules are properly mapped
+      // Verify that function-based rules are properly mapped with filter values
       expect(criteria?.filter).toEqual({
         'users.id': { eq: 1 },
-        'dynamic_test': { eq: 'some_value' },
-        'CASE WHEN status = "active" THEN 1 ELSE 0 END': { eq: 1 }
+        'dynamic_test_{"eq":"some_value"}': { eq: 'some_value' },
+        'CASE WHEN status = "1" THEN 1 ELSE 0 END': { eq: 1 }
       })
     })
 
@@ -626,7 +641,7 @@ describe('QueryRunner with function-based rules', () => {
       
       expect(criteria?.filter).toEqual({
         'users.name': { contains: 'User' },
-        'dynamic_test': { ne: 'excluded' }
+        'dynamic_test_{"ne":"excluded"}': { ne: 'excluded' }
       })
     })
   })

@@ -345,13 +345,11 @@ describe('function-based rules support', () => {
       const rules = {
         id: 'u.id',
         name: 'u.name', 
-        // Function-based rule that uses SQLBuilder
-        dynamic_status: (sourceInstance: SQLBuilder) => {
-          return sourceInstance.case()
-            .when('u.status = ?', 'active').then('?', 'Active')
-            .when('u.status = ?', 'inactive').then('?', 'Inactive')
-            .else('?', 'Unknown')
-            .end().toString()
+        // Function-based rule that receives value and uses SQLBuilder
+        dynamic_status: (value: any, sourceInstance: SQLBuilder) => {
+          // Use the filter value to generate different SQL expressions
+          const targetValue = value.eq
+          return `CASE WHEN u.status = '${targetValue === 'Active' ? 'active' : 'inactive'}' THEN '${targetValue}' ELSE 'Unknown' END`
         }
       }
 
@@ -397,9 +395,11 @@ describe('function-based rules support', () => {
       const rules = {
         id: 'p.id', // static rule
         name: 'p.name', // static rule
-        // Function-based rule
-        price_category: (sourceInstance: SQLBuilder) => {
-          return `CASE WHEN p.price >= 1000 THEN 'premium' ELSE 'standard' END`
+        // Function-based rule that uses filter value
+        price_category: (value: any, sourceInstance: SQLBuilder) => {
+          // Generate different SQL based on the filter value
+          const threshold = value.eq === 'premium' ? 1000 : 500
+          return `CASE WHEN p.price >= ${threshold} THEN '${value.eq}' ELSE 'standard' END`
         }
       }
 

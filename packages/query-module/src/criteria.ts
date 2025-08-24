@@ -60,9 +60,9 @@ export class QueryCriteria<Data extends QueryResultData>
             const value = f[prev]
             const mappingValue = (this.mapping as any)[prev]
             
-            // If mapping value is a function, execute it with sourceInstance and input
+            // If mapping value is a function, execute it with value and sourceInstance
             const rename = typeof mappingValue === 'function' 
-              ? mappingValue(this.sourceInstance, input, prev)
+              ? mappingValue(value, this.sourceInstance)
               : mappingValue
               
             ret[rename ? rename : prev] = value
