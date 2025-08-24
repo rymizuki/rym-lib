@@ -1,5 +1,13 @@
 # @rym-lib/remix-helper
 
+## 1.2.2
+
+### Patch Changes
+
+- update nakadachi, query-module
+- Updated dependencies
+  - @rym-lib/utilities@1.2.2
+
 ## 1.2.1
 
 ### Patch Changes

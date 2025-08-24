@@ -25,7 +25,7 @@ class TestDriver<Data extends Record<string, any> = Record<string, any>>
       method: 'execute',
       args: [criteria],
     })
-    
+
     // If data is manually set via returns(), use that (for backward compatibility)
     if (this.data && this.data !== this.initial) {
       return this.data
@@ -40,20 +40,28 @@ class TestDriver<Data extends Record<string, any> = Record<string, any>>
     return this.initial
   }
 
-  private shouldApplySmartFiltering(criteria: QueryCriteriaInterface<any>): boolean {
+  private shouldApplySmartFiltering(
+    criteria: QueryCriteriaInterface<any>,
+  ): boolean {
     if (!criteria.filter) return false
-    
-    const filters = Array.isArray(criteria.filter) ? criteria.filter : [criteria.filter]
-    
+
+    const filters = Array.isArray(criteria.filter)
+      ? criteria.filter
+      : [criteria.filter]
+
     for (const filter of filters) {
       for (const [field, conditions] of Object.entries(filter)) {
         // Apply smart filtering if the field looks like a CASE-WHEN field
-        if (field.includes('status_display') || field.includes('user_tier') || field.includes('CASE')) {
+        if (
+          field.includes('status_display') ||
+          field.includes('user_tier') ||
+          field.includes('CASE')
+        ) {
           return true
         }
       }
     }
-    
+
     return false
   }
 
@@ -61,46 +69,77 @@ class TestDriver<Data extends Record<string, any> = Record<string, any>>
     let result = this.initial.slice()
 
     if (criteria.filter) {
-      const filters = Array.isArray(criteria.filter) ? criteria.filter : [criteria.filter]
-      
+      const filters = Array.isArray(criteria.filter)
+        ? criteria.filter
+        : [criteria.filter]
+
       for (const filter of filters) {
         for (const [field, conditions] of Object.entries(filter)) {
           for (const [operator, value] of Object.entries(conditions as any)) {
             switch (operator) {
               case 'eq':
-                if (field.includes('status_display') || field.includes('user_tier') || field.includes('CASE')) {
-                  result = result.filter(item => {
-                    const mockCaseWhenResult = this.evaluateMockCaseWhen(field, item)
+                if (
+                  field.includes('status_display') ||
+                  field.includes('user_tier') ||
+                  field.includes('CASE')
+                ) {
+                  result = result.filter((item) => {
+                    const mockCaseWhenResult = this.evaluateMockCaseWhen(
+                      field,
+                      item,
+                    )
                     return mockCaseWhenResult === value
                   })
                 } else {
-                  result = result.filter(item => (item as any)[field] === value)
+                  result = result.filter(
+                    (item) => (item as any)[field] === value,
+                  )
                 }
                 break
               case 'ne':
-                if (field.includes('status_display') || field.includes('user_tier') || field.includes('CASE')) {
-                  result = result.filter(item => {
-                    const mockCaseWhenResult = this.evaluateMockCaseWhen(field, item)
+                if (
+                  field.includes('status_display') ||
+                  field.includes('user_tier') ||
+                  field.includes('CASE')
+                ) {
+                  result = result.filter((item) => {
+                    const mockCaseWhenResult = this.evaluateMockCaseWhen(
+                      field,
+                      item,
+                    )
                     return mockCaseWhenResult !== value
                   })
                 } else {
-                  result = result.filter(item => (item as any)[field] !== value)
+                  result = result.filter(
+                    (item) => (item as any)[field] !== value,
+                  )
                 }
                 break
               case 'contains':
-                result = result.filter(item => 
-                  String((item as any)[field]).toLowerCase().includes(String(value).toLowerCase())
+                result = result.filter((item) =>
+                  String((item as any)[field])
+                    .toLowerCase()
+                    .includes(String(value).toLowerCase()),
                 )
                 break
               case 'in':
                 if (Array.isArray(value) && value.length > 0) {
-                  if (field.includes('status_display') || field.includes('user_tier') || field.includes('CASE')) {
-                    result = result.filter(item => {
-                      const mockCaseWhenResult = this.evaluateMockCaseWhen(field, item)
+                  if (
+                    field.includes('status_display') ||
+                    field.includes('user_tier') ||
+                    field.includes('CASE')
+                  ) {
+                    result = result.filter((item) => {
+                      const mockCaseWhenResult = this.evaluateMockCaseWhen(
+                        field,
+                        item,
+                      )
                       return value.includes(mockCaseWhenResult)
                     })
                   } else {
-                    result = result.filter(item => value.includes((item as any)[field]))
+                    result = result.filter((item) =>
+                      value.includes((item as any)[field]),
+                    )
                   }
                 }
                 break

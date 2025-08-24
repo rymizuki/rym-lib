@@ -1,10 +1,5 @@
 import { beforeEach, describe, expect, it, MockInstance, vi } from 'vitest'
 
-// Local helper to simulate raw SQL expressions in tests
-const unescape = (sql: string): any => {
-  return { __raw: true, sql: sql.trim() }
-}
-
 import { QueryRunnerResourceNotFoundException } from './exceptions'
 import { defineQuery } from './functions/define-query'
 import {
@@ -15,6 +10,11 @@ import {
 } from './interfaces'
 import { createDriver, TestDriver } from './test-utils/test-driver'
 import { createLogger, TestMockLogger } from './test-utils/test-mock-logger'
+
+// Local helper to simulate raw SQL expressions in tests
+const unescape = (sql: string): any => {
+  return { __raw: true, sql: sql.trim() }
+}
 
 type Data = {
   index: number
@@ -411,7 +411,7 @@ describe('QueryRunner with raw operators', () => {
       // Test passes the criteria to driver correctly
       expect(driver.called).toHaveLength(1)
       expect(driver.called[0].method).toBe('execute')
-      
+
       // Check that the criteria contains the filter
       const criteria = driver.called[0].args[0]
       expect(criteria.filter).toBeDefined()

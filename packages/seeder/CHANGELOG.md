@@ -1,5 +1,11 @@
 # @rym-lib/nakadachi-interactor-mixin-validator
 
+## 1.2.2
+
+### Patch Changes
+
+- update nakadachi, query-module
+
 ## 1.2.1
 
 ### Patch Changes

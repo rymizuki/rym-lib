@@ -21,17 +21,35 @@ function keys<T extends Record<string, unknown>>(value: T) {
 function isRawSqlExpression(fieldName: string): boolean {
   // Check if the field name contains SQL keywords or complex expressions
   const sqlKeywords = [
-    'CASE', 'WHEN', 'THEN', 'ELSE', 'END',
-    'CONCAT', 'COALESCE', 'SUBSTRING', 'LENGTH',
-    'COUNT', 'SUM', 'AVG', 'MAX', 'MIN',
-    'UPPER', 'LOWER', 'TRIM',
-    '(', ')', '+', '-', '*', '/'
+    'CASE',
+    'WHEN',
+    'THEN',
+    'ELSE',
+    'END',
+    'CONCAT',
+    'COALESCE',
+    'SUBSTRING',
+    'LENGTH',
+    'COUNT',
+    'SUM',
+    'AVG',
+    'MAX',
+    'MIN',
+    'UPPER',
+    'LOWER',
+    'TRIM',
+    '(',
+    ')',
+    '+',
+    '-',
+    '*',
+    '/',
   ]
-  
+
   const upperFieldName = fieldName.toUpperCase()
-  
+
   // Check for SQL keywords or complex expressions
-  return sqlKeywords.some(keyword => upperFieldName.includes(keyword))
+  return sqlKeywords.some((keyword) => upperFieldName.includes(keyword))
 }
 
 const defaults: BuildSqlOptions = {

@@ -1,5 +1,13 @@
 # @rym-lib/query-module-driver-prisma
 
+## 1.2.2
+
+### Patch Changes
+
+- update nakadachi, query-module
+- Updated dependencies
+  - @rym-lib/query-module-sql-builder@1.2.2
+
 ## 1.2.1
 
 ### Patch Changes

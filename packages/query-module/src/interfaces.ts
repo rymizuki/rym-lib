@@ -16,9 +16,11 @@ type QueryFilterOperator =
 export type QueryFilter<Data extends QueryResultData> = Partial<
   Record<
     keyof Data,
-    Partial<Record<Exclude<QueryFilterOperator, 'in'>, any> & { 
-      in: any[]
-    }>
+    Partial<
+      Record<Exclude<QueryFilterOperator, 'in'>, any> & {
+        in: any[]
+      }
+    >
   >
 >
 type QueryCriteriaOrderByRecord<

@@ -1,5 +1,15 @@
 # @rym-lib/nakadachi-interactor
 
+## 1.2.2
+
+### Patch Changes
+
+- update nakadachi, query-module
+- Updated dependencies
+  - @rym-lib/exception@1.2.2
+  - @rym-lib/inversify-bundler@1.2.2
+  - @rym-lib/nakadachi@1.2.2
+
 ## 1.2.1
 
 ### Patch Changes
