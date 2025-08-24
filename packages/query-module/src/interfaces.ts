@@ -69,6 +69,7 @@ export interface QueryDriverInterface {
   execute<D>(
     criteria: QueryCriteriaInterface<D>,
   ): Promise<Record<string, any>[]>
+  customFilter(fn: (source: any) => any): any
 }
 
 interface QuerySourceInterface<
@@ -111,9 +112,10 @@ export interface QueryRunnerMiddleware<
 export type QueryRuleFunction<
   Data extends QueryResultData,
   Driver extends QueryDriverInterface,
-  FilterKey = any,
-  SourceInstance = ReturnType<Parameters<Driver['source']>[0]>,
-> = (value: any, sourceInstance: SourceInstance) => string | any
+  Filter extends QueryFilter<any> = QueryFilter<Data>,
+  FilterKey extends keyof Filter = keyof Filter,
+  SourceInstance = Parameters<Driver['customFilter']>[0],
+> = (value: Filter[FilterKey], sourceInstance: SourceInstance) => string | any
 
 export interface QuerySpecification<
   Data extends QueryResultData,
@@ -126,7 +128,7 @@ export interface QuerySpecification<
   rules: Partial<
     Record<
       keyof NonNullable<Params['filter']> | string,
-      string | QueryRuleFunction<Data, Driver>
+      string | QueryRuleFunction<Data, Driver, NonNullable<Params['filter']>>
     >
   >
   criteria?: (params: Partial<Params>) => Partial<Params>

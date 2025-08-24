@@ -45,15 +45,15 @@ export class QueryRunner<
     }
 
     // Execute source function first to get the builder instance
-    const sourceInstance = this.driver.source(this.spec.source)
+    const source = this.driver.source(this.spec.source)
 
     const criteria = new QueryCriteria<Data>(
       this.spec.rules,
       this.spec.criteria ? this.spec.criteria(params) : params,
-      sourceInstance, // Pass sourceInstance to QueryCriteria
+      this.driver.customFilter,
     )
 
-    const items = await sourceInstance.execute(criteria)
+    const items = await source.execute(criteria)
     const result = {
       items: items as Data[],
     } as any

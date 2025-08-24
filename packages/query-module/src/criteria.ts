@@ -7,6 +7,7 @@ import {
   QueryCriteriaTake,
   QueryFilter,
   QueryRunnerCriteria,
+  QueryDriverInterface,
 } from './interfaces'
 
 export class QueryCriteria<Data extends QueryResultData>
@@ -27,7 +28,7 @@ export class QueryCriteria<Data extends QueryResultData>
       >
     >,
     input: Partial<typeof this.attr>,
-    private sourceInstance?: any,
+    private customFilter: QueryDriverInterface['customFilter'],
   ) {
     this.attr = this.remap({
       filter: input.filter ?? {},
@@ -68,7 +69,9 @@ export class QueryCriteria<Data extends QueryResultData>
 
             // If mapping value is a function, execute it with value and sourceInstance
             if (typeof mappingValue === 'function') {
-              const result = mappingValue(value, this.sourceInstance)
+              const result = this.customFilter((source) =>
+                mappingValue(value, source),
+              )
               // If the result is a string, use it as the renamed key
               if (typeof result === 'string') {
                 ret[result] = value

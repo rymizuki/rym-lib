@@ -30,6 +30,14 @@ export class QueryDriverSequelize implements QueryDriverInterface {
     return this
   }
 
+  customFilter(fn: (source: any) => any): any {
+    if (!this.setup) {
+      throw new Error('QueryDriver must be required source.')
+    }
+    const source = this.setup(this.builderSetup())
+    return fn(source)
+  }
+
   async execute(
     criteria: QueryCriteriaInterface,
   ): Promise<Record<string, any>[]> {

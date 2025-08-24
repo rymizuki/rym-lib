@@ -1,4 +1,4 @@
-import { QueryDriverInterface, QueryCriteriaInterface } from '../interfaces'
+import { QueryCriteriaInterface, QueryDriverInterface } from '../interfaces'
 
 class TestDriver<Data extends Record<string, any> = Record<string, any>>
   implements QueryDriverInterface
@@ -18,6 +18,20 @@ class TestDriver<Data extends Record<string, any> = Record<string, any>>
       this.data = this.initial
     }
     return this
+  }
+
+  customFilter(fn: (source: any) => any): any {
+    // For testing, create a mock source object
+    const mockSource = {
+      buildDynamicExpression: (key: string, value: any) => 
+        `dynamic_${key}_${JSON.stringify(value)}`,
+      buildComplexQuery: (value: any) => 
+        `CASE WHEN status = "${value.eq}" THEN 1 ELSE 0 END`,
+      from: (table: string, alias?: string) => mockSource,
+      column: (col: string) => col,
+      where: (condition: any) => mockSource,
+    }
+    return fn(mockSource)
   }
 
   async execute<D>(criteria: QueryCriteriaInterface<D>): Promise<Data[]> {
