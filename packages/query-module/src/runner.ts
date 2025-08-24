@@ -4,6 +4,8 @@ import { QueryCriteria } from './criteria'
 import { QueryRunnerResourceNotFoundException } from './exceptions'
 import {
   QueryDriverInterface,
+  QueryFilter,
+  QueryFilterOperator,
   QueryResultData,
   QueryResultList,
   QueryRunnerContext,
@@ -50,7 +52,7 @@ export class QueryRunner<
     const criteria = new QueryCriteria<Data>(
       this.spec.rules,
       this.spec.criteria ? this.spec.criteria(params) : params,
-      this.driver.customFilter.bind(this.driver),
+      this.driver,
     )
 
     const items = await source.execute(criteria)

@@ -2,6 +2,7 @@ import { PrismaClient } from '@prisma/client'
 import {
   QueryCriteriaInterface,
   QueryDriverInterface,
+  QueryFilterOperator,
   QueryLoggerInterface,
 } from '@rym-lib/query-module'
 import {
@@ -31,11 +32,15 @@ export class QueryDriverPrisma implements QueryDriverInterface {
   }
 
   customFilter(
+    operator: QueryFilterOperator,
+    value: any,
     filter: (
-      source: SQLBuilderPort,
+      operator: QueryFilterOperator,
+      value: any,
+      builder: SQLBuilderPort,
     ) => SQLBuilderPort | SQLBuilderConditionsPort,
   ): SQLBuilderPort | SQLBuilderConditionsPort {
-    return filter(this.builderSetup())
+    return filter(operator, value, this.builderSetup())
   }
 
   async execute<D>(criteria: QueryCriteriaInterface<D>): Promise<
@@ -49,6 +54,7 @@ export class QueryDriverPrisma implements QueryDriverInterface {
     const [sql, replacements] = buildSQL(
       this.setup(this.builderSetup()),
       criteria,
+      {},
     )
     this.context.logger.verbose(`[QueryDriverPrisma] ${sql}`, { replacements })
 

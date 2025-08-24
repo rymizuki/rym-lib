@@ -1,9 +1,11 @@
+import { AnyMxRecord } from 'dns'
+
 export type QueryResultData = any
 export interface QueryResultList<D> {
   items: D[]
 }
 
-type QueryFilterOperator =
+export type QueryFilterOperator =
   | 'contains'
   | 'not_contains'
   | 'eq' // = (automatically handles raw SQL expressions)
@@ -16,11 +18,12 @@ type QueryFilterOperator =
 export type QueryFilter<Data extends QueryResultData> = Partial<
   Record<
     keyof Data | (string & {}),
-    Partial<
-      Record<Exclude<QueryFilterOperator, 'in'>, any> & {
-        in: any[]
-      }
-    >
+    | Partial<
+        Record<Exclude<QueryFilterOperator, 'in'>, any> & {
+          in: any[]
+        }
+      >
+    | QueryRuleFunction<Data, QueryDriverInterface, any>
   >
 >
 type QueryCriteriaOrderByRecord<
@@ -69,7 +72,11 @@ export interface QueryDriverInterface {
   execute<D>(
     criteria: QueryCriteriaInterface<D>,
   ): Promise<Record<string, any>[]>
-  customFilter(fn: (source: any) => any): any
+  customFilter(
+    operator: QueryFilterOperator,
+    value: any,
+    fn: (builder: any) => any,
+  ): any
 }
 
 interface QuerySourceInterface<
@@ -106,6 +113,8 @@ export interface QueryRunnerMiddleware<
   ) => void | Promise<void>
 }
 
+type UnpackArray<T> = T extends Array<infer U> ? U : T
+
 /**
  * Type for function-based rules that provides type safety for both value and sourceInstance parameters
  */
@@ -113,9 +122,9 @@ export type QueryRuleFunction<
   Data extends QueryResultData,
   Driver extends QueryDriverInterface,
   Filter extends QueryFilter<any> = QueryFilter<Data>,
-  FilterKey extends keyof Filter = keyof Filter,
-  SourceInstance = Parameters<Parameters<Driver['customFilter']>[0]>[0],
-> = (value: Filter[FilterKey], sourceInstance: SourceInstance) => string | any
+  Op extends QueryFilterOperator = QueryFilterOperator,
+  SourceInstance = Parameters<Parameters<Driver['customFilter']>[2]>[0],
+> = (operator: Op, value: any, sourceInstance: SourceInstance) => string | any
 
 export interface QuerySpecification<
   Data extends QueryResultData,

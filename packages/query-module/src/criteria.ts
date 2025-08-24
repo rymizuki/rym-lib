@@ -1,13 +1,13 @@
 import {
-  QueryResultData,
   QueryCriteriaInterface,
-  QuerySpecification,
   QueryCriteriaOrderBy,
   QueryCriteriaSkip,
   QueryCriteriaTake,
-  QueryFilter,
-  QueryRunnerCriteria,
   QueryDriverInterface,
+  QueryFilter,
+  QueryFilterOperator,
+  QueryResultData,
+  QuerySpecification,
 } from './interfaces'
 
 export class QueryCriteria<Data extends QueryResultData>
@@ -21,14 +21,9 @@ export class QueryCriteria<Data extends QueryResultData>
   }
 
   constructor(
-    private mapping: Partial<
-      Record<
-        keyof NonNullable<QueryRunnerCriteria<Data>['filter']> | string,
-        string | ((value: any, sourceInstance: any) => string)
-      >
-    >,
-    input: Partial<typeof this.attr>,
-    private customFilter: QueryDriverInterface['customFilter'],
+    private mapping: QuerySpecification<Data, any>['rules'],
+    private input: Partial<typeof this.attr>,
+    private driver: QueryDriverInterface,
   ) {
     this.attr = this.remap({
       filter: input.filter ?? {},
@@ -70,18 +65,17 @@ export class QueryCriteria<Data extends QueryResultData>
             // Skip undefined values
             if (value === undefined) continue
 
-            // If mapping value is a function, execute it with value and sourceInstance
+            // If mapping value is a function, execute it and use result as field name
             if (typeof mappingValue === 'function') {
-              const result = this.customFilter((source) =>
-                mappingValue(value, source),
-              )
-              // If the result is a string, use it as the renamed key
-              if (typeof result === 'string') {
-                ret[result] = value
-              } else {
-                // For SQL expressions, use the expression as the value for the original key
-                // This allows the SQL builder to handle the expression directly
-                ret[prev] = result
+              const operators = Object.keys(value) as QueryFilterOperator[]
+              for (const operator of operators) {
+                const operatorValue = (value as any)[operator]
+                const result = this.driver.customFilter(
+                  operator,
+                  operatorValue,
+                  mappingValue as any,
+                )
+                ret[prev] = { [operator]: result }
               }
             } else {
               // Static string mapping (rename)
