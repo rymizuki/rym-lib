@@ -14,8 +14,8 @@ class DummyDriver implements QueryDriverInterface {
   source(setup: (...args: any[]) => any): this {
     return this
   }
-  customFilter(fn: (source: any) => any): any {
-    // For middleware testing, just return empty object
+  customFilter(operator: string, value: any, fn: (builder: any) => any): any {
+    // For middleware testing, just return the result of calling the function with empty object
     return fn({})
   }
 

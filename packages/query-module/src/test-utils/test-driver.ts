@@ -20,7 +20,18 @@ class TestDriver<Data extends Record<string, any> = Record<string, any>>
     return this
   }
 
-  customFilter(fn: (source: any) => any): any {
+  buildDynamicExpression(key: string, value: any): string {
+    return `dynamic_${key}_${JSON.stringify(value)}`
+  }
+
+  buildComplexQuery(value: any): string {
+    if (typeof value === 'object' && value.eq !== undefined) {
+      return `CASE WHEN status = "${value.eq}" THEN 1 ELSE 0 END`
+    }
+    return `CASE WHEN condition THEN 1 ELSE 0 END`
+  }
+
+  customFilter(operator: string, value: any, fn: (value: any, source: any) => any): any {
     // For testing, create a mock source object
     const mockSource = {
       buildDynamicExpression: (key: string, value: any) =>
@@ -31,7 +42,8 @@ class TestDriver<Data extends Record<string, any> = Record<string, any>>
       column: (col: string) => col,
       where: (condition: any) => mockSource,
     }
-    return fn(mockSource)
+    // Call the function with value and mockSource
+    return fn(value, mockSource)
   }
 
   async execute<D>(criteria: QueryCriteriaInterface<D>): Promise<Data[]> {

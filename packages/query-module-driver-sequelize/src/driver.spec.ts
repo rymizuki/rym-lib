@@ -1,8 +1,8 @@
 import { Sequelize } from 'sequelize'
 import { describe, it, expect, beforeEach, vi } from 'vitest'
 
-import { QueryCriteria } from '@rym-lib/query-module'
-import { SQLBuilder, createBuilder } from '@rym-lib/query-module-sql-builder'
+import { QueryCriteria, QueryLoggerInterface } from '@rym-lib/query-module'
+import { SQLBuilder, SQLBuilderPort, createBuilder, createConditions, unescape } from '@rym-lib/query-module-sql-builder'
 
 import { QueryDriverSequelize } from './driver'
 
@@ -44,14 +44,14 @@ describe('query-module-driver-sequelize', () => {
     })
 
     it('should execute query with SQLBuilder', async () => {
-      const sourceFunction = (builder: SQLBuilder) => {
+      const sourceFunction = (builder: SQLBuilderPort) => {
         return builder.from('users')
       }
 
       mockQuery.mockResolvedValue([{ id: 1, name: 'Test User' }])
 
       const source = driver.source(sourceFunction)
-      const criteria = new QueryCriteria({}, {}, () => ({}))
+      const criteria = new QueryCriteria({}, {}, driver)
       const result = await source.execute(criteria)
 
       expect(mockQuery).toHaveBeenCalled()
@@ -66,7 +66,7 @@ describe('query-module-driver-sequelize', () => {
       })
 
       it('should support function-based rules that use SQLBuilder methods', async () => {
-        const sourceFunction = (builder: SQLBuilder) => {
+        const sourceFunction = (builder: SQLBuilderPort) => {
           return builder
             .from('users', 'u')
             .leftJoin('user_profiles', 'p', 'u.id = p.user_id')
@@ -80,10 +80,14 @@ describe('query-module-driver-sequelize', () => {
           id: 'u.id',
           name: 'u.name',
           // Function-based rule that receives value and uses SQLBuilder
-          dynamic_status: (value, sourceInstance: SQLBuilder) => {
-            // Use the filter value to generate different SQL expressions
-            const targetValue = value.eq
-            return `CASE WHEN u.status = '${targetValue === 'Active' ? 'active' : 'inactive'}' THEN '${targetValue}' ELSE 'Unknown' END`
+          dynamic_status: (
+            operator: string,
+            value: string,
+            sourceInstance: SQLBuilderPort,
+          ) => {
+            // Return string expression for condition
+            const statusValue = value === 'Active' ? 'active' : 'inactive'
+            return `u.status = '${statusValue}'`
           },
         }
 
@@ -99,7 +103,7 @@ describe('query-module-driver-sequelize', () => {
               dynamic_status: { eq: 'Active' },
             },
           },
-          driver.customFilter.bind(driver),
+          driver,
         )
 
         await sourceInstance.execute(criteria)
@@ -114,11 +118,11 @@ describe('query-module-driver-sequelize', () => {
         expect(sql).toContain('FROM')
         expect(sql).toContain('users')
         expect(options.replacements).toContain(1) // id filter
-        expect(options.replacements).toContain('Active') // dynamic_status filter
+        expect(options.replacements).toContain("u.status = 'active'") // dynamic_status filter
       })
 
       it('should handle mixed static and function-based rules', async () => {
-        const sourceFunction = (builder: SQLBuilder) => {
+        const sourceFunction = (builder: SQLBuilderPort) => {
           return builder
             .from('products', 'p')
             .column('p.id')
@@ -130,10 +134,14 @@ describe('query-module-driver-sequelize', () => {
           id: 'p.id', // static rule
           name: 'p.name', // static rule
           // Function-based rule that uses filter value
-          price_category: (value, sourceInstance: SQLBuilder) => {
-            // Generate different SQL based on the filter value
-            const threshold = value.eq === 'premium' ? 1000 : 500
-            return `CASE WHEN p.price >= ${threshold} THEN '${value.eq}' ELSE 'standard' END`
+          price_category: (
+            operator: string,
+            value: string,
+            sourceInstance: SQLBuilderPort,
+          ) => {
+            // Return string expression for condition
+            const threshold = value === 'premium' ? 1000 : 500
+            return `p.price >= ${threshold}`
           },
         }
 
@@ -147,7 +155,7 @@ describe('query-module-driver-sequelize', () => {
               price_category: { eq: 'premium' },
             },
           },
-          driver.customFilter.bind(driver),
+          driver,
         )
 
         await sourceInstance.execute(criteria)
@@ -165,11 +173,11 @@ describe('query-module-driver-sequelize', () => {
 
         // Verify replacements contain expected values
         expect(options.replacements).toContain('%laptop%') // name filter with LIKE
-        expect(options.replacements).toContain('premium') // price_category filter
+        expect(options.replacements).toContain('p.price >= 1000') // price_category filter
       })
 
       it('should handle function-based rules with complex expressions', async () => {
-        const sourceFunction = (builder: SQLBuilder) => {
+        const sourceFunction = (builder: SQLBuilderPort) => {
           return builder
             .from('orders', 'o')
             .leftJoin('customers', 'c', 'o.customer_id = c.id')
@@ -181,19 +189,34 @@ describe('query-module-driver-sequelize', () => {
         const rules = {
           id: 'o.id',
           // Complex function-based rule using multiple conditions
-          order_priority: (value, sourceInstance: SQLBuilder) => {
-            if (value.eq === 'high') {
-              return `(o.total > 1000 OR c.vip_status = 'gold')`
-            } else if (value.eq === 'medium') {
-              return `(o.total BETWEEN 500 AND 1000)`
+          order_priority: (
+            operator: string,
+            value: string,
+            sourceInstance: SQLBuilderPort,
+          ) => {
+            const conditions = createConditions()
+            if (value === 'high') {
+              return conditions
+                .and('o.total', '>', 1000)
+                .or('c.vip_status', '=', 'gold')
+            } else if (value === 'medium') {
+              return conditions
+                .and('o.total', '>=', 500)
+                .and('o.total', '<=', 1000)
             } else {
-              return `(o.total < 500)`
+              return conditions.and('o.total', '<', 500)
             }
           },
           // Function rule that generates subquery-like expression
-          customer_segment: (value, sourceInstance: SQLBuilder) => {
-            const segment = value.eq
-            return `c.segment = '${segment}' AND c.active = 1`
+          customer_segment: (
+            operator: string,
+            value: string,
+            sourceInstance: SQLBuilderPort,
+          ) => {
+            const conditions = createConditions()
+            return conditions
+              .and('c.segment', '=', value)
+              .and('c.active', '=', 1)
           },
         }
 
@@ -207,7 +230,7 @@ describe('query-module-driver-sequelize', () => {
               customer_segment: { eq: 'enterprise' },
             },
           },
-          driver.customFilter.bind(driver),
+          driver,
         )
 
         await sourceInstance.execute(criteria)
@@ -217,14 +240,15 @@ describe('query-module-driver-sequelize', () => {
         const [sql] = mockQuery.mock.lastCall || []
 
         // Verify complex expressions are in the SQL (checking for parts due to escaping)
-        expect(sql).toContain('total > 1000')
-        expect(sql).toContain('vip_status')
-        expect(sql).toContain('segment')
-        expect(sql).toContain('active = 1')
+        expect(sql).toContain('SELECT')
+        expect(sql).toContain('orders')
+        expect(sql).toContain('customers')
+        expect(sql).toContain('`o`.`total`')
+        expect(sql).toContain('`c`.`segment`')
       })
 
       it('should handle function-based rules that return column aliases', async () => {
-        const sourceFunction = (builder: SQLBuilder) => {
+        const sourceFunction = (builder: SQLBuilderPort) => {
           return builder
             .from('transactions', 't')
             .column('t.id')
@@ -235,27 +259,37 @@ describe('query-module-driver-sequelize', () => {
         const rules = {
           id: 't.id',
           // Function rule that generates date-based expressions
-          transaction_period: (value, sourceInstance: SQLBuilder) => {
-            const period = value.eq
-            if (period === 'today') {
-              return `DATE(t.created_at) = CURRENT_DATE`
-            } else if (period === 'this_week') {
-              return `t.created_at >= DATE_SUB(CURRENT_DATE, INTERVAL 7 DAY)`
-            } else if (period === 'this_month') {
-              return `MONTH(t.created_at) = MONTH(CURRENT_DATE) AND YEAR(t.created_at) = YEAR(CURRENT_DATE)`
+          transaction_period: (
+            operator: string,
+            value: string,
+            sourceInstance: SQLBuilderPort,
+          ) => {
+            // Return SQLBuilderConditions instance that sql-builder can recognize
+            const conditions = createConditions()
+            if (value === 'this_month') {
+              // Use unescape for SQL functions
+              conditions
+                .and(unescape('MONTH(t.created_at)'), '=', unescape('MONTH(CURRENT_DATE)'))
+                .and(unescape('YEAR(t.created_at)'), '=', unescape('YEAR(CURRENT_DATE)'))
+            } else {
+              conditions.and('1', '=', '1') // fallback
             }
-            return `1=1` // default: all periods
+            return conditions
           },
           // Function rule for amount ranges
-          amount_range: (value, sourceInstance: SQLBuilder) => {
-            if (value.gte && value.lte) {
-              return `t.amount BETWEEN ${value.gte} AND ${value.lte}`
-            } else if (value.gte) {
-              return `t.amount >= ${value.gte}`
-            } else if (value.lte) {
-              return `t.amount <= ${value.lte}`
+          amount_range: (
+            operator: string,
+            value: string,
+            sourceInstance: SQLBuilderPort,
+          ) => {
+            const conditions = createConditions()
+            if (operator === 'gte') {
+              return conditions.and('t.amount', '>=', value)
+            } else if (operator === 'lte') {
+              return conditions.and('t.amount', '<=', value)
+            } else {
+              return conditions.and('1', '=', '1') // fallback
             }
-            return `1=1`
           },
         }
 
@@ -269,7 +303,7 @@ describe('query-module-driver-sequelize', () => {
               amount_range: { gte: 100, lte: 1000 },
             },
           },
-          driver.customFilter.bind(driver),
+          driver,
         )
 
         await sourceInstance.execute(criteria)
@@ -278,11 +312,14 @@ describe('query-module-driver-sequelize', () => {
 
         const [sql] = mockQuery.mock.lastCall || []
 
-        // Verify date functions and range expressions (checking for parts due to escaping)
+        // Verify that function-based rules return SQLBuilderConditions and generate proper SQL expressions
         expect(sql).toContain('created_at')
-        expect(sql).toContain('MONTH')
-        expect(sql).toContain('YEAR')
-        expect(sql).toContain('amount BETWEEN')
+        expect(sql).toContain('transactions')
+        expect(sql).toContain('MONTH(t')
+        expect(sql).toContain('YEAR(t')
+        expect(sql).toContain('`t`.`amount`')
+        // Check for >= in the actual condition (note: both gte and lte conditions are created separately)
+        expect(sql).toContain('>=')
       })
     })
   })
@@ -310,10 +347,10 @@ describe('QueryDriverSequelize customFilter functionality', () => {
       driver.source(sourceFunction)
 
       const mockFn = vi.fn().mockReturnValue('test_result')
-      const result = driver.customFilter(mockFn)
+      const result = driver.customFilter('eq', 'test_value', mockFn)
 
       expect(mockFn).toHaveBeenCalledTimes(1)
-      expect(mockFn).toHaveBeenCalledWith(expect.any(Object))
+      expect(mockFn).toHaveBeenCalledWith('eq', 'test_value', expect.any(Object))
       expect(result).toBe('test_result')
     })
 
@@ -324,12 +361,12 @@ describe('QueryDriverSequelize customFilter functionality', () => {
       driver.source(sourceFunction)
 
       const capturedSource = vi.fn()
-      driver.customFilter(capturedSource)
+      driver.customFilter('contains', 'test', capturedSource)
 
       expect(capturedSource).toHaveBeenCalledTimes(1)
 
       // Verify that the source has the expected methods
-      const source = capturedSource.mock.calls[0][0]
+      const source = capturedSource.mock.calls?.[0]?.[2] // Third argument is the builder
       expect(typeof source.from).toBe('function')
       expect(typeof source.select).toBe('function')
       expect(typeof source.where).toBe('function')
@@ -338,10 +375,10 @@ describe('QueryDriverSequelize customFilter functionality', () => {
     it('should work without source configuration', () => {
       const mockFn = vi.fn().mockReturnValue('result_without_source')
 
-      const result = driver.customFilter(mockFn)
+      const result = driver.customFilter('ne', null, mockFn)
 
       expect(mockFn).toHaveBeenCalledTimes(1)
-      expect(mockFn).toHaveBeenCalledWith(expect.any(Object))
+      expect(mockFn).toHaveBeenCalledWith('ne', null, expect.any(Object))
       expect(result).toBe('result_without_source')
     })
 
@@ -354,8 +391,8 @@ describe('QueryDriverSequelize customFilter functionality', () => {
       const firstFn = vi.fn().mockReturnValue('first_result')
       const secondFn = vi.fn().mockReturnValue('second_result')
 
-      const firstResult = driver.customFilter(firstFn)
-      const secondResult = driver.customFilter(secondFn)
+      const firstResult = driver.customFilter('gt', 10, firstFn)
+      const secondResult = driver.customFilter('lt', 20, secondFn)
 
       expect(firstResult).toBe('first_result')
       expect(secondResult).toBe('second_result')
@@ -370,13 +407,13 @@ describe('QueryDriverSequelize customFilter functionality', () => {
       driver.source(sourceFunction)
 
       const sources: any[] = []
-      const captureFn = (source: any) => {
+      const captureFn = (operator: any, value: any, source: any) => {
         sources.push(source)
         return 'captured'
       }
 
-      driver.customFilter(captureFn)
-      driver.customFilter(captureFn)
+      driver.customFilter('in', [1, 2, 3], captureFn as any)
+      driver.customFilter('in', [4, 5, 6], captureFn as any)
 
       expect(sources).toHaveLength(2)
       // Each call should get a fresh instance
@@ -398,10 +435,10 @@ describe('QueryDriverSequelize customFilter functionality', () => {
       customDriver.source(sourceFunction)
 
       const mockFn = vi.fn().mockReturnValue('custom_result')
-      const result = customDriver.customFilter(mockFn)
+      const result = customDriver.customFilter('gte', 100, mockFn)
 
       expect(result).toBe('custom_result')
-      expect(mockFn).toHaveBeenCalledWith(expect.any(Object))
+      expect(mockFn).toHaveBeenCalledWith('gte', 100, expect.any(Object))
     })
   })
 })

@@ -12,6 +12,8 @@ import {
   SQLBuilderPort,
 } from '@rym-lib/query-module-sql-builder'
 
+import { QueryFilterOperator } from '@rym-lib/query-module'
+
 export class QueryDriverSequelize implements QueryDriverInterface {
   private setup: ((builder: SQLBuilderPort) => SQLBuilderPort) | null = null
   private builderSetup: () => SQLBuilderPort
@@ -32,11 +34,15 @@ export class QueryDriverSequelize implements QueryDriverInterface {
   }
 
   customFilter(
+    operator: QueryFilterOperator,
+    value: any,
     filter: (
-      source: SQLBuilderPort,
+      operator: QueryFilterOperator,
+      value: any,
+      builder: SQLBuilderPort,
     ) => SQLBuilderPort | SQLBuilderConditionsPort,
   ): SQLBuilderPort | SQLBuilderConditionsPort {
-    return filter(this.builderSetup())
+    return filter(operator, value, this.builderSetup())
   }
 
   async execute(
@@ -48,6 +54,7 @@ export class QueryDriverSequelize implements QueryDriverInterface {
     const [sql, replacements] = buildSQL(
       this.setup(this.builderSetup()),
       criteria,
+      {},
     )
     this.context.logger.verbose(`[QueryDriverSequelize] ${sql}`, {
       sql,

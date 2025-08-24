@@ -3,12 +3,18 @@ import {
   createConditions,
   is_not_null,
   is_null,
-  unescape,
+  SQLBuilderConditionExpressionPort,
+  SQLBuilderConditions,
   SQLBuilderConditionsPort,
   SQLBuilderPort,
+  unescape,
 } from 'coral-sql'
 
-import type { QueryCriteriaInterface, QueryFilter } from '@rym-lib/query-module'
+import type {
+  QueryCriteriaInterface,
+  QueryDriverInterface,
+  QueryFilter,
+} from '@rym-lib/query-module'
 
 export { createBuilder }
 
@@ -58,7 +64,7 @@ const defaults: BuildSqlOptions = {
   containsSplitSpaces: true,
 }
 
-export function buildSQL(
+export function buildSQL<Driver extends QueryDriverInterface>(
   builder: SQLBuilderPort,
   criteria: QueryCriteriaInterface,
   options: Partial<BuildSqlOptions> = {},
@@ -143,7 +149,42 @@ function createCond(
   // If useUnescape is true, use unescape to avoid backticks for SQL functions
   const field = useUnescape ? unescape(name) : name
   for (const operator of keys(property)) {
-    const value = property[operator] as string
+    const value = property[operator] as
+      | string
+      | string[]
+      | SQLBuilderPort
+      | SQLBuilderConditionsPort
+      | SQLBuilderConditionExpressionPort
+
+
+    if (value instanceof SQLBuilderConditions) {
+      cond.and(value)
+      continue
+    }
+    if (value !== null && typeof value === 'object' && 'toSQL' in value) {
+      cond.and(value as Exclude<typeof value, SQLBuilderConditionsPort>)
+      continue
+    }
+
+    // Check if value is a raw SQL expression (from function-based rules)
+    if (typeof value === 'string' && isRawSqlExpression(value)) {
+      // Use the SQL expression as the field name
+      switch (operator) {
+        case 'eq': {
+          cond.and(`(${value})`, '=', '?')
+          break
+        }
+        case 'ne': {
+          cond.and(`(${value})`, '!=', '?')
+          break
+        }
+        default: {
+          cond.and(`(${value})`, operator as any, '?')
+        }
+      }
+      continue
+    }
+
     switch (operator) {
       case 'eq': {
         if (value === null) {
@@ -207,6 +248,7 @@ function createCond(
       }
       case 'contains': {
         if (!value) break
+        if (Array.isArray(value)) break
         const values =
           options.containsSplitSpaces && /\x20/.test(value)
             ? value.split(/\x20+/)
@@ -219,6 +261,7 @@ function createCond(
       }
       case 'not_contains': {
         if (!value) break
+        if (Array.isArray(value)) break
         const values =
           options.containsSplitSpaces && /\x20/.test(value)
             ? value.split(/\x20+/)
