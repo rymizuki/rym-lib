@@ -25,7 +25,10 @@ export type QueryFilter<Data extends QueryResultData> = Partial<
 >
 type QueryCriteriaOrderByRecord<
   Data,
-  Keys extends Extract<keyof Data | (string & {}), string> = Extract<keyof Data | (string & {}), string>,
+  Keys extends Extract<keyof Data | (string & {}), string> = Extract<
+    keyof Data | (string & {}),
+    string
+  >,
 > = `${Keys}` | `${Keys}:${'asc' | 'desc'}`
 export type QueryCriteriaOrderBy<Data> =
   | QueryCriteriaOrderByRecord<Data>

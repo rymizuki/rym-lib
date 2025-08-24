@@ -1,5 +1,13 @@
 # @rym-lib/nakadachi-adapter-react-router
 
+## 1.2.5
+
+### Patch Changes
+
+- fix query-module bugs
+- Updated dependencies
+  - @rym-lib/nakadachi@1.2.5
+
 ## 1.2.4
 
 ### Patch Changes
