@@ -75,7 +75,11 @@ export class QueryCriteria<Data extends QueryResultData>
                   operatorValue,
                   mappingValue as any,
                 )
-                ret[prev] = { [operator]: result }
+                // Initialize the object if it doesn't exist
+                if (!ret[prev]) {
+                  ret[prev] = {}
+                }
+                ret[prev][operator] = result
               }
             } else {
               // Static string mapping (rename)
