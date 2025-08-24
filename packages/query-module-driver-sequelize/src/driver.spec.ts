@@ -299,7 +299,7 @@ describe('query-module-driver-sequelize', () => {
 
         const [sql] = mockQuery.mock.lastCall || []
 
-        // Verify date functions and range expressions (checking for parts due to escaping)
+        // Verify that function-based rules are treated as field names in WHERE clause
         expect(sql).toContain('created_at')
         expect(sql).toContain('transactions')
         expect(sql).toContain('transaction_period')
