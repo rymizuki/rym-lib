@@ -1,0 +1,34 @@
+generator client {
+  provider               = "prisma-client"
+  output                 = "../generated/prisma"
+  moduleFormat           = "esm"
+  generatedFileExtension = "ts"
+}
+
+datasource db {
+  provider          = "postgresql"
+  url               = env("DATABASE_URL")
+}
+
+model User {
+  id        String @id
+  name      String
+  birthdate String
+
+  @@map("user")
+}
+
+model UserInactivation {
+  id          String @id
+  created_at  DateTime
+
+  @@map("user_inactivation")
+}
+
+model Order {
+  id          String @id
+  user_id     String
+  created_at  DateTime
+
+  @@map("order")
+}
