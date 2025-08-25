@@ -65,27 +65,9 @@ export class QueryCriteria<Data extends QueryResultData>
             // Skip undefined values
             if (value === undefined) continue
 
-            // If mapping value is a function, execute it and use result as SQL expression
-            if (typeof mappingValue === 'function') {
-              const operators = Object.keys(value) as QueryFilterOperator[]
-              for (const operator of operators) {
-                const operatorValue = (value as any)[operator]
-                const result = this.driver.customFilter(
-                  operator,
-                  operatorValue,
-                  mappingValue as any,
-                )
-                // Initialize the object if it doesn't exist
-                if (!ret[prev]) {
-                  ret[prev] = {}
-                }
-                ret[prev][operator] = result
-              }
-            } else {
-              // Static string mapping (rename)
-              const rename = mappingValue
-              ret[rename ? rename : prev] = value
-            }
+            // Static string mapping (rename)
+            const rename = mappingValue as string
+            ret[rename ? rename : prev] = value
           }
           results.push(ret)
         }
