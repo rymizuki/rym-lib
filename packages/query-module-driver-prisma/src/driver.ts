@@ -7,6 +7,8 @@ import {
 import {
   buildSQL,
   createBuilder,
+  SQLBuilderConditionExpressionPort,
+  SQLBuilderOperator,
   SQLBuilderPort,
 } from '@rym-lib/query-module-sql-builder'
 
@@ -29,7 +31,6 @@ export class QueryDriverPrisma implements QueryDriverInterface {
     return this
   }
 
-
   async execute<D>(criteria: QueryCriteriaInterface<D>): Promise<
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     Record<string, any>[]
@@ -50,4 +51,11 @@ export class QueryDriverPrisma implements QueryDriverInterface {
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     return rows as Record<string, any>[]
   }
+
+  customFilter?:
+    | ((
+        content: { op: SQLBuilderOperator; value: string | string[] },
+        context: { builder: SQLBuilderPort },
+      ) => SQLBuilderPort | SQLBuilderConditionExpressionPort)
+    | undefined
 }

@@ -33,8 +33,11 @@ export type QueryCriteriaOrderBy<Data> =
   | undefined
 export type QueryCriteriaTake = number | undefined
 export type QueryCriteriaSkip = number | undefined
-export interface QueryRunnerCriteria<Data extends QueryResultData> {
-  filter?: QueryFilter<Data> | QueryFilter<Data>[]
+export interface QueryRunnerCriteria<
+  Data extends QueryResultData,
+  DataExtra extends Partial<Record<string, any>> = {},
+> {
+  filter?: QueryFilter<Data & DataExtra> | QueryFilter<Data & DataExtra>[]
   orderBy?: QueryCriteriaOrderBy<Data>
   take?: QueryCriteriaTake
   skip?: QueryCriteriaSkip
@@ -74,6 +77,7 @@ export interface QueryDriverInterface {
   execute<D>(
     criteria: QueryCriteriaInterface<D>,
   ): Promise<Record<string, any>[]>
+  customFilter?: (value: any, context: any) => any
 }
 
 interface QuerySourceInterface<
@@ -112,7 +116,19 @@ export interface QueryRunnerMiddleware<
 
 type UnpackArray<T> = T extends Array<infer U> ? U : T
 
-type QueryRule = string | { column: () => any }
+type UnpackQueryRunnerCriteriaFilter<
+  Data,
+  Params extends QueryRunnerCriteria<Data>,
+> = UnpackArray<NonNullable<Params['filter']>>
+type QueryRule<Driver extends QueryDriverInterface> =
+  | string
+  | {
+      column?: () => any
+      filter?: (
+        value: Parameters<NonNullable<Driver['customFilter']>>[0],
+        context: Parameters<NonNullable<Driver['customFilter']>>[1],
+      ) => ReturnType<NonNullable<Driver['customFilter']>>[0]
+    }
 
 export interface QuerySpecification<
   Data extends QueryResultData,
@@ -125,7 +141,10 @@ export interface QuerySpecification<
   // Rules must map existing filter keys to source field names. Arbitrary
   // string keys are not allowed to keep the type-safety of filter keys.
   rules: Partial<
-    Record<keyof UnpackArray<NonNullable<Params['filter']>>, QueryRule>
+    Record<
+      keyof UnpackQueryRunnerCriteriaFilter<Data, Params>,
+      QueryRule<Driver>
+    >
   >
   criteria?: (params: Partial<Params>) => Partial<Params>
   middlewares?: QueryRunnerMiddleware<Data, List, Params>[]
