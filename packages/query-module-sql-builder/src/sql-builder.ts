@@ -44,8 +44,6 @@ export function buildSQL<Driver extends QueryDriverInterface>(
       // filter -> where
       for (const name of keys(filter)) {
         if (typeof name !== 'string') continue
-
-        // skip having-prefixed fields here; previously these were diverted to HAVING
         if (/^having:/.test(name)) continue
 
         const property = filter[name]
@@ -60,6 +58,33 @@ export function buildSQL<Driver extends QueryDriverInterface>(
       }
     }
     builder.where(whole)
+
+    // having support
+    const whole_having = createConditions()
+    for (const filter of Array.isArray(criteria.filter)
+      ? criteria.filter
+      : [criteria.filter]) {
+      const cond = createConditions()
+      let hasHavingCondition = false
+
+      // filter -> having
+      for (const name of keys(filter)) {
+        if (typeof name !== 'string') continue
+        if (!/^having:/.test(name)) continue
+
+        const property = filter[name]
+        if (!property) continue
+
+        const column_name = name.replace(/^having:/, '')
+        hasHavingCondition = true
+        createCond(cond, column_name, property as QueryFilter<any>, o)
+      }
+
+      if (hasHavingCondition) {
+        whole_having.or(cond)
+      }
+    }
+    builder.having(whole_having)
   }
 
   // orderBy
