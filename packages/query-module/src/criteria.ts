@@ -14,7 +14,7 @@ export class QueryCriteria<Data extends QueryResultData>
   implements QueryCriteriaInterface<Data>
 {
   private attr: {
-    filter: QueryFilter<Data> | QueryFilter<Data>[]
+    filter: QueryFilter<Data>[]
     orderBy: QueryCriteriaOrderBy<Data>
     take: QueryCriteriaTake
     skip: QueryCriteriaSkip
@@ -26,7 +26,7 @@ export class QueryCriteria<Data extends QueryResultData>
     private driver: QueryDriverInterface,
   ) {
     this.attr = this.remap({
-      filter: input.filter ?? {},
+      filter: input.filter ?? [],
       orderBy: input.orderBy,
       take: input.take,
       skip: input.skip,
@@ -34,7 +34,7 @@ export class QueryCriteria<Data extends QueryResultData>
   }
 
   get filter() {
-    return this.attr.filter ?? {}
+    return this.attr.filter
   }
 
   get orderBy() {
@@ -76,11 +76,8 @@ export class QueryCriteria<Data extends QueryResultData>
           }
           results.push(ret)
         }
-        return results.length === 0
-          ? undefined
-          : results.length === 1
-            ? (results[0] as P['filter'])
-            : (results as P['filter'][])
+        // Always return an array; callers now expect QueryFilter<Data>[]
+        return results as any
       })(input.filter),
       orderBy: input.orderBy,
       take: input.take,

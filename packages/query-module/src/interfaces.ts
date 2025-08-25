@@ -34,14 +34,14 @@ export type QueryCriteriaOrderBy<Data> =
 export type QueryCriteriaTake = number | undefined
 export type QueryCriteriaSkip = number | undefined
 export interface QueryRunnerCriteria<Data extends QueryResultData> {
-  filter?: QueryFilter<Data> | QueryFilter<Data>[]
+  filter?: QueryFilter<Data>[]
   orderBy?: QueryCriteriaOrderBy<Data>
   take?: QueryCriteriaTake
   skip?: QueryCriteriaSkip
 }
 
 export interface QueryCriteriaInterface<Data extends QueryResultData = any> {
-  readonly filter: QueryFilter<Data> | QueryFilter<Data>[]
+  readonly filter: QueryFilter<Data>[]
   readonly orderBy: QueryCriteriaOrderBy<Data>
   readonly take: QueryCriteriaTake
   readonly skip: QueryCriteriaSkip
