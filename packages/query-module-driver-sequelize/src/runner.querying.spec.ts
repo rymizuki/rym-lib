@@ -31,7 +31,7 @@ describe('QueryDriverSequelize - SQL generation', () => {
     await driver.execute(new QueryCriteria({}, {}, driver))
     expect(mockQuery.mock.lastCall).toStrictEqual([
       'SELECT\n  *\nFROM\n  `example`',
-      { replacements: undefined, type: 'SELECT' },
+      { replacements: [], type: 'SELECT' },
     ])
   })
 
@@ -49,7 +49,7 @@ describe('QueryDriverSequelize - SQL generation', () => {
     await driver.execute(new QueryCriteria({}, { orderBy: 'index:desc' } as any, driver))
     expect(mockQuery.mock.lastCall).toStrictEqual([
       'SELECT\n  *\nFROM\n  `example`\nORDER BY\n  `index` DESC',
-      { replacements: undefined, type: 'SELECT' },
+      { replacements: [], type: 'SELECT' },
     ])
   })
 })
