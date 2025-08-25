@@ -124,7 +124,9 @@ export interface QuerySpecification<
   source: QuerySourceInterface<Data, Driver>
   // Rules must map existing filter keys to source field names. Arbitrary
   // string keys are not allowed to keep the type-safety of filter keys.
-  rules: Partial<Record<keyof NonNullable<Params['filter']>, QueryRule>>
+  rules: Partial<
+    Record<keyof UnpackArray<NonNullable<Params['filter']>>, QueryRule>
+  >
   criteria?: (params: Partial<Params>) => Partial<Params>
   middlewares?: QueryRunnerMiddleware<Data, List, Params>[]
 }
