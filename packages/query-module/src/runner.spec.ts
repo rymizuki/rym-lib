@@ -72,7 +72,7 @@ describe('QueryRunner', () => {
         })
         it('should be call with specified criteria', () => {
           expect(driver.called[0]?.args[0].filter).toStrictEqual({
-            index: { column: null, value: { eq: 1 } }
+            index: { column: null, value: { eq: 1 } },
           })
           expect(driver.called[0]?.args[0].orderBy).toBe(criteria.orderBy)
           expect(driver.called[0]?.args[0].skip).toBe(criteria.skip)
@@ -94,7 +94,7 @@ describe('QueryRunner', () => {
         it('should be call with specified criteria', () => {
           expect(driver.called[0]?.args[0].filter).toStrictEqual([
             { index: { column: null, value: { eq: 1 } } },
-            { index: { column: null, value: { ne: 5 } } }
+            { index: { column: null, value: { ne: 5 } } },
           ])
         })
       })
@@ -136,7 +136,7 @@ describe('QueryRunner', () => {
         })
         it('should be call with specified criteria', () => {
           expect(driver.called[0]?.args[0].filter).toStrictEqual({
-            index: { column: null, value: { eq: 1 } }
+            index: { column: null, value: { eq: 1 } },
           })
           expect(driver.called[0]?.args[0].orderBy).toBe(criteria.orderBy)
           expect(driver.called[0]?.args[0].skip).toBe(criteria.skip)
@@ -171,7 +171,7 @@ describe('QueryRunner', () => {
         })
         it('should be call with specified criteria', () => {
           expect(driver.called[0]?.args[0].filter).toStrictEqual({
-            index: { column: null, value: { eq: 1 } }
+            index: { column: null, value: { eq: 1 } },
           })
           expect(driver.called[0]?.args[0].orderBy).toBe(criteria.orderBy)
           expect(driver.called[0]?.args[0].skip).toBe(criteria.skip)
@@ -405,8 +405,14 @@ describe('QueryRunner with dot notation keys', () => {
       // マッピングが正しく適用されることを確認
       expect(criteria?.filter).toEqual({
         'users.id': { column: 'users.id', value: { eq: 1 } },
-        'user_profile.city_name': { column: 'user_profile.city_name', value: { eq: 'Tokyo' } },
-        'user_profile.zip_code': { column: 'user_profile.zip_code', value: { eq: '100-0001' } },
+        'user_profile.city_name': {
+          column: 'user_profile.city_name',
+          value: { eq: 'Tokyo' },
+        },
+        'user_profile.zip_code': {
+          column: 'user_profile.zip_code',
+          value: { eq: '100-0001' },
+        },
       })
     })
 
@@ -423,11 +429,11 @@ describe('QueryRunner with dot notation keys', () => {
 
       expect(criteria?.filter).toEqual({
         'users.name': { column: 'users.name', value: { contains: 'User' } },
-        'user_profile.city_name': { column: 'user_profile.city_name', value: { ne: 'Kyoto' } },
+        'user_profile.city_name': {
+          column: 'user_profile.city_name',
+          value: { ne: 'Kyoto' },
+        },
       })
     })
   })
 })
-
-
-

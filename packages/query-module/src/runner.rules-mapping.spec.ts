@@ -1,12 +1,12 @@
 // @ts-nocheck
 import { describe, it, expect, beforeEach } from 'vitest'
 
+import { defineQuery } from './functions/define-query'
 import {
   QueryResultList,
   QueryRunnerCriteria,
   QueryRunnerInterface,
 } from './interfaces'
-import { defineQuery } from './functions/define-query'
 import { createDriver, TestDriver } from './test-utils/test-driver'
 
 type TestData = {
@@ -23,10 +23,22 @@ type TestData = {
 describe('QueryRunner - Rules Mapping with many()', () => {
   let driver: TestDriver
   let runner: QueryRunnerInterface<TestData>
-  
+
   const testData: TestData[] = [
-    { id: 1, name: 'Alice', status: 'active', email: 'alice@example.com', metadata: { tags: ['user'], priority: 1 } },
-    { id: 2, name: 'Bob', status: 'inactive', email: 'bob@example.com', metadata: { tags: ['admin'], priority: 2 } },
+    {
+      id: 1,
+      name: 'Alice',
+      status: 'active',
+      email: 'alice@example.com',
+      metadata: { tags: ['user'], priority: 1 },
+    },
+    {
+      id: 2,
+      name: 'Bob',
+      status: 'inactive',
+      email: 'bob@example.com',
+      metadata: { tags: ['admin'], priority: 2 },
+    },
   ]
 
   beforeEach(() => {
@@ -41,51 +53,51 @@ describe('QueryRunner - Rules Mapping with many()', () => {
         rules: {
           name: 'user_name',
           id: 'user_id',
-          'metadata.priority': 'priority_score'
+          'metadata.priority': 'priority_score',
         },
       })
     })
 
     it('should map filter keys using spec.rules: {name: "user_name", id: "user_id"}', async () => {
-      await runner.many({ 
-        filter: { 
+      await runner.many({
+        filter: {
           name: { eq: 'Alice' },
-          id: { eq: 1 }
-        } 
+          id: { eq: 1 },
+        },
       })
-      
+
       // ドライバーに渡される際、プロパティ名がマッピングされている
       expect(driver.called[0]?.args[0].filter).toEqual({
         user_name: { column: 'user_name', value: { eq: 'Alice' } },
-        user_id: { column: 'user_id', value: { eq: 1 } }
+        user_id: { column: 'user_id', value: { eq: 1 } },
       })
     })
 
     it('should handle spec.rules with dot notation: {"metadata.priority": "priority_score"}', async () => {
-      await runner.many({ 
-        filter: { 
-          'metadata.priority': { gte: 2 } as any
-        } 
+      await runner.many({
+        filter: {
+          'metadata.priority': { gte: 2 } as any,
+        },
       })
-      
+
       expect(driver.called[0]?.args[0].filter).toEqual({
-        priority_score: { column: 'priority_score', value: { gte: 2 } }
+        priority_score: { column: 'priority_score', value: { gte: 2 } },
       })
     })
 
     it('should preserve unmapped keys when not in spec.rules', async () => {
-      await runner.many({ 
-        filter: { 
+      await runner.many({
+        filter: {
           name: { eq: 'Alice' },
-          status: { eq: 'active' },  // statusはマッピングされていない
-          email: { ne: null }        // emailもマッピングされていない
-        } 
+          status: { eq: 'active' }, // statusはマッピングされていない
+          email: { ne: null }, // emailもマッピングされていない
+        },
       })
-      
+
       expect(driver.called[0]?.args[0].filter).toEqual({
-        user_name: { column: 'user_name', value: { eq: 'Alice' } },  // マッピングされた
-        status: { column: null, value: { eq: 'active' } },    // そのまま
-        email: { column: null, value: { ne: null } }          // そのまま
+        user_name: { column: 'user_name', value: { eq: 'Alice' } }, // マッピングされた
+        status: { column: null, value: { eq: 'active' } }, // そのまま
+        email: { column: null, value: { ne: null } }, // そのまま
       })
     })
   })
@@ -98,38 +110,38 @@ describe('QueryRunner - Rules Mapping with many()', () => {
           source: () => testData,
           rules: {
             name: 'full_name',
-            id: 'record_id'
+            id: 'record_id',
           },
         })
       })
 
       it('should map simple property names', async () => {
         await runner.many({ filter: { name: { eq: 'Alice' } } })
-        
+
         expect(driver.called[0]?.args[0].filter).toEqual({
-          full_name: { column: 'full_name', value: { eq: 'Alice' } }
+          full_name: { column: 'full_name', value: { eq: 'Alice' } },
         })
       })
 
       it('should handle unmapped properties', async () => {
         await runner.many({ filter: { status: { eq: 'active' } } })
-        
+
         expect(driver.called[0]?.args[0].filter).toEqual({
-          status: { column: null, value: { eq: 'active' } }
+          status: { column: null, value: { eq: 'active' } },
         })
       })
 
       it('should preserve original property names when no mapping exists', async () => {
-        await runner.many({ 
-          filter: { 
+        await runner.many({
+          filter: {
             email: { ne: null },
-            status: { eq: 'active' }
-          } 
+            status: { eq: 'active' },
+          },
         })
-        
+
         expect(driver.called[0]?.args[0].filter).toEqual({
           email: { column: null, value: { ne: null } },
-          status: { column: null, value: { eq: 'active' } }
+          status: { column: null, value: { eq: 'active' } },
         })
       })
     })
@@ -141,20 +153,20 @@ describe('QueryRunner - Rules Mapping with many()', () => {
           source: () => testData,
           rules: {
             'metadata.tags': 'user_tags',
-            'metadata.priority': 'user_priority'
+            'metadata.priority': 'user_priority',
           },
         })
       })
 
       it('should handle dot notation in source keys', async () => {
-        await runner.many({ 
-          filter: { 
-            'metadata.tags': { contains: 'user' } as any
-          } 
+        await runner.many({
+          filter: {
+            'metadata.tags': { contains: 'user' } as any,
+          },
         })
-        
+
         expect(driver.called[0]?.args[0].filter).toEqual({
-          user_tags: { column: 'user_tags', value: { contains: 'user' } }
+          user_tags: { column: 'user_tags', value: { contains: 'user' } },
         })
       })
 
@@ -163,28 +175,31 @@ describe('QueryRunner - Rules Mapping with many()', () => {
           name: 'target-dot-query',
           source: () => testData,
           rules: {
-            name: 'user.full_name'
+            name: 'user.full_name',
           },
         })
-        
+
         await runner.many({ filter: { name: { eq: 'Alice' } } })
-        
+
         expect(driver.called[0]?.args[0].filter).toEqual({
-          'user.full_name': { column: 'user.full_name', value: { eq: 'Alice' } }
+          'user.full_name': {
+            column: 'user.full_name',
+            value: { eq: 'Alice' },
+          },
         })
       })
 
       it('should handle nested object mapping', async () => {
-        await runner.many({ 
-          filter: { 
+        await runner.many({
+          filter: {
             'metadata.priority': { gte: 1 } as any,
-            'metadata.tags': { in: ['user', 'admin'] } as any
-          } 
+            'metadata.tags': { in: ['user', 'admin'] } as any,
+          },
         })
-        
+
         expect(driver.called[0]?.args[0].filter).toEqual({
           user_priority: { column: 'user_priority', value: { gte: 1 } },
-          user_tags: { column: 'user_tags', value: { in: ['user', 'admin'] } }
+          user_tags: { column: 'user_tags', value: { in: ['user', 'admin'] } },
         })
       })
     })
@@ -197,26 +212,26 @@ describe('QueryRunner - Rules Mapping with many()', () => {
           rules: {
             id: 'record_id',
             name: 'user_name',
-            'metadata.priority': 'priority'
+            'metadata.priority': 'priority',
           },
         })
       })
 
       it('should handle partial mapping', async () => {
-        await runner.many({ 
-          filter: { 
+        await runner.many({
+          filter: {
             id: { eq: 1 },
             name: { eq: 'Alice' },
-            status: { eq: 'active' },  // マッピングなし
-            email: { ne: null }        // マッピングなし
-          } 
+            status: { eq: 'active' }, // マッピングなし
+            email: { ne: null }, // マッピングなし
+          },
         })
-        
+
         expect(driver.called[0]?.args[0].filter).toEqual({
           record_id: { column: 'record_id', value: { eq: 1 } },
           user_name: { column: 'user_name', value: { eq: 'Alice' } },
           status: { column: null, value: { eq: 'active' } },
-          email: { column: null, value: { ne: null } }
+          email: { column: null, value: { ne: null } },
         })
       })
 
@@ -225,21 +240,21 @@ describe('QueryRunner - Rules Mapping with many()', () => {
           name: 'case-sensitive-query',
           source: () => testData,
           rules: {
-            name: 'Name',      // 大文字
-            email: 'EMAIL'     // 全て大文字
+            name: 'Name', // 大文字
+            email: 'EMAIL', // 全て大文字
           },
         })
-        
-        await runner.many({ 
-          filter: { 
+
+        await runner.many({
+          filter: {
             name: { eq: 'Alice' },
-            email: { ne: null }
-          } 
+            email: { ne: null },
+          },
         })
-        
+
         expect(driver.called[0]?.args[0].filter).toEqual({
           Name: { column: 'Name', value: { eq: 'Alice' } },
-          EMAIL: { column: 'EMAIL', value: { ne: null } }
+          EMAIL: { column: 'EMAIL', value: { ne: null } },
         })
       })
     })
@@ -254,37 +269,46 @@ describe('QueryRunner - Rules Mapping with many()', () => {
           rules: {},
           criteria: (params) => {
             // 条件を変換する例：statusがactiveの場合、emailも必須にする
-            if (params.filter && !Array.isArray(params.filter) && params.filter.status?.eq === 'active') {
+            if (
+              params.filter &&
+              !Array.isArray(params.filter) &&
+              params.filter.status?.eq === 'active'
+            ) {
               return {
                 ...params,
                 filter: {
                   ...params.filter,
-                  email: { ne: null }
-                }
+                  email: { ne: null },
+                },
               }
             }
             return params
-          }
+          },
         })
       })
 
       it('should apply criteria transformation to parameters', async () => {
         await runner.many({ filter: { status: { eq: 'active' } } })
-        
+
         // 変換後の条件がドライバーに渡される
         expect(driver.called[0]?.args[0].filter).toEqual({
           status: { column: null, value: { eq: 'active' } },
-          email: { column: null, value: { ne: null } }  // 変換で追加された
+          email: { column: null, value: { ne: null } }, // 変換で追加された
         })
       })
 
       it('should return Promise<QueryResultList<TestData>> with transformed criteria', async () => {
-        const result = await runner.many({ filter: { status: { eq: 'active' } } })
-        
+        const result = await runner.many({
+          filter: { status: { eq: 'active' } },
+        })
+
         expect(result).toHaveProperty('items')
         expect(Array.isArray(result.items)).toBe(true)
         // 変換された条件でクエリが実行される
-        expect(driver.called[0]?.args[0].filter.email).toEqual({ column: null, value: { ne: null } })
+        expect(driver.called[0]?.args[0].filter.email).toEqual({
+          column: null,
+          value: { ne: null },
+        })
       })
     })
 
@@ -300,20 +324,20 @@ describe('QueryRunner - Rules Mapping with many()', () => {
 
       it('should use parameters directly without transformation', async () => {
         const params = { filter: { status: { eq: 'active' } } }
-        
+
         await runner.many(params)
-        
+
         expect(driver.called[0]?.args[0].filter).toEqual({
-          status: { column: null, value: { eq: 'active' } }
+          status: { column: null, value: { eq: 'active' } },
         })
       })
 
       it('should not modify original params object', async () => {
         const params = { filter: { status: { eq: 'active' } } }
         const originalFilter = { ...params.filter }
-        
+
         await runner.many(params)
-        
+
         expect(params.filter).toEqual(originalFilter)
       })
     })

@@ -1,11 +1,8 @@
 import { describe, it, expect, beforeEach } from 'vitest'
 
 import { QueryRunnerResourceNotFoundException } from './exceptions'
-import {
-  QueryRunnerCriteria,
-  QueryRunnerInterface,
-} from './interfaces'
 import { defineQuery } from './functions/define-query'
+import { QueryRunnerCriteria, QueryRunnerInterface } from './interfaces'
 import { createDriver, TestDriver } from './test-utils/test-driver'
 
 type TestData = {
@@ -22,11 +19,29 @@ type TestData = {
 describe('QueryRunner - Method: find(params: QueryRunnerCriteria<TestData>)', () => {
   let driver: TestDriver
   let runner: QueryRunnerInterface<TestData>
-  
+
   const testData: TestData[] = [
-    { id: 1, name: 'Alice', status: 'active', email: 'alice@example.com', metadata: { tags: ['user'], priority: 1 } },
-    { id: 2, name: 'Bob', status: 'inactive', email: 'bob@example.com', metadata: { tags: ['admin'], priority: 2 } },
-    { id: 3, name: 'Charlie', status: 'active', email: null, metadata: { tags: ['user'], priority: 3 } },
+    {
+      id: 1,
+      name: 'Alice',
+      status: 'active',
+      email: 'alice@example.com',
+      metadata: { tags: ['user'], priority: 1 },
+    },
+    {
+      id: 2,
+      name: 'Bob',
+      status: 'inactive',
+      email: 'bob@example.com',
+      metadata: { tags: ['admin'], priority: 2 },
+    },
+    {
+      id: 3,
+      name: 'Charlie',
+      status: 'active',
+      email: null,
+      metadata: { tags: ['user'], priority: 3 },
+    },
   ]
 
   beforeEach(() => {
@@ -41,7 +56,7 @@ describe('QueryRunner - Method: find(params: QueryRunnerCriteria<TestData>)', ()
   describe('When matching TestData exists', () => {
     it('should return Promise<TestData> resolving to matching TestData', async () => {
       const result = await runner.find({ filter: { id: { eq: 1 } } })
-      
+
       expect(result).toBeDefined()
       expect(result).toEqual(testData[0])
       expect(result.id).toBe(1)
@@ -50,7 +65,7 @@ describe('QueryRunner - Method: find(params: QueryRunnerCriteria<TestData>)', ()
 
     it('should apply QueryRunnerInterface contract for single record retrieval', async () => {
       const result = await runner.find({ filter: { name: { eq: 'Bob' } } })
-      
+
       // find()は常にTestData型を返す（nullは返さない）
       expect(result).toBeDefined()
       expect(typeof result).toBe('object')
@@ -59,24 +74,26 @@ describe('QueryRunner - Method: find(params: QueryRunnerCriteria<TestData>)', ()
 
     it('should never return null (throws exception instead)', async () => {
       driver.returns([])
-      
+
       // find()はnullを返さず、代わりに例外を投げる
-      await expect(runner.find({ filter: { id: { eq: 999 } } }))
-        .rejects.toThrow(QueryRunnerResourceNotFoundException)
+      await expect(
+        runner.find({ filter: { id: { eq: 999 } } }),
+      ).rejects.toThrow(QueryRunnerResourceNotFoundException)
     })
   })
 
   describe('When no matching record exists', () => {
     it('should reject Promise with QueryRunnerResourceNotFoundException', async () => {
       driver.returns([])
-      
-      await expect(runner.find({ filter: { id: { eq: 999 } } }))
-        .rejects.toThrow(QueryRunnerResourceNotFoundException)
+
+      await expect(
+        runner.find({ filter: { id: { eq: 999 } } }),
+      ).rejects.toThrow(QueryRunnerResourceNotFoundException)
     })
 
     it('should include QuerySpecification.name in exception message', async () => {
       driver.returns([])
-      
+
       try {
         await runner.find({ filter: { id: { eq: 999 } } })
         throw new Error('Should have thrown an exception')
@@ -89,7 +106,7 @@ describe('QueryRunner - Method: find(params: QueryRunnerCriteria<TestData>)', ()
     it('should include search criteria in exception message', async () => {
       driver.returns([])
       const searchCriteria = { filter: { id: { eq: 999 } } }
-      
+
       try {
         await runner.find(searchCriteria)
         throw new Error('Should have thrown an exception')
@@ -105,18 +122,18 @@ describe('QueryRunner - Method: find(params: QueryRunnerCriteria<TestData>)', ()
     it('should return Promise<TestData> resolving to first matching TestData', async () => {
       // activeステータスのレコードが複数ある場合
       driver.returns([testData[0]!, testData[2]!]) // Alice and Charlie
-      
+
       const result = await runner.find({ filter: { status: { eq: 'active' } } })
-      
+
       expect(result).toEqual(testData[0]) // 最初のマッチするレコード
     })
 
     it('should respect orderBy for determining "first" record', async () => {
-      await runner.find({ 
-        filter: { status: { eq: 'active' } }, 
-        orderBy: 'name:desc' as any 
+      await runner.find({
+        filter: { status: { eq: 'active' } },
+        orderBy: 'name:desc' as any,
       })
-      
+
       expect(driver.called[0]!.args[0].orderBy).toBe('name:desc')
       expect(driver.called[0]!.args[0].take).toBe(1)
     })
@@ -127,36 +144,36 @@ describe('QueryRunner - Method: find(params: QueryRunnerCriteria<TestData>)', ()
       const params = {
         filter: { status: { eq: 'active' } },
         orderBy: 'name:desc' as any,
-        skip: 2
+        skip: 2,
       }
-      
+
       const result = await runner.find(params)
-      
+
       expect(result).toBeDefined()
-      expect(driver.called[0]!.args[0].filter).toEqual({ 
-        status: { column: null, value: { eq: 'active' } } 
+      expect(driver.called[0]!.args[0].filter).toEqual({
+        status: { column: null, value: { eq: 'active' } },
       })
       expect(driver.called[0]!.args[0].orderBy).toBe(params.orderBy)
       expect(driver.called[0]!.args[0].skip).toBe(params.skip)
     })
 
     it('should respect QueryFilter<TestData> filtering rules', async () => {
-      await runner.find({ 
-        filter: { status: { eq: 'active' } } 
+      await runner.find({
+        filter: { status: { eq: 'active' } },
       })
-      
-      expect(driver.called[0]!.args[0].filter).toEqual({ 
-        status: { column: null, value: { eq: 'active' } } 
+
+      expect(driver.called[0]!.args[0].filter).toEqual({
+        status: { column: null, value: { eq: 'active' } },
       })
     })
 
     it('should respect sorting and pagination parameters', async () => {
-      await runner.find({ 
+      await runner.find({
         filter: { status: { eq: 'active' } },
         orderBy: 'id:asc' as any,
-        skip: 1
+        skip: 1,
       })
-      
+
       expect(driver.called[0]!.args[0].orderBy).toBe('id:asc')
       expect(driver.called[0]!.args[0].skip).toBe(1)
       expect(driver.called[0]!.args[0].take).toBe(1)
@@ -165,9 +182,9 @@ describe('QueryRunner - Method: find(params: QueryRunnerCriteria<TestData>)', ()
     it('should respect QuerySpecification.rules property mapping', async () => {
       // プロパティマッピングの詳細は rules-mapping.spec.ts で実装
       await runner.find({ filter: { name: { eq: 'Alice' } } })
-      
-      expect(driver.called[0]!.args[0].filter).toEqual({ 
-        name: { column: null, value: { eq: 'Alice' } } 
+
+      expect(driver.called[0]!.args[0].filter).toEqual({
+        name: { column: null, value: { eq: 'Alice' } },
       })
     })
   })
@@ -181,21 +198,23 @@ describe('QueryRunner - Method: find(params: QueryRunnerCriteria<TestData>)', ()
         },
         rules: {},
       })
-      
-      await expect(runner.find({ filter: { id: { eq: 1 } } }))
-        .rejects.toThrow('Database connection failed')
+
+      await expect(runner.find({ filter: { id: { eq: 1 } } })).rejects.toThrow(
+        'Database connection failed',
+      )
     })
 
     it('should reject Promise with QueryRunnerResourceNotFoundException when no match', async () => {
       driver.returns([])
-      
-      await expect(runner.find({ filter: { id: { eq: 999 } } }))
-        .rejects.toThrow(QueryRunnerResourceNotFoundException)
+
+      await expect(
+        runner.find({ filter: { id: { eq: 999 } } }),
+      ).rejects.toThrow(QueryRunnerResourceNotFoundException)
     })
 
     it('should provide meaningful error information', async () => {
       driver.returns([])
-      
+
       try {
         await runner.find({ filter: { id: { eq: 999 } } })
         throw new Error('Should have thrown an exception')

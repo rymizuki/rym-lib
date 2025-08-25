@@ -41,11 +41,15 @@ export interface QueryRunnerCriteria<Data extends QueryResultData> {
 }
 
 export type QueryCriteriaFilter<Data extends QueryResultData = any> = Partial<
-  Record<string, { column: string | (() => any), value: any }>
+  Record<string, { column: string | (() => any); value: any }>
 >
 
 export interface QueryCriteriaInterface<Data extends QueryResultData = any> {
-  readonly filter: QueryCriteriaFilter<Data> | QueryCriteriaFilter<Data>[]
+  readonly filter:
+    | QueryCriteriaFilter<Data>
+    | QueryCriteriaFilter<Data>[]
+    | QueryFilter<Data>
+    | QueryFilter<Data>[]
   readonly orderBy: QueryCriteriaOrderBy<Data>
   readonly take: QueryCriteriaTake
   readonly skip: QueryCriteriaSkip

@@ -24,7 +24,7 @@ export function deflate<D, C extends Column<D> = Column<D>>(
             if (!Object.prototype.hasOwnProperty.call(filter, column)) continue
             const filterData = filter[column] as any
             const element = filterData?.value || filterData
-            
+
             for (const operator in element) {
               if (!Object.prototype.hasOwnProperty.call(element, operator))
                 continue
