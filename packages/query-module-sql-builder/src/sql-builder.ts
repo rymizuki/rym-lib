@@ -5,7 +5,6 @@ import {
   is_null,
   SQLBuilderPort,
   SQLBuilderConditionsPort,
-  unescape,
 } from 'coral-sql'
 
 import type {
@@ -41,9 +40,12 @@ export function buildSQL<Driver extends QueryDriverInterface>(
       : [criteria.filter]) {
       const cond = createConditions()
 
-      // filter -> where (HAVING prefix support removed)
+      // filter -> where
       for (const name of keys(filter)) {
         if (typeof name !== 'string') continue
+
+        // skip having-prefixed fields here; they will be processed into HAVING
+        if (/^having:/.test(name)) continue
 
         const property = filter[name]
         if (!property) continue
@@ -54,6 +56,29 @@ export function buildSQL<Driver extends QueryDriverInterface>(
       whole.or(cond)
     }
     builder.where(whole)
+
+    // HAVING: support fields prefixed with 'having:' and convert them to HAVING
+    const whole_having = createConditions()
+    for (const filter of Array.isArray(criteria.filter)
+      ? criteria.filter
+      : [criteria.filter]) {
+      const cond = createConditions()
+
+      for (const name of keys(filter)) {
+        if (typeof name !== 'string') continue
+        if (!/^having:/.test(name)) continue
+
+        const property = filter[name]
+        if (!property) continue
+
+        const column_name = name.replace(/^having:/, '')
+        // DO NOT unescape SQL expressions; raw SQL expression support removed
+        createCond(cond, column_name, property as QueryFilter<any>, o)
+      }
+
+      whole_having.or(cond)
+    }
+    builder.having(whole_having)
   }
 
   // orderBy
@@ -85,10 +110,8 @@ function createCond(
   name: string,
   property: QueryFilter<any>,
   options: BuildSqlOptions,
-  useUnescape = false,
 ) {
-  // If useUnescape is true, use unescape to avoid backticks for SQL functions
-  const field = useUnescape ? unescape(name) : name
+  const field = name
   for (const operator of keys(property)) {
     const value = property[operator] as string | string[]
 
