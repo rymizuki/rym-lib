@@ -51,7 +51,7 @@ class TestDriver<Data extends Record<string, any> = Record<string, any>>
       : [criteria.filter]
 
     for (const filter of filters) {
-      for (const [field, conditions] of Object.entries(filter)) {
+      for (const [field, filterData] of Object.entries(filter)) {
         // Apply smart filtering if the field looks like a CASE-WHEN field
         if (
           field.includes('status_display') ||
@@ -75,7 +75,8 @@ class TestDriver<Data extends Record<string, any> = Record<string, any>>
         : [criteria.filter]
 
       for (const filter of filters) {
-        for (const [field, conditions] of Object.entries(filter)) {
+        for (const [field, filterData] of Object.entries(filter)) {
+          const conditions = (filterData as any)?.value || filterData
           for (const [operator, value] of Object.entries(conditions as any)) {
             switch (operator) {
               case 'eq':
@@ -201,6 +202,7 @@ class TestDriver<Data extends Record<string, any> = Record<string, any>>
     this.data = rows
     return this
   }
+
 
   clear() {
     this.data = this.initial

@@ -56,8 +56,8 @@ describe('QueryRunner - Rules Mapping with many()', () => {
       
       // ドライバーに渡される際、プロパティ名がマッピングされている
       expect(driver.called[0]?.args[0].filter).toEqual({
-        user_name: { eq: 'Alice' },
-        user_id: { eq: 1 }
+        user_name: { column: 'user_name', value: { eq: 'Alice' } },
+        user_id: { column: 'user_id', value: { eq: 1 } }
       })
     })
 
@@ -69,7 +69,7 @@ describe('QueryRunner - Rules Mapping with many()', () => {
       })
       
       expect(driver.called[0]?.args[0].filter).toEqual({
-        priority_score: { gte: 2 }
+        priority_score: { column: 'priority_score', value: { gte: 2 } }
       })
     })
 
@@ -83,9 +83,9 @@ describe('QueryRunner - Rules Mapping with many()', () => {
       })
       
       expect(driver.called[0]?.args[0].filter).toEqual({
-        user_name: { eq: 'Alice' },  // マッピングされた
-        status: { eq: 'active' },    // そのまま
-        email: { ne: null }          // そのまま
+        user_name: { column: 'user_name', value: { eq: 'Alice' } },  // マッピングされた
+        status: { column: null, value: { eq: 'active' } },    // そのまま
+        email: { column: null, value: { ne: null } }          // そのまま
       })
     })
   })
@@ -107,7 +107,7 @@ describe('QueryRunner - Rules Mapping with many()', () => {
         await runner.many({ filter: { name: { eq: 'Alice' } } })
         
         expect(driver.called[0]?.args[0].filter).toEqual({
-          full_name: { eq: 'Alice' }
+          full_name: { column: 'full_name', value: { eq: 'Alice' } }
         })
       })
 
@@ -115,7 +115,7 @@ describe('QueryRunner - Rules Mapping with many()', () => {
         await runner.many({ filter: { status: { eq: 'active' } } })
         
         expect(driver.called[0]?.args[0].filter).toEqual({
-          status: { eq: 'active' }
+          status: { column: null, value: { eq: 'active' } }
         })
       })
 
@@ -128,8 +128,8 @@ describe('QueryRunner - Rules Mapping with many()', () => {
         })
         
         expect(driver.called[0]?.args[0].filter).toEqual({
-          email: { ne: null },
-          status: { eq: 'active' }
+          email: { column: null, value: { ne: null } },
+          status: { column: null, value: { eq: 'active' } }
         })
       })
     })
@@ -154,7 +154,7 @@ describe('QueryRunner - Rules Mapping with many()', () => {
         })
         
         expect(driver.called[0]?.args[0].filter).toEqual({
-          user_tags: { contains: 'user' }
+          user_tags: { column: 'user_tags', value: { contains: 'user' } }
         })
       })
 
@@ -170,7 +170,7 @@ describe('QueryRunner - Rules Mapping with many()', () => {
         await runner.many({ filter: { name: { eq: 'Alice' } } })
         
         expect(driver.called[0]?.args[0].filter).toEqual({
-          'user.full_name': { eq: 'Alice' }
+          'user.full_name': { column: 'user.full_name', value: { eq: 'Alice' } }
         })
       })
 
@@ -183,8 +183,8 @@ describe('QueryRunner - Rules Mapping with many()', () => {
         })
         
         expect(driver.called[0]?.args[0].filter).toEqual({
-          user_priority: { gte: 1 },
-          user_tags: { in: ['user', 'admin'] }
+          user_priority: { column: 'user_priority', value: { gte: 1 } },
+          user_tags: { column: 'user_tags', value: { in: ['user', 'admin'] } }
         })
       })
     })
@@ -213,10 +213,10 @@ describe('QueryRunner - Rules Mapping with many()', () => {
         })
         
         expect(driver.called[0]?.args[0].filter).toEqual({
-          record_id: { eq: 1 },
-          user_name: { eq: 'Alice' },
-          status: { eq: 'active' },
-          email: { ne: null }
+          record_id: { column: 'record_id', value: { eq: 1 } },
+          user_name: { column: 'user_name', value: { eq: 'Alice' } },
+          status: { column: null, value: { eq: 'active' } },
+          email: { column: null, value: { ne: null } }
         })
       })
 
@@ -238,8 +238,8 @@ describe('QueryRunner - Rules Mapping with many()', () => {
         })
         
         expect(driver.called[0]?.args[0].filter).toEqual({
-          Name: { eq: 'Alice' },
-          EMAIL: { ne: null }
+          Name: { column: 'Name', value: { eq: 'Alice' } },
+          EMAIL: { column: 'EMAIL', value: { ne: null } }
         })
       })
     })
@@ -273,8 +273,8 @@ describe('QueryRunner - Rules Mapping with many()', () => {
         
         // 変換後の条件がドライバーに渡される
         expect(driver.called[0]?.args[0].filter).toEqual({
-          status: { eq: 'active' },
-          email: { ne: null }  // 変換で追加された
+          status: { column: null, value: { eq: 'active' } },
+          email: { column: null, value: { ne: null } }  // 変換で追加された
         })
       })
 
@@ -284,7 +284,7 @@ describe('QueryRunner - Rules Mapping with many()', () => {
         expect(result).toHaveProperty('items')
         expect(Array.isArray(result.items)).toBe(true)
         // 変換された条件でクエリが実行される
-        expect(driver.called[0]?.args[0].filter.email).toEqual({ ne: null })
+        expect(driver.called[0]?.args[0].filter.email).toEqual({ column: null, value: { ne: null } })
       })
     })
 
@@ -303,7 +303,9 @@ describe('QueryRunner - Rules Mapping with many()', () => {
         
         await runner.many(params)
         
-        expect(driver.called[0]?.args[0].filter).toEqual(params.filter)
+        expect(driver.called[0]?.args[0].filter).toEqual({
+          status: { column: null, value: { eq: 'active' } }
+        })
       })
 
       it('should not modify original params object', async () => {

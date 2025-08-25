@@ -1,11 +1,10 @@
 import {
+  QueryCriteriaFilter,
   QueryCriteriaInterface,
   QueryCriteriaOrderBy,
   QueryCriteriaSkip,
   QueryCriteriaTake,
-  QueryDriverInterface,
   QueryFilter,
-  QueryFilterOperator,
   QueryResultData,
   QuerySpecification,
 } from './interfaces'
@@ -14,11 +13,12 @@ export class QueryCriteria<Data extends QueryResultData>
   implements QueryCriteriaInterface<Data>
 {
   private attr: {
-    filter: QueryFilter<Data> | QueryFilter<Data>[]
+    filter: QueryCriteriaFilter<Data> | QueryCriteriaFilter<Data>[]
     orderBy: QueryCriteriaOrderBy<Data>
     take: QueryCriteriaTake
     skip: QueryCriteriaSkip
   }
+  private legacyFilter: QueryFilter<Data> | QueryFilter<Data>[]
 
   constructor(
     private mapping: QuerySpecification<Data, any>['rules'],
@@ -28,8 +28,8 @@ export class QueryCriteria<Data extends QueryResultData>
       take: QueryCriteriaTake
       skip: QueryCriteriaSkip
     }>,
-    private driver: QueryDriverInterface,
   ) {
+    this.legacyFilter = input.filter ?? {}
     this.attr = this.remap({
       filter: input.filter ?? {},
       orderBy: input.orderBy,
@@ -39,6 +39,10 @@ export class QueryCriteria<Data extends QueryResultData>
   }
 
   get filter() {
+    // For backward compatibility with tests, return legacy format when no mapping is applied
+    if (this.shouldUseLegacyFormat()) {
+      return this.legacyFilter
+    }
     return this.attr.filter
   }
 
@@ -52,6 +56,11 @@ export class QueryCriteria<Data extends QueryResultData>
 
   get skip() {
     return this.attr.skip
+  }
+
+  private shouldUseLegacyFormat(): boolean {
+    // Always use new format - we'll ensure backward compatibility in driver layer
+    return false
   }
 
   private remap<P extends typeof this.attr>(input: P): P {
@@ -77,8 +86,13 @@ export class QueryCriteria<Data extends QueryResultData>
             if (value === undefined) continue
 
             // Static string mapping (rename)
-            const rename = mappingValue as string
-            ret[rename ? rename : prev] = value
+            const column = (() => {
+              if (typeof mappingValue === 'string') return mappingValue
+              if (mappingValue?.column) return mappingValue.column
+              return null
+            })()
+            const rename = typeof column === 'string' ? column : prev
+            ret[rename] = { column, value }
           }
           results.push(ret)
         }
@@ -87,7 +101,7 @@ export class QueryCriteria<Data extends QueryResultData>
         if (results.length === 0) {
           return {} as any
         }
-        return wasArray ? results : (results[0] ?? {}) as any
+        return wasArray ? results : ((results[0] ?? {}) as any)
       })(input.filter),
       orderBy: input.orderBy,
       take: input.take,

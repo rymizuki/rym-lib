@@ -105,14 +105,18 @@ describe('QueryRunner - Method: one(params?: Partial<QueryRunnerCriteria<TestDat
         await runner.one({ filter: { id: { eq: 2 } } })
         
         // ドライバーが正しい条件で呼び出されたことを確認
-        expect(driver.called[0]!.args[0].filter).toEqual({ id: { eq: 2 } })
+        expect(driver.called[0]!.args[0].filter).toEqual({ 
+          id: { column: null, value: { eq: 2 } } 
+        })
       })
 
       it('should respect property mapping rules from QuerySpecification', async () => {
         // プロパティマッピングのテストは rules-mapping.spec.ts で詳細実装
         await runner.one({ filter: { name: { eq: 'Bob' } } })
         
-        expect(driver.called[0]!.args[0].filter).toEqual({ name: { eq: 'Bob' } })
+        expect(driver.called[0]!.args[0].filter).toEqual({ 
+          name: { column: null, value: { eq: 'Bob' } } 
+        })
       })
     })
 

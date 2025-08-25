@@ -59,8 +59,8 @@ describe('QueryRunner - Middleware with many()', () => {
         expect(preprocessMiddleware.preprocess).toHaveBeenCalled()
         // ミドルウェアによって条件が変更されている
         expect(driver.called[0]?.args[0].filter).toEqual({
-          name: { eq: 'Alice' },
-          status: { eq: 'active' }  // ミドルウェアで追加
+          name: { column: null, value: { eq: 'Alice' } },
+          status: { column: null, value: { eq: 'active' } }  // ミドルウェアで追加
         })
       })
 

@@ -133,7 +133,9 @@ describe('QueryRunner - Method: find(params: QueryRunnerCriteria<TestData>)', ()
       const result = await runner.find(params)
       
       expect(result).toBeDefined()
-      expect(driver.called[0]!.args[0].filter).toEqual(params.filter)
+      expect(driver.called[0]!.args[0].filter).toEqual({ 
+        status: { column: null, value: { eq: 'active' } } 
+      })
       expect(driver.called[0]!.args[0].orderBy).toBe(params.orderBy)
       expect(driver.called[0]!.args[0].skip).toBe(params.skip)
     })
@@ -143,7 +145,9 @@ describe('QueryRunner - Method: find(params: QueryRunnerCriteria<TestData>)', ()
         filter: { status: { eq: 'active' } } 
       })
       
-      expect(driver.called[0]!.args[0].filter).toEqual({ status: { eq: 'active' } })
+      expect(driver.called[0]!.args[0].filter).toEqual({ 
+        status: { column: null, value: { eq: 'active' } } 
+      })
     })
 
     it('should respect sorting and pagination parameters', async () => {
@@ -162,7 +166,9 @@ describe('QueryRunner - Method: find(params: QueryRunnerCriteria<TestData>)', ()
       // プロパティマッピングの詳細は rules-mapping.spec.ts で実装
       await runner.find({ filter: { name: { eq: 'Alice' } } })
       
-      expect(driver.called[0]!.args[0].filter).toEqual({ name: { eq: 'Alice' } })
+      expect(driver.called[0]!.args[0].filter).toEqual({ 
+        name: { column: null, value: { eq: 'Alice' } } 
+      })
     })
   })
 

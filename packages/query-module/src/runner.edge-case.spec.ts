@@ -65,7 +65,7 @@ describe('QueryRunner - Edge cases and boundary conditions', () => {
       // 文字列が文字の配列のようなオブジェクトに変換される
       const calledFilter = driver.called[0]!.args[0].filter
       expect(typeof calledFilter).toBe('object')
-      expect(calledFilter['0']).toBe('i')
+      expect(calledFilter['0']).toEqual({ column: null, value: 'i' })
     })
   })
 
@@ -136,7 +136,7 @@ describe('QueryRunner - Edge cases and boundary conditions', () => {
       
       // マッピングは実行されるが、存在しないフィールドにマッピングされる
       expect(driver.called[0]!.args[0].filter).toEqual({
-        nonexistent_field: { eq: 'Alice' }
+        nonexistent_field: { column: 'nonexistent_field', value: { eq: 'Alice' } }
       })
     })
 
@@ -160,8 +160,8 @@ describe('QueryRunner - Edge cases and boundary conditions', () => {
       
       // null/undefinedのルールは無視され、正常なルールのみ適用される
       const calledFilter = driver.called[0]!.args[0].filter
-      expect(calledFilter.name).toEqual({ eq: 'Alice' }) // マッピングされない
-      expect(calledFilter.mapped_status).toEqual({ eq: 'active' }) // マッピングされる
+      expect(calledFilter.name).toEqual({ column: null, value: { eq: 'Alice' } }) // マッピングされない
+      expect(calledFilter.mapped_status).toEqual({ column: 'mapped_status', value: { eq: 'active' } }) // マッピングされる
     })
 
     it('should handle empty rules object', async () => {
@@ -175,7 +175,7 @@ describe('QueryRunner - Edge cases and boundary conditions', () => {
       
       // ルールが空の場合、そのままマッピングされない
       expect(driver.called[0]!.args[0].filter).toEqual({
-        name: { eq: 'Alice' }
+        name: { column: null, value: { eq: 'Alice' } }
       })
     })
   })
@@ -233,7 +233,17 @@ describe('QueryRunner - Edge cases and boundary conditions', () => {
       
       await runner.many(deepFilter)
       
-      expect(driver.called[0]!.args[0].filter).toEqual(deepFilter.filter)
+      const expectedFilter = [
+        {
+          name: { column: null, value: { eq: 'Alice' } },
+          status: { column: null, value: { eq: 'active' } }
+        },
+        {
+          id: { column: null, value: { gte: 1 } },
+          email: { column: null, value: { ne: null } }
+        }
+      ]
+      expect(driver.called[0]!.args[0].filter).toEqual(expectedFilter)
     })
   })
 })
