@@ -14,7 +14,7 @@ export class QueryCriteria<Data extends QueryResultData>
   implements QueryCriteriaInterface<Data>
 {
   private attr: {
-    filter: QueryFilter<Data>[]
+    filter: QueryFilter<Data> | QueryFilter<Data>[]
     orderBy: QueryCriteriaOrderBy<Data>
     take: QueryCriteriaTake
     skip: QueryCriteriaSkip
@@ -22,11 +22,16 @@ export class QueryCriteria<Data extends QueryResultData>
 
   constructor(
     private mapping: QuerySpecification<Data, any>['rules'],
-    private input: Partial<typeof this.attr>,
+    private input: Partial<{
+      filter: QueryFilter<Data> | QueryFilter<Data>[]
+      orderBy: QueryCriteriaOrderBy<Data>
+      take: QueryCriteriaTake
+      skip: QueryCriteriaSkip
+    }>,
     private driver: QueryDriverInterface,
   ) {
     this.attr = this.remap({
-      filter: input.filter ?? [],
+      filter: input.filter ?? {},
       orderBy: input.orderBy,
       take: input.take,
       skip: input.skip,
@@ -52,10 +57,11 @@ export class QueryCriteria<Data extends QueryResultData>
   private remap<P extends typeof this.attr>(input: P): P {
     const attr = {
       filter: ((filter) => {
+        const wasArray = Array.isArray(filter)
         const filters = Array.isArray(filter) ? filter : [filter]
         const results = []
         for (const f of filters) {
-          if (!Object.keys(f).length) continue
+          if (!f || !Object.keys(f).length) continue
           const ret: any = {}
           for (const prev in f) {
             if (!Object.prototype.hasOwnProperty.call(f, prev)) continue
@@ -76,8 +82,12 @@ export class QueryCriteria<Data extends QueryResultData>
           }
           results.push(ret)
         }
-        // Always return an array; callers now expect QueryFilter<Data>[]
-        return results as any
+        // Return in the same format as input: preserve original structure
+        // For empty filter, always return {} (single object)
+        if (results.length === 0) {
+          return {} as any
+        }
+        return wasArray ? results : (results[0] ?? {}) as any
       })(input.filter),
       orderBy: input.orderBy,
       take: input.take,
