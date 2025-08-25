@@ -12,7 +12,7 @@ import { QueryRunner } from '../runner'
 
 export function defineQuery<
   Data extends QueryResultData,
-  Driver extends QueryDriverInterface,
+  Driver extends QueryDriverInterface = QueryDriverInterface,
   List extends QueryResultList<Data> = QueryResultList<Data>,
   Params extends QueryRunnerCriteria<Data> = QueryRunnerCriteria<Data>,
 >(

@@ -22,7 +22,12 @@ export class QueryCriteria<Data extends QueryResultData>
 
   constructor(
     private mapping: QuerySpecification<Data, any>['rules'],
-    private input: Partial<typeof this.attr>,
+    private input: Partial<{
+      filter: QueryFilter<Data> | QueryFilter<Data>[]
+      orderBy: QueryCriteriaOrderBy<Data>
+      take: QueryCriteriaTake
+      skip: QueryCriteriaSkip
+    }>,
     private driver: QueryDriverInterface,
   ) {
     this.attr = this.remap({
@@ -34,7 +39,7 @@ export class QueryCriteria<Data extends QueryResultData>
   }
 
   get filter() {
-    return this.attr.filter ?? {}
+    return this.attr.filter
   }
 
   get orderBy() {
@@ -52,15 +57,21 @@ export class QueryCriteria<Data extends QueryResultData>
   private remap<P extends typeof this.attr>(input: P): P {
     const attr = {
       filter: ((filter) => {
+        const wasArray = Array.isArray(filter)
         const filters = Array.isArray(filter) ? filter : [filter]
         const results = []
         for (const f of filters) {
-          if (!Object.keys(f).length) continue
+          if (!f || !Object.keys(f).length) continue
           const ret: any = {}
           for (const prev in f) {
             if (!Object.prototype.hasOwnProperty.call(f, prev)) continue
             const value = f[prev]
-            const mappingValue = this.mapping[prev]
+            // mapping is typed by QuerySpecification.rules which does not
+            // include arbitrary string keys. At runtime we may index by
+            // property names coming from filters (strings), so cast to any
+            // to avoid TypeScript index errors while preserving the
+            // runtime lookup behavior.
+            const mappingValue = (this.mapping as any)[prev]
 
             // Skip undefined values
             if (value === undefined) continue
@@ -71,11 +82,12 @@ export class QueryCriteria<Data extends QueryResultData>
           }
           results.push(ret)
         }
-        return results.length === 0
-          ? undefined
-          : results.length === 1
-            ? (results[0] as P['filter'])
-            : (results as P['filter'][])
+        // Return in the same format as input: preserve original structure
+        // For empty filter, always return {} (single object)
+        if (results.length === 0) {
+          return {} as any
+        }
+        return wasArray ? results : (results[0] ?? {}) as any
       })(input.filter),
       orderBy: input.orderBy,
       take: input.take,

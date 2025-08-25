@@ -29,7 +29,9 @@
     "@changesets/cli": "^2.27.7",
     "@rym-lib/dev-config": "*",
     "npm-check-updates": "^17.0.6",
-    "turbo": "^2.0.14"
+    "tinypool": "^1.1.1",
+    "turbo": "^2.0.14",
+    "vitest": "^3.2.4"
   },
   "optionalDependencies": {
     "@rollup/rollup-linux-x64-gnu": "^4.21.0"

@@ -123,6 +123,13 @@ class TestDriver<Data extends Record<string, any> = Record<string, any>>
                     .includes(String(value).toLowerCase()),
                 )
                 break
+              case 'not_contains':
+                result = result.filter((item) =>
+                  !String((item as any)[field])
+                    .toLowerCase()
+                    .includes(String(value).toLowerCase()),
+                )
+                break
               case 'in':
                 if (Array.isArray(value) && value.length > 0) {
                   if (
@@ -143,6 +150,26 @@ class TestDriver<Data extends Record<string, any> = Record<string, any>>
                     )
                   }
                 }
+                break
+              case 'gt':
+                result = result.filter(
+                  (item) => Number((item as any)[field]) > Number(value),
+                )
+                break
+              case 'gte':
+                result = result.filter(
+                  (item) => Number((item as any)[field]) >= Number(value),
+                )
+                break
+              case 'lt':
+                result = result.filter(
+                  (item) => Number((item as any)[field]) < Number(value),
+                )
+                break
+              case 'lte':
+                result = result.filter(
+                  (item) => Number((item as any)[field]) <= Number(value),
+                )
                 break
             }
           }
