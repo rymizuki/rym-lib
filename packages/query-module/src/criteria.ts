@@ -60,7 +60,12 @@ export class QueryCriteria<Data extends QueryResultData>
           for (const prev in f) {
             if (!Object.prototype.hasOwnProperty.call(f, prev)) continue
             const value = f[prev]
-            const mappingValue = this.mapping[prev]
+            // mapping is typed by QuerySpecification.rules which does not
+            // include arbitrary string keys. At runtime we may index by
+            // property names coming from filters (strings), so cast to any
+            // to avoid TypeScript index errors while preserving the
+            // runtime lookup behavior.
+            const mappingValue = (this.mapping as any)[prev]
 
             // Skip undefined values
             if (value === undefined) continue

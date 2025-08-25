@@ -1,0 +1,17 @@
+{
+  "name": "example-query-module",
+  "version": "0.0.0",
+  "private": true,
+  "type": "module",
+  "devDependencies": {
+    "@prisma/client": "^6.14.0",
+    "@rym-lib/dev-config": "*",
+    "@rym-lib/query-module": "*",
+    "@rym-lib/query-module-driver-prisma": "*",
+    "@types/node": "^24.3.0",
+    "eslint": "^9.34.0",
+    "prisma": "^6.14.0",
+    "typescript": "^5.9.2",
+    "vitest": "^3.2.4"
+  }
+}

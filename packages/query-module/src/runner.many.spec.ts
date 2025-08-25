@@ -1,10 +1,13 @@
-import { describe, it } from 'vitest'
+import { describe, it, expect, beforeEach } from 'vitest'
 
 import {
   QueryFilter,
   QueryResultList,
   QueryRunnerCriteria,
+  QueryRunnerInterface,
 } from './interfaces'
+import { defineQuery } from './functions/define-query'
+import { createDriver, TestDriver } from './test-utils/test-driver'
 
 type TestData = {
   id: number
@@ -17,17 +20,76 @@ type TestData = {
   }
 }
 
-describe.todo('QueryRunner - Method: many(params?: Partial<QueryRunnerCriteria<TestData>>)', () => {
-  describe.todo('When params is undefined', () => {
-    describe.todo('When data source contains TestData records', () => {
-      it.todo('should return Promise<QueryResultList<TestData>> with all records')
-      it.todo('should return result.items as TestData[]')
-      it.todo('should apply empty filter criteria by default')
+describe('QueryRunner - Method: many(params?: Partial<QueryRunnerCriteria<TestData>>)', () => {
+  let driver: TestDriver
+  let runner: QueryRunnerInterface<TestData>
+  
+  const testData: TestData[] = [
+    { id: 1, name: 'Alice', status: 'active', email: 'alice@example.com', metadata: { tags: ['user'], priority: 1 } },
+    { id: 2, name: 'Bob', status: 'inactive', email: 'bob@example.com', metadata: { tags: ['admin'], priority: 2 } },
+    { id: 3, name: 'Charlie', status: 'active', email: null, metadata: { tags: ['user'], priority: 3 } },
+  ]
+
+  beforeEach(() => {
+    driver = createDriver()
+    runner = defineQuery<TestData>(driver, {
+      name: 'test-query',
+      source: () => testData,
+      rules: {},
+    })
+  })
+  describe('When params is undefined', () => {
+    describe('When data source contains TestData records', () => {
+      it('should return Promise<QueryResultList<TestData>> with all records', async () => {
+        const result = await runner.many()
+        
+        expect(result).toHaveProperty('items')
+        expect(result.items).toHaveLength(3)
+        expect(result.items).toEqual(testData)
+      })
+
+      it('should return result.items as TestData[]', async () => {
+        const result = await runner.many()
+        
+        expect(Array.isArray(result.items)).toBe(true)
+        result.items.forEach(item => {
+          expect(item).toHaveProperty('id')
+          expect(item).toHaveProperty('name')
+          expect(item).toHaveProperty('status')
+          expect(item).toHaveProperty('email')
+        })
+      })
+
+      it('should apply empty filter criteria by default', async () => {
+        await runner.many()
+        
+        expect(driver.called[0]!.args[0].filter).toEqual({})
+      })
     })
 
-    describe.todo('When data source is empty', () => {
-      it.todo('should return Promise<QueryResultList<TestData>> resolving to {items: []}')
-      it.todo('should maintain QueryResultList<TestData> structure')
+    describe('When data source is empty', () => {
+      beforeEach(() => {
+        runner = defineQuery<TestData>(driver, {
+          name: 'empty-query',
+          source: () => [],
+          rules: {},
+        })
+      })
+
+      it('should return Promise<QueryResultList<TestData>> resolving to {items: []}', async () => {
+        const result = await runner.many()
+        
+        expect(result).toHaveProperty('items')
+        expect(result.items).toHaveLength(0)
+        expect(result.items).toEqual([])
+      })
+
+      it('should maintain QueryResultList<TestData> structure', async () => {
+        const result = await runner.many()
+        
+        expect(result).toHaveProperty('items')
+        expect(Array.isArray(result.items)).toBe(true)
+      })
     })
   })
 

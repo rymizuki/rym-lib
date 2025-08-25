@@ -592,8 +592,8 @@ describe('query-module-sql-builder', () => {
     })
   })
 
-  // HAVING clause support tests
-  describe('HAVING clause support', () => {
+  // HAVING clause support tests (skipped — HAVING support removed)
+  describe.skip('HAVING clause support', () => {
     describe('basic HAVING clause', () => {
       describe('single HAVING condition', () => {
         describe('COUNT function condition', () => {

@@ -1,5 +1,3 @@
-import { AnyMxRecord } from 'dns'
-
 export type QueryResultData = any
 export interface QueryResultList<D> {
   items: D[]
@@ -10,14 +8,14 @@ export type QueryFilterOperator =
   | 'not_contains'
   | 'eq' // = (automatically handles raw SQL expressions)
   | 'ne' // != (automatically handles raw SQL expressions)
-  | 'lte' // >=
-  | 'lt' // >
-  | 'gte' // <=
-  | 'gt' // <
+  | 'lt' // <
+  | 'lte' // <=
+  | 'gt' // >
+  | 'gte' // >=
   | 'in' // IN (automatically handles raw SQL expressions)
 export type QueryFilter<Data extends QueryResultData> = Partial<
   Record<
-    keyof Data | (string & {}),
+    keyof Data,
     Partial<
       Record<Exclude<QueryFilterOperator, 'in'>, any> & {
         in: any[]
@@ -27,10 +25,7 @@ export type QueryFilter<Data extends QueryResultData> = Partial<
 >
 type QueryCriteriaOrderByRecord<
   Data,
-  Keys extends Extract<keyof Data | (string & {}), string> = Extract<
-    keyof Data | (string & {}),
-    string
-  >,
+  Keys extends Extract<keyof Data, string> = Extract<keyof Data, string>,
 > = `${Keys}` | `${Keys}:${'asc' | 'desc'}`
 export type QueryCriteriaOrderBy<Data> =
   | QueryCriteriaOrderByRecord<Data>
@@ -109,7 +104,6 @@ export interface QueryRunnerMiddleware<
 
 type UnpackArray<T> = T extends Array<infer U> ? U : T
 
-
 export interface QuerySpecification<
   Data extends QueryResultData,
   Driver extends QueryDriverInterface,
@@ -118,9 +112,9 @@ export interface QuerySpecification<
 > {
   name?: string
   source: QuerySourceInterface<Data, Driver>
-  rules: Partial<
-    Record<keyof NonNullable<Params['filter']> | string, string>
-  >
+  // Rules must map existing filter keys to source field names. Arbitrary
+  // string keys are not allowed to keep the type-safety of filter keys.
+  rules: Partial<Record<keyof NonNullable<Params['filter']>, string>>
   criteria?: (params: Partial<Params>) => Partial<Params>
   middlewares?: QueryRunnerMiddleware<Data, List, Params>[]
 }

@@ -25,12 +25,27 @@ export class QueryRunner<
     private driver: Driver,
     private spec: QuerySpecification<Data, Driver, List, Params>,
     private context: QueryRunnerContext,
-  ) {}
+  ) {
+    // Minimal validation to ensure required collaborators are present.
+    if (!driver || typeof driver.source !== 'function' || typeof driver.execute !== 'function') {
+      throw new TypeError('QueryRunner requires a valid QueryDriverInterface')
+    }
+
+    if (!spec || typeof spec.source !== 'function') {
+      throw new TypeError('QueryRunner requires a valid QuerySpecification with a source function')
+    }
+
+    if (!context || !context.logger) {
+      throw new TypeError('QueryRunner requires a valid context with logger')
+    }
+  }
+
 
   async one(params: Partial<Params> = {}): Promise<Data | null> {
-    params.take = 1
+    // Do not mutate the caller's params object — create a shallow clone
+    const cloned: Partial<Params> = { ...(params as any), take: 1 }
 
-    const list = await this.many(params)
+    const list = await this.many(cloned)
 
     if (!list.items.length) {
       return null

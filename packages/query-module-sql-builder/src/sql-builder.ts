@@ -41,10 +41,9 @@ export function buildSQL<Driver extends QueryDriverInterface>(
       : [criteria.filter]) {
       const cond = createConditions()
 
-      // filter -> where
+      // filter -> where (HAVING prefix support removed)
       for (const name of keys(filter)) {
         if (typeof name !== 'string') continue
-        if (/^having:/.test(name)) continue
 
         const property = filter[name]
         if (!property) continue
@@ -55,28 +54,6 @@ export function buildSQL<Driver extends QueryDriverInterface>(
       whole.or(cond)
     }
     builder.where(whole)
-
-    const whole_having = createConditions()
-    for (const filter of Array.isArray(criteria.filter)
-      ? criteria.filter
-      : [criteria.filter]) {
-      const cond = createConditions()
-
-      // filter -> where
-      for (const name of keys(filter)) {
-        if (typeof name !== 'string') continue
-        if (!/^having:/.test(name)) continue
-
-        const property = filter[name]
-        if (!property) continue
-
-        const column_name = name.replace(/^having:/, '')
-        createCond(cond, column_name, property as QueryFilter<any>, o, true)
-      }
-
-      whole_having.or(cond)
-    }
-    builder.having(whole_having)
   }
 
   // orderBy
