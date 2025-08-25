@@ -1,4 +1,12 @@
 import { describe, it, expect, beforeEach, vi } from 'vitest'
+// mock sequelize to avoid sqlite3 requirement in test env
+vi.mock('sequelize', () => {
+  const mockQuery = vi.fn()
+  return {
+    Sequelize: vi.fn().mockImplementation(() => ({ query: mockQuery })),
+    QueryTypes: { SELECT: 'SELECT' },
+  }
+})
 import { Sequelize } from 'sequelize'
 import { QueryDriverSequelize } from './driver'
 import { createLogger } from '@rym-lib/query-module/test-utils'
@@ -31,4 +39,3 @@ describe('QueryDriverSequelize - basic one/many semantics', () => {
     expect(rows[0]).toStrictEqual(data[0])
   })
 })
-
