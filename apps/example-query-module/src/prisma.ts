@@ -1,12 +1,22 @@
-import { unescape } from 'coral-sql'
+import {
+  caseWhen,
+  coalesce,
+  is_not_null,
+  json_array_aggregate,
+  json_object,
+  unescape,
+} from 'coral-sql'
 
-import { PrismaClient } from '@prisma/client'
 import {
   defineQuery,
   QueryLoggerInterface,
+  QueryResultList,
+  QueryRunnerCriteria,
   QuerySpecification,
 } from '@rym-lib/query-module'
 import { QueryDriverPrisma } from '@rym-lib/query-module-driver-prisma'
+
+import { PrismaClient } from '../generated/prisma/client.js'
 
 type Data = {
   id: string
@@ -15,7 +25,30 @@ type Data = {
   status: 'active' | 'inactive'
 }
 
-const prisma = new PrismaClient()
+type List = QueryResultList<Data>
+type Params = QueryRunnerCriteria<Data>
+
+const prisma = new PrismaClient().$extends({
+  query: {
+    $queryRawUnsafe: async ({ args }) => {
+      const sql = args.shift()
+      console.debug(
+        '[Query]',
+        sql.replace(/\n/g, ' ').replace(/(\s|\t)+/g, ' '),
+        args,
+      )
+
+      return [
+        {
+          id: '123456',
+          name: 'april',
+          birthdate: '1999-01-01',
+          status: 'active',
+        },
+      ]
+    },
+  },
+})
 
 const logger: QueryLoggerInterface = {
   verbose(message: string) {},
@@ -25,24 +58,69 @@ const logger: QueryLoggerInterface = {
 
 const driver = new QueryDriverPrisma(prisma, { logger })
 
-const spec: QuerySpecification<Data, QueryDriverPrisma> = {
+const spec: QuerySpecification<Data, QueryDriverPrisma, List, Params> = {
   source: (builder) => {
     return builder
       .from('user', 'u')
       .leftJoin('user_inactivation', 'ui', 'u.id = ui.user_id')
       .column('u.id')
-      .column('name')
+      .column('u.name')
       .column('u.birthdate')
       .column(
-        unescape(`
-          CASE WHEN ui.id IS NOT NULL
-            THEN 'active'
-            ELSE 'inactive'
-          END
-          `),
+        caseWhen().when('ui.id', is_not_null()).then('active').else('inactive'),
+        'status',
+      )
+      .column(
+        builder
+          .createBuilder()
+          .from('order', 'o')
+          .column(
+            json_array_aggregate(
+              json_object({ id: 'o.id', ordered_at: 'o.created_at' }),
+            ),
+          )
+          .where('order.user_id', unescape('u.id'))
+          .orderBy('o.created_at', 'desc')
+          .limit(5),
+        'orders',
       )
   },
-  rules: {},
+  rules: {
+    id: 'u.id',
+    name: 'u.name',
+    status: {
+      column: () =>
+        caseWhen().when('ui.id', is_not_null()).then('active').else('inactive'),
+    },
+  },
 }
 
-const query = defineQuery(driver, spec)
+const main = async () => {
+  const query = defineQuery(driver, spec)
+
+  console.info('params: undefined', await query.many())
+
+  console.info('params: orderBy', await query.many({ orderBy: 'id:desc' }))
+  console.info('params: take, skip', await query.many({ take: 10, skip: 20 }))
+  console.info(
+    'params: filter',
+    await query.many({
+      filter: { birthdate: { gte: '2000-01-01', lt: '2020-12-31' } },
+    }),
+  )
+  console.info(
+    'params: filter[]',
+    await query.many({
+      filter: [
+        { name: { contains: 'jr.' } },
+        { birthdate: { gte: '2000-01-01', lt: '2020-12-31' } },
+      ],
+    }),
+  )
+  console.info(
+    'params: filter for case-when',
+    await query.many({ filter: { status: { eq: 'active' } } }),
+  )
+}
+
+main()
