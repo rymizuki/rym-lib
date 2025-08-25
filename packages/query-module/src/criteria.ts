@@ -1,11 +1,10 @@
 import {
+  QueryCriteriaFilter,
   QueryCriteriaInterface,
   QueryCriteriaOrderBy,
   QueryCriteriaSkip,
   QueryCriteriaTake,
-  QueryDriverInterface,
   QueryFilter,
-  QueryFilterOperator,
   QueryResultData,
   QuerySpecification,
 } from './interfaces'
@@ -14,7 +13,7 @@ export class QueryCriteria<Data extends QueryResultData>
   implements QueryCriteriaInterface<Data>
 {
   private attr: {
-    filter: QueryFilter<Data> | QueryFilter<Data>[]
+    filter: QueryCriteriaFilter<Data> | QueryCriteriaFilter<Data>[]
     orderBy: QueryCriteriaOrderBy<Data>
     take: QueryCriteriaTake
     skip: QueryCriteriaSkip
@@ -28,7 +27,6 @@ export class QueryCriteria<Data extends QueryResultData>
       take: QueryCriteriaTake
       skip: QueryCriteriaSkip
     }>,
-    private driver: QueryDriverInterface,
   ) {
     this.attr = this.remap({
       filter: input.filter ?? {},
@@ -77,8 +75,13 @@ export class QueryCriteria<Data extends QueryResultData>
             if (value === undefined) continue
 
             // Static string mapping (rename)
-            const rename = mappingValue as string
-            ret[rename ? rename : prev] = value
+            const column = (() => {
+              if (typeof mappingValue === 'string') return mappingValue
+              if (mappingValue?.column) return mappingValue.column
+              return null
+            })()
+            const rename = typeof column === 'string' ? column : prev
+            ret[rename] = { column, value }
           }
           results.push(ret)
         }
@@ -87,7 +90,7 @@ export class QueryCriteria<Data extends QueryResultData>
         if (results.length === 0) {
           return {} as any
         }
-        return wasArray ? results : (results[0] ?? {}) as any
+        return wasArray ? results : ((results[0] ?? {}) as any)
       })(input.filter),
       orderBy: input.orderBy,
       take: input.take,

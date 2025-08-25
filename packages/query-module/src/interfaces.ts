@@ -40,8 +40,16 @@ export interface QueryRunnerCriteria<Data extends QueryResultData> {
   skip?: QueryCriteriaSkip
 }
 
+export type QueryCriteriaFilter<Data extends QueryResultData = any> = Partial<
+  Record<string, { column: string | (() => any); value: any }>
+>
+
 export interface QueryCriteriaInterface<Data extends QueryResultData = any> {
-  readonly filter: QueryFilter<Data> | QueryFilter<Data>[]
+  readonly filter:
+    | QueryCriteriaFilter<Data>
+    | QueryCriteriaFilter<Data>[]
+    | QueryFilter<Data>
+    | QueryFilter<Data>[]
   readonly orderBy: QueryCriteriaOrderBy<Data>
   readonly take: QueryCriteriaTake
   readonly skip: QueryCriteriaSkip
@@ -104,6 +112,8 @@ export interface QueryRunnerMiddleware<
 
 type UnpackArray<T> = T extends Array<infer U> ? U : T
 
+type QueryRule = string | { column: () => any }
+
 export interface QuerySpecification<
   Data extends QueryResultData,
   Driver extends QueryDriverInterface,
@@ -114,7 +124,9 @@ export interface QuerySpecification<
   source: QuerySourceInterface<Data, Driver>
   // Rules must map existing filter keys to source field names. Arbitrary
   // string keys are not allowed to keep the type-safety of filter keys.
-  rules: Partial<Record<keyof NonNullable<Params['filter']>, string>>
+  rules: Partial<
+    Record<keyof UnpackArray<NonNullable<Params['filter']>>, QueryRule>
+  >
   criteria?: (params: Partial<Params>) => Partial<Params>
   middlewares?: QueryRunnerMiddleware<Data, List, Params>[]
 }

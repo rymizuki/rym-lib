@@ -27,19 +27,24 @@ export class QueryRunner<
     private context: QueryRunnerContext,
   ) {
     // Minimal validation to ensure required collaborators are present.
-    if (!driver || typeof driver.source !== 'function' || typeof driver.execute !== 'function') {
+    if (
+      !driver ||
+      typeof driver.source !== 'function' ||
+      typeof driver.execute !== 'function'
+    ) {
       throw new TypeError('QueryRunner requires a valid QueryDriverInterface')
     }
 
     if (!spec || typeof spec.source !== 'function') {
-      throw new TypeError('QueryRunner requires a valid QuerySpecification with a source function')
+      throw new TypeError(
+        'QueryRunner requires a valid QuerySpecification with a source function',
+      )
     }
 
     if (!context || !context.logger) {
       throw new TypeError('QueryRunner requires a valid context with logger')
     }
   }
-
 
   async one(params: Partial<Params> = {}): Promise<Data | null> {
     // Do not mutate the caller's params object — create a shallow clone
@@ -67,7 +72,6 @@ export class QueryRunner<
     const criteria = new QueryCriteria<Data>(
       this.spec.rules,
       this.spec.criteria ? this.spec.criteria(params) : params,
-      this.driver,
     )
 
     const items = await source.execute(criteria)

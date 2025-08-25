@@ -1,8 +1,8 @@
 import { describe, it, expect, beforeEach } from 'vitest'
 
+import { defineQuery } from './functions/define-query'
 import { QueryRunnerInterface } from './interfaces'
 import { QueryRunner } from './runner'
-import { defineQuery } from './functions/define-query'
 import { createDriver, TestDriver } from './test-utils/test-driver'
 import { createLogger } from './test-utils/test-mock-logger'
 
@@ -19,7 +19,7 @@ type TestData = {
 
 describe('QueryRunner - Constructor', () => {
   let driver: TestDriver
-  
+
   beforeEach(() => {
     driver = createDriver()
   })
@@ -63,15 +63,16 @@ describe('QueryRunner - Constructor', () => {
 
   describe('When null/undefined parameters are provided', () => {
     it('should throw TypeError when constructed with null parameters', () => {
-      expect(() => new QueryRunner(null as any, null as any, null as any)).toThrow(
-        TypeError,
-      )
+      expect(
+        () => new QueryRunner(null as any, null as any, null as any),
+      ).toThrow(TypeError)
     })
 
     it('should throw TypeError when constructed with undefined parameters', () => {
-      expect(() => new QueryRunner(undefined as any, undefined as any, undefined as any)).toThrow(
-        TypeError,
-      )
+      expect(
+        () =>
+          new QueryRunner(undefined as any, undefined as any, undefined as any),
+      ).toThrow(TypeError)
     })
   })
 })

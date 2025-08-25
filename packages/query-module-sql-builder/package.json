@@ -44,6 +44,6 @@
     "vitest": "^3.0.3"
   },
   "dependencies": {
-    "coral-sql": "^1.4.4"
+    "coral-sql": "^1.5.1"
   }
 }

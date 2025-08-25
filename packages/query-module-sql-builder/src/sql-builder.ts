@@ -50,7 +50,17 @@ export function buildSQL<Driver extends QueryDriverInterface>(
         if (!property) continue
 
         hasCondition = true
-        createCond(cond, name, property as QueryFilter<any>, o)
+        
+        // Handle new QueryCriteriaFilter format: { column, value }
+        if (property && typeof property === 'object' && 'value' in property && 'column' in property) {
+          const columnName = property.column && typeof property.column === 'function' 
+            ? property.column().toSQL()[0] // Use toSQL() method for coral-sql objects
+            : (typeof property.column === 'string' ? property.column : name) // Use column name or fallback to field name
+          createCond(cond, columnName, property.value as QueryFilter<any>, o)
+        } else {
+          // Handle legacy QueryFilter format
+          createCond(cond, name, property as QueryFilter<any>, o)
+        }
       }
 
       if (hasCondition) {
@@ -77,7 +87,17 @@ export function buildSQL<Driver extends QueryDriverInterface>(
 
         const column_name = name.replace(/^having:/, '')
         hasHavingCondition = true
-        createCond(cond, column_name, property as QueryFilter<any>, o)
+        
+        // Handle new QueryCriteriaFilter format: { column, value }
+        if (property && typeof property === 'object' && 'value' in property && 'column' in property) {
+          const columnName = property.column && typeof property.column === 'function' 
+            ? property.column().toSQL()[0] // Use toSQL() method for coral-sql objects
+            : (typeof property.column === 'string' ? property.column : column_name) // Use column name or fallback to parsed name
+          createCond(cond, columnName, property.value as QueryFilter<any>, o)
+        } else {
+          // Handle legacy QueryFilter format
+          createCond(cond, column_name, property as QueryFilter<any>, o)
+        }
       }
 
       if (hasHavingCondition) {

@@ -71,9 +71,9 @@ describe('QueryRunner', () => {
           expect(result).toStrictEqual({ items: data })
         })
         it('should be call with specified criteria', () => {
-          expect(driver.called[0]?.args[0].filter).toStrictEqual(
-            criteria.filter,
-          )
+          expect(driver.called[0]?.args[0].filter).toStrictEqual({
+            index: { column: null, value: { eq: 1 } },
+          })
           expect(driver.called[0]?.args[0].orderBy).toBe(criteria.orderBy)
           expect(driver.called[0]?.args[0].skip).toBe(criteria.skip)
           expect(driver.called[0]?.args[0].take).toBe(criteria.take)
@@ -92,9 +92,10 @@ describe('QueryRunner', () => {
           expect(result).toStrictEqual({ items: data })
         })
         it('should be call with specified criteria', () => {
-          expect(driver.called[0]?.args[0].filter).toStrictEqual(
-            criteria.filter,
-          )
+          expect(driver.called[0]?.args[0].filter).toStrictEqual([
+            { index: { column: null, value: { eq: 1 } } },
+            { index: { column: null, value: { ne: 5 } } },
+          ])
         })
       })
     })
@@ -134,9 +135,9 @@ describe('QueryRunner', () => {
           expect(result).toStrictEqual(data[0])
         })
         it('should be call with specified criteria', () => {
-          expect(driver.called[0]?.args[0].filter).toStrictEqual(
-            criteria.filter,
-          )
+          expect(driver.called[0]?.args[0].filter).toStrictEqual({
+            index: { column: null, value: { eq: 1 } },
+          })
           expect(driver.called[0]?.args[0].orderBy).toBe(criteria.orderBy)
           expect(driver.called[0]?.args[0].skip).toBe(criteria.skip)
           expect(driver.called[0]?.args[0].take).toBe(1)
@@ -169,9 +170,9 @@ describe('QueryRunner', () => {
           expect(result).toStrictEqual(data[0])
         })
         it('should be call with specified criteria', () => {
-          expect(driver.called[0]?.args[0].filter).toStrictEqual(
-            criteria.filter,
-          )
+          expect(driver.called[0]?.args[0].filter).toStrictEqual({
+            index: { column: null, value: { eq: 1 } },
+          })
           expect(driver.called[0]?.args[0].orderBy).toBe(criteria.orderBy)
           expect(driver.called[0]?.args[0].skip).toBe(criteria.skip)
           expect(driver.called[0]?.args[0].take).toBe(1)
@@ -225,8 +226,8 @@ describe('QueryRunner', () => {
       describe('criteria.filter', () => {
         it('should be replaced name for index, value', () => {
           expect(driver.called[0]?.args[0]?.filter).toStrictEqual({
-            'record.id': { gte: 0 },
-            'record.value': { ne: 'item-1' },
+            'record.id': { column: 'record.id', value: { gte: 0 } },
+            'record.value': { column: 'record.value', value: { ne: 'item-1' } },
           })
         })
       })
@@ -280,10 +281,10 @@ describe('QueryRunner', () => {
         describe('called with criteria', () => {
           it("should be equals driver' criteria", () => {
             expect(callArgs[0]).toStrictEqual({
-              filter: driver.called[0]?.args[0]?.filter,
-              orderBy: driver.called[0]?.args[0]?.orderBy,
-              take: driver.called[0]?.args[0]?.take,
-              skip: driver.called[0]?.args[0]?.skip,
+              filter: { index: { eq: 0 } },
+              orderBy: 'index:asc',
+              take: 10,
+              skip: 1,
             })
           })
         })
@@ -317,10 +318,10 @@ describe('QueryRunner', () => {
         describe('called with criteria', () => {
           it('should be equals specified driver criteria', () => {
             expect(callArgs[1]).toStrictEqual({
-              filter: driver.called[0]?.args[0].filter,
-              orderBy: driver.called[0]?.args[0].orderBy,
-              take: driver.called[0]?.args[0].take,
-              skip: driver.called[0]?.args[0].skip,
+              filter: { index: { eq: 0 } },
+              orderBy: 'index:asc',
+              take: 10,
+              skip: 1,
             })
           })
         })
@@ -403,9 +404,15 @@ describe('QueryRunner with dot notation keys', () => {
 
       // マッピングが正しく適用されることを確認
       expect(criteria?.filter).toEqual({
-        'users.id': { eq: 1 },
-        'user_profile.city_name': { eq: 'Tokyo' },
-        'user_profile.zip_code': { eq: '100-0001' },
+        'users.id': { column: 'users.id', value: { eq: 1 } },
+        'user_profile.city_name': {
+          column: 'user_profile.city_name',
+          value: { eq: 'Tokyo' },
+        },
+        'user_profile.zip_code': {
+          column: 'user_profile.zip_code',
+          value: { eq: '100-0001' },
+        },
       })
     })
 
@@ -421,12 +428,12 @@ describe('QueryRunner with dot notation keys', () => {
       const criteria = driver.called[0]?.args[0]
 
       expect(criteria?.filter).toEqual({
-        'users.name': { contains: 'User' },
-        'user_profile.city_name': { ne: 'Kyoto' },
+        'users.name': { column: 'users.name', value: { contains: 'User' } },
+        'user_profile.city_name': {
+          column: 'user_profile.city_name',
+          value: { ne: 'Kyoto' },
+        },
       })
     })
   })
 })
-
-
-

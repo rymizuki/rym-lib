@@ -1,11 +1,11 @@
 import { describe, it, expect, beforeEach, vi } from 'vitest'
 
+import { defineQuery } from './functions/define-query'
 import {
   QueryResultList,
   QueryRunnerInterface,
   QueryRunnerMiddleware,
 } from './interfaces'
-import { defineQuery } from './functions/define-query'
 import { createDriver, TestDriver } from './test-utils/test-driver'
 
 type TestData = {
@@ -22,10 +22,22 @@ type TestData = {
 describe('QueryRunner - Middleware with many()', () => {
   let driver: TestDriver
   let runner: QueryRunnerInterface<TestData>
-  
+
   const testData: TestData[] = [
-    { id: 1, name: 'Alice', status: 'active', email: 'alice@example.com', metadata: { tags: ['user'], priority: 1 } },
-    { id: 2, name: 'Bob', status: 'inactive', email: 'bob@example.com', metadata: { tags: ['admin'], priority: 2 } },
+    {
+      id: 1,
+      name: 'Alice',
+      status: 'active',
+      email: 'alice@example.com',
+      metadata: { tags: ['user'], priority: 1 },
+    },
+    {
+      id: 2,
+      name: 'Bob',
+      status: 'inactive',
+      email: 'bob@example.com',
+      metadata: { tags: ['admin'], priority: 2 },
+    },
   ]
 
   beforeEach(() => {
@@ -44,14 +56,14 @@ describe('QueryRunner - Middleware with many()', () => {
             if (!Array.isArray(params.filter)) {
               params.filter.status = { eq: 'active' }
             }
-          })
+          }),
         }
 
         runner = defineQuery<TestData>(driver, {
           name: 'middleware-preprocess-query',
           source: () => testData,
           rules: {},
-          middlewares: [preprocessMiddleware]
+          middlewares: [preprocessMiddleware],
         })
 
         await runner.many({ filter: { name: { eq: 'Alice' } } })
@@ -59,8 +71,8 @@ describe('QueryRunner - Middleware with many()', () => {
         expect(preprocessMiddleware.preprocess).toHaveBeenCalled()
         // ミドルウェアによって条件が変更されている
         expect(driver.called[0]?.args[0].filter).toEqual({
-          name: { eq: 'Alice' },
-          status: { eq: 'active' }  // ミドルウェアで追加
+          name: { column: null, value: { eq: 'Alice' } },
+          status: { column: null, value: { eq: 'active' } }, // ミドルウェアで追加
         })
       })
 
@@ -72,16 +84,16 @@ describe('QueryRunner - Middleware with many()', () => {
             // データを変換
             result.items = (result.items as any).map((item: any) => ({
               ...item,
-              processed: true
+              processed: true,
             }))
-          })
+          }),
         }
 
         runner = defineQuery<TestData>(driver, {
           name: 'middleware-postprocess-query',
           source: () => testData,
           rules: {},
-          middlewares: [postprocessMiddleware]
+          middlewares: [postprocessMiddleware],
         })
 
         const result = await runner.many()
@@ -94,20 +106,22 @@ describe('QueryRunner - Middleware with many()', () => {
       it('should handle async middleware operations transparently', async () => {
         const asyncMiddleware: QueryRunnerMiddleware<TestData> = {
           preprocess: vi.fn().mockImplementation(async (params, context) => {
-            await new Promise(resolve => setTimeout(resolve, 10))
+            await new Promise((resolve) => setTimeout(resolve, 10))
             params.processedByAsync = true
           }),
-          postprocess: vi.fn().mockImplementation(async (result, params, context) => {
-            await new Promise(resolve => setTimeout(resolve, 10))
-            result.asyncProcessed = true
-          })
+          postprocess: vi
+            .fn()
+            .mockImplementation(async (result, params, context) => {
+              await new Promise((resolve) => setTimeout(resolve, 10))
+              result.asyncProcessed = true
+            }),
         }
 
         runner = defineQuery<TestData>(driver, {
           name: 'async-middleware-query',
           source: () => testData,
           rules: {},
-          middlewares: [asyncMiddleware]
+          middlewares: [asyncMiddleware],
         })
 
         const result = await runner.many()
@@ -126,7 +140,7 @@ describe('QueryRunner - Middleware with many()', () => {
           }),
           postprocess: vi.fn().mockImplementation((result) => {
             result.step1Result = true
-          })
+          }),
         }
 
         const middleware2: QueryRunnerMiddleware<TestData> = {
@@ -135,14 +149,14 @@ describe('QueryRunner - Middleware with many()', () => {
           }),
           postprocess: vi.fn().mockImplementation((result) => {
             result.step2Result = true
-          })
+          }),
         }
 
         runner = defineQuery<TestData>(driver, {
           name: 'multiple-middleware-query',
           source: () => testData,
           rules: {},
-          middlewares: [middleware1, middleware2]
+          middlewares: [middleware1, middleware2],
         })
 
         const result = await runner.many()
@@ -162,23 +176,23 @@ describe('QueryRunner - Middleware with many()', () => {
         const middlewares: QueryRunnerMiddleware<TestData>[] = [
           {
             preprocess: vi.fn(),
-            postprocess: vi.fn()
+            postprocess: vi.fn(),
           },
           {
             preprocess: vi.fn(),
-            postprocess: vi.fn()
+            postprocess: vi.fn(),
           },
           {
             preprocess: vi.fn(),
-            postprocess: vi.fn()
-          }
+            postprocess: vi.fn(),
+          },
         ]
 
         runner = defineQuery<TestData>(driver, {
           name: 'consistent-middleware-query',
           source: () => testData,
           rules: {},
-          middlewares
+          middlewares,
         })
 
         const result = await runner.many()
@@ -186,9 +200,9 @@ describe('QueryRunner - Middleware with many()', () => {
         expect(result).toHaveProperty('items')
         expect(Array.isArray(result.items)).toBe(true)
         expect(result.items).toHaveLength(2)
-        
+
         // 全てのミドルウェアが実行される
-        middlewares.forEach(middleware => {
+        middlewares.forEach((middleware) => {
           expect(middleware.preprocess).toHaveBeenCalled()
           expect(middleware.postprocess).toHaveBeenCalled()
         })
@@ -200,17 +214,19 @@ describe('QueryRunner - Middleware with many()', () => {
         const failingMiddleware: QueryRunnerMiddleware<TestData> = {
           preprocess: vi.fn().mockImplementation(() => {
             throw new Error('Middleware processing failed')
-          })
+          }),
         }
 
         runner = defineQuery<TestData>(driver, {
           name: 'failing-middleware-query',
           source: () => testData,
           rules: {},
-          middlewares: [failingMiddleware]
+          middlewares: [failingMiddleware],
         })
 
-        await expect(runner.many()).rejects.toThrow('Middleware processing failed')
+        await expect(runner.many()).rejects.toThrow(
+          'Middleware processing failed',
+        )
         expect(failingMiddleware.preprocess).toHaveBeenCalled()
       })
 
@@ -218,14 +234,14 @@ describe('QueryRunner - Middleware with many()', () => {
         const errorMiddleware: QueryRunnerMiddleware<TestData> = {
           postprocess: vi.fn().mockImplementation(() => {
             throw new Error('Postprocess middleware error with details')
-          })
+          }),
         }
 
         runner = defineQuery<TestData>(driver, {
           name: 'error-middleware-query',
           source: () => testData,
           rules: {},
-          middlewares: [errorMiddleware]
+          middlewares: [errorMiddleware],
         })
 
         try {
@@ -233,23 +249,25 @@ describe('QueryRunner - Middleware with many()', () => {
           throw new Error('Should have thrown an error')
         } catch (error) {
           expect(error).toBeInstanceOf(Error)
-          expect((error as Error).message).toBe('Postprocess middleware error with details')
+          expect((error as Error).message).toBe(
+            'Postprocess middleware error with details',
+          )
         }
       })
 
       it('should handle async middleware errors correctly', async () => {
         const asyncErrorMiddleware: QueryRunnerMiddleware<TestData> = {
           preprocess: vi.fn().mockImplementation(async () => {
-            await new Promise(resolve => setTimeout(resolve, 10))
+            await new Promise((resolve) => setTimeout(resolve, 10))
             throw new Error('Async middleware error')
-          })
+          }),
         }
 
         runner = defineQuery<TestData>(driver, {
           name: 'async-error-middleware-query',
           source: () => testData,
           rules: {},
-          middlewares: [asyncErrorMiddleware]
+          middlewares: [asyncErrorMiddleware],
         })
 
         await expect(runner.many()).rejects.toThrow('Async middleware error')
@@ -261,30 +279,32 @@ describe('QueryRunner - Middleware with many()', () => {
       it('should provide correct context to middlewares', async () => {
         const contextMiddleware: QueryRunnerMiddleware<TestData> = {
           preprocess: vi.fn(),
-          postprocess: vi.fn()
+          postprocess: vi.fn(),
         }
 
         runner = defineQuery<TestData>(driver, {
           name: 'context-middleware-query',
           source: () => testData,
           rules: {},
-          middlewares: [contextMiddleware]
+          middlewares: [contextMiddleware],
         })
 
         await runner.many()
 
         // preprocessとpostprocessに同じpidが渡される
-        const preprocessCall = (contextMiddleware.preprocess as any).mock.calls[0]
-        const postprocessCall = (contextMiddleware.postprocess as any).mock.calls[0]
-        
+        const preprocessCall = (contextMiddleware.preprocess as any).mock
+          .calls[0]
+        const postprocessCall = (contextMiddleware.postprocess as any).mock
+          .calls[0]
+
         expect(preprocessCall[1]).toHaveProperty('pid')
         expect(preprocessCall[1]).toHaveProperty('logger')
         expect(preprocessCall[1]).toHaveProperty('runner')
-        
+
         expect(postprocessCall[2]).toHaveProperty('pid')
-        expect(postprocessCall[2]).toHaveProperty('logger')  
+        expect(postprocessCall[2]).toHaveProperty('logger')
         expect(postprocessCall[2]).toHaveProperty('runner')
-        
+
         // 同じpidが使われている
         expect(preprocessCall[1].pid).toBe(postprocessCall[2].pid)
         expect(preprocessCall[1].runner).toBe(postprocessCall[2].runner)

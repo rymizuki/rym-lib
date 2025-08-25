@@ -20,7 +20,6 @@ class TestDriver<Data extends Record<string, any> = Record<string, any>>
     return this
   }
 
-
   async execute<D>(criteria: QueryCriteriaInterface<D>): Promise<Data[]> {
     this.called.push({
       method: 'execute',
@@ -51,7 +50,7 @@ class TestDriver<Data extends Record<string, any> = Record<string, any>>
       : [criteria.filter]
 
     for (const filter of filters) {
-      for (const [field, conditions] of Object.entries(filter)) {
+      for (const [field, filterData] of Object.entries(filter)) {
         // Apply smart filtering if the field looks like a CASE-WHEN field
         if (
           field.includes('status_display') ||
@@ -75,7 +74,8 @@ class TestDriver<Data extends Record<string, any> = Record<string, any>>
         : [criteria.filter]
 
       for (const filter of filters) {
-        for (const [field, conditions] of Object.entries(filter)) {
+        for (const [field, filterData] of Object.entries(filter)) {
+          const conditions = (filterData as any)?.value || filterData
           for (const [operator, value] of Object.entries(conditions as any)) {
             switch (operator) {
               case 'eq':
@@ -124,10 +124,11 @@ class TestDriver<Data extends Record<string, any> = Record<string, any>>
                 )
                 break
               case 'not_contains':
-                result = result.filter((item) =>
-                  !String((item as any)[field])
-                    .toLowerCase()
-                    .includes(String(value).toLowerCase()),
+                result = result.filter(
+                  (item) =>
+                    !String((item as any)[field])
+                      .toLowerCase()
+                      .includes(String(value).toLowerCase()),
                 )
                 break
               case 'in':
