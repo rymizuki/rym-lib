@@ -18,12 +18,11 @@ export type QueryFilterOperator =
 export type QueryFilter<Data extends QueryResultData> = Partial<
   Record<
     keyof Data | (string & {}),
-    | Partial<
-        Record<Exclude<QueryFilterOperator, 'in'>, any> & {
-          in: any[]
-        }
-      >
-    | QueryRuleFunction<Data, QueryDriverInterface, any>
+    Partial<
+      Record<Exclude<QueryFilterOperator, 'in'>, any> & {
+        in: any[]
+      }
+    >
   >
 >
 type QueryCriteriaOrderByRecord<
@@ -72,11 +71,6 @@ export interface QueryDriverInterface {
   execute<D>(
     criteria: QueryCriteriaInterface<D>,
   ): Promise<Record<string, any>[]>
-  customFilter(
-    operator: QueryFilterOperator,
-    value: any,
-    fn: (builder: any) => any,
-  ): any
 }
 
 interface QuerySourceInterface<
@@ -115,16 +109,6 @@ export interface QueryRunnerMiddleware<
 
 type UnpackArray<T> = T extends Array<infer U> ? U : T
 
-/**
- * Type for function-based rules that provides type safety for both value and sourceInstance parameters
- */
-export type QueryRuleFunction<
-  Data extends QueryResultData,
-  Driver extends QueryDriverInterface,
-  Filter extends QueryFilter<any> = QueryFilter<Data>,
-  Op extends QueryFilterOperator = QueryFilterOperator,
-  SourceInstance = Parameters<Parameters<Driver['customFilter']>[2]>[0],
-> = (operator: Op, value: any, sourceInstance: SourceInstance) => string | any
 
 export interface QuerySpecification<
   Data extends QueryResultData,
@@ -135,10 +119,7 @@ export interface QuerySpecification<
   name?: string
   source: QuerySourceInterface<Data, Driver>
   rules: Partial<
-    Record<
-      keyof NonNullable<Params['filter']> | string,
-      string | QueryRuleFunction<Data, Driver, NonNullable<Params['filter']>>
-    >
+    Record<keyof NonNullable<Params['filter']> | string, string>
   >
   criteria?: (params: Partial<Params>) => Partial<Params>
   middlewares?: QueryRunnerMiddleware<Data, List, Params>[]

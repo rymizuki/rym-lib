@@ -5,11 +5,9 @@ import {
   QueryDriverInterface,
   QueryLoggerInterface,
 } from '@rym-lib/query-module'
-import { QueryFilterOperator } from '@rym-lib/query-module'
 import {
   buildSQL,
   createBuilder,
-  SQLBuilderConditionsPort,
   SQLBuilderPort,
 } from '@rym-lib/query-module-sql-builder'
 
@@ -32,17 +30,6 @@ export class QueryDriverSequelize implements QueryDriverInterface {
     return this
   }
 
-  customFilter(
-    operator: QueryFilterOperator,
-    value: any,
-    filter: (
-      operator: QueryFilterOperator,
-      value: any,
-      builder: SQLBuilderPort,
-    ) => SQLBuilderPort | SQLBuilderConditionsPort,
-  ): SQLBuilderPort | SQLBuilderConditionsPort {
-    return filter(operator, value, this.builderSetup())
-  }
 
   async execute(
     criteria: QueryCriteriaInterface,

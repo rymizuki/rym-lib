@@ -3,10 +3,8 @@ import {
   createConditions,
   is_not_null,
   is_null,
-  SQLBuilderConditionExpressionPort,
-  SQLBuilderConditions,
-  SQLBuilderConditionsPort,
   SQLBuilderPort,
+  SQLBuilderConditionsPort,
   unescape,
 } from 'coral-sql'
 
@@ -115,21 +113,8 @@ function createCond(
   // If useUnescape is true, use unescape to avoid backticks for SQL functions
   const field = useUnescape ? unescape(name) : name
   for (const operator of keys(property)) {
-    const value = property[operator] as
-      | string
-      | string[]
-      | SQLBuilderPort
-      | SQLBuilderConditionsPort
-      | SQLBuilderConditionExpressionPort
+    const value = property[operator] as string | string[]
 
-    if (value instanceof SQLBuilderConditions) {
-      cond.and(value)
-      continue
-    }
-    if (value !== null && typeof value === 'object' && 'toSQL' in value) {
-      cond.and(value as Exclude<typeof value, SQLBuilderConditionsPort>)
-      continue
-    }
 
     switch (operator) {
       case 'eq': {
