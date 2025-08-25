@@ -5,6 +5,7 @@
   "type": "module",
   "scripts": {
     "build": "prisma generate",
+    "lint": "tsc --noEmit && prettier ./src -w --check",
     "exec:prisma": "tsx ./src/prisma.ts"
   },
   "devDependencies": {

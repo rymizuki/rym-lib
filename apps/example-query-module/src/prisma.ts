@@ -1,6 +1,6 @@
 import {
   caseWhen,
-  coalesce,
+  exists,
   is_not_null,
   json_array_aggregate,
   json_object,
@@ -23,10 +23,19 @@ type Data = {
   name: string
   birthdate: string
   status: 'active' | 'inactive'
+  orders: {
+    id: string
+    ordered_at: Date
+  }[]
 }
 
 type List = QueryResultList<Data>
-type Params = QueryRunnerCriteria<Data>
+type Params = QueryRunnerCriteria<
+  Data,
+  {
+    order_id: string
+  }
+>
 
 const prisma = new PrismaClient().$extends({
   query: {
@@ -91,6 +100,21 @@ const spec: QuerySpecification<Data, QueryDriverPrisma, List, Params> = {
     status: {
       column: () =>
         caseWhen().when('ui.id', is_not_null()).then('active').else('inactive'),
+    },
+    order_id: {
+      filter: ({ op, value }, { builder }) =>
+        exists(
+          builder
+            .createBuilder()
+            .from('order', 'o')
+            .column(unescape('1'))
+            .where(
+              builder
+                .createConditions()
+                .and('u.id', unescape('o.user_id'))
+                .and('o.id', op, value),
+            ),
+        ),
     },
   },
 }
