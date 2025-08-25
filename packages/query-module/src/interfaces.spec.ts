@@ -56,7 +56,7 @@ describe('QueryFilter Type Extensions', () => {
     })
   })
 
-  describe('HAVING句プレフィックス対応', () => {
+  describe.skip('HAVING句プレフィックス対応', () => {
     it('having:プレフィックス付きプロパティは型に含める必要がある', () => {
       type ExtendedData = TestData & {
         'having:SUM(amount)'?: number

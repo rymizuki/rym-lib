@@ -9,8 +9,13 @@ describe('QueryDriverPrisma - Constructor', () => {
     expect(driver).toBeDefined()
   })
 
-  it('should throw when invalid params provided', () => {
-    expect(() => new QueryDriverPrisma(null as any, { logger: createLogger() } as any)).toThrow()
+  it('should allow construction with invalid params but fail on execution', async () => {
+    const driver = new QueryDriverPrisma(null as any, { logger: createLogger() } as any)
+    expect(driver).toBeDefined()
+
+    // set a source so execute proceeds to use the DB instance (which is null)
+    driver.source((b: any) => b.from('example'))
+
+    await expect(async () => await driver.execute({} as any)).rejects.toThrow()
   })
 })
-

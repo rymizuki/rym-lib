@@ -592,3 +592,4 @@ describe('query-module-sql-builder', () => {
     })
   })
 
+})

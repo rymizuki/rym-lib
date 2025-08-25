@@ -39,46 +39,27 @@ export function buildSQL<Driver extends QueryDriverInterface>(
       ? criteria.filter
       : [criteria.filter]) {
       const cond = createConditions()
+      let hasCondition = false
 
       // filter -> where
       for (const name of keys(filter)) {
         if (typeof name !== 'string') continue
 
-        // skip having-prefixed fields here; they will be processed into HAVING
+        // skip having-prefixed fields here; previously these were diverted to HAVING
         if (/^having:/.test(name)) continue
 
         const property = filter[name]
         if (!property) continue
 
+        hasCondition = true
         createCond(cond, name, property as QueryFilter<any>, o)
       }
 
-      whole.or(cond)
+      if (hasCondition) {
+        whole.or(cond)
+      }
     }
     builder.where(whole)
-
-    // HAVING: support fields prefixed with 'having:' and convert them to HAVING
-    const whole_having = createConditions()
-    for (const filter of Array.isArray(criteria.filter)
-      ? criteria.filter
-      : [criteria.filter]) {
-      const cond = createConditions()
-
-      for (const name of keys(filter)) {
-        if (typeof name !== 'string') continue
-        if (!/^having:/.test(name)) continue
-
-        const property = filter[name]
-        if (!property) continue
-
-        const column_name = name.replace(/^having:/, '')
-        // DO NOT unescape SQL expressions; raw SQL expression support removed
-        createCond(cond, column_name, property as QueryFilter<any>, o)
-      }
-
-      whole_having.or(cond)
-    }
-    builder.having(whole_having)
   }
 
   // orderBy
