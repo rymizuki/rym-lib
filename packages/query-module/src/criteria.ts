@@ -18,7 +18,6 @@ export class QueryCriteria<Data extends QueryResultData>
     take: QueryCriteriaTake
     skip: QueryCriteriaSkip
   }
-  private legacyFilter: QueryFilter<Data> | QueryFilter<Data>[]
 
   constructor(
     private mapping: QuerySpecification<Data, any>['rules'],
@@ -29,7 +28,6 @@ export class QueryCriteria<Data extends QueryResultData>
       skip: QueryCriteriaSkip
     }>,
   ) {
-    this.legacyFilter = input.filter ?? {}
     this.attr = this.remap({
       filter: input.filter ?? {},
       orderBy: input.orderBy,
@@ -39,10 +37,6 @@ export class QueryCriteria<Data extends QueryResultData>
   }
 
   get filter() {
-    // For backward compatibility with tests, return legacy format when no mapping is applied
-    if (this.shouldUseLegacyFormat()) {
-      return this.legacyFilter
-    }
     return this.attr.filter
   }
 
@@ -56,11 +50,6 @@ export class QueryCriteria<Data extends QueryResultData>
 
   get skip() {
     return this.attr.skip
-  }
-
-  private shouldUseLegacyFormat(): boolean {
-    // Always use new format - we'll ensure backward compatibility in driver layer
-    return false
   }
 
   private remap<P extends typeof this.attr>(input: P): P {
