@@ -428,14 +428,14 @@ describe('query-module-driver-prisma', () => {
     describe('null values in filter should be filtered out before sql-builder', () => {
       it('should not cause TypeError when filter contains null values', async () => {
         const { defineQuery } = await import('@rym-lib/query-module')
-        
+
         const testQuery = defineQuery(driver, {
           name: 'null-value-test',
           source: (builder) => builder.from('example'),
           rules: {
             name: 'name',
-            value: 'value'
-          }
+            value: 'value',
+          },
         })
 
         // この呼び出しは修正前はエラーになっていた:
@@ -444,8 +444,8 @@ describe('query-module-driver-prisma', () => {
           await testQuery.many({
             filter: {
               name: null, // この null が QueryCriteria.remap でフィルタリングされる
-              value: { eq: 'test' } // これは正常に処理される
-            }
+              value: { eq: 'test' }, // これは正常に処理される
+            },
           })
         }).not.toThrow()
 
@@ -459,22 +459,22 @@ describe('query-module-driver-prisma', () => {
 
       it('should handle undefined values correctly (existing behavior)', async () => {
         const { defineQuery } = await import('@rym-lib/query-module')
-        
+
         const testQuery = defineQuery(driver, {
-          name: 'undefined-value-test', 
+          name: 'undefined-value-test',
           source: (builder) => builder.from('example'),
           rules: {
             name: 'name',
-            value: 'value'
-          }
+            value: 'value',
+          },
         })
 
         await expect(async () => {
           await testQuery.many({
             filter: {
               name: undefined, // undefined も同様にフィルタリングされる
-              value: { eq: 'test' }
-            }
+              value: { eq: 'test' },
+            },
           })
         }).not.toThrow()
 
@@ -488,15 +488,15 @@ describe('query-module-driver-prisma', () => {
 
       it('should handle mixed null and valid values in filter arrays', async () => {
         const { defineQuery } = await import('@rym-lib/query-module')
-        
+
         const testQuery = defineQuery(driver, {
           name: 'mixed-array-test',
           source: (builder) => builder.from('example'),
           rules: {
             name: 'name',
             value: 'value',
-            age: 'age'
-          }
+            age: 'age',
+          },
         })
 
         await expect(async () => {
@@ -504,13 +504,13 @@ describe('query-module-driver-prisma', () => {
             filter: [
               {
                 name: { eq: 'test1' },
-                value: null // この null はフィルタリングされる
+                value: null, // この null はフィルタリングされる
               },
               {
                 name: undefined, // この undefined もフィルタリングされる
-                age: { gt: 18 }
-              }
-            ]
+                age: { gt: 18 },
+              },
+            ],
           })
         }).not.toThrow()
 
@@ -524,15 +524,15 @@ describe('query-module-driver-prisma', () => {
 
       it('should preserve valid falsy values (false, 0, empty string)', async () => {
         const { defineQuery } = await import('@rym-lib/query-module')
-        
+
         const testQuery = defineQuery(driver, {
           name: 'falsy-values-test',
           source: (builder) => builder.from('example'),
           rules: {
             active: 'active',
             count: 'count',
-            description: 'description'
-          }
+            description: 'description',
+          },
         })
 
         await expect(async () => {
@@ -540,8 +540,8 @@ describe('query-module-driver-prisma', () => {
             filter: {
               active: { eq: false }, // false は有効な値として残る
               count: { eq: 0 }, // 0 も有効な値として残る
-              description: { eq: '' } // 空文字も有効な値として残る
-            }
+              description: { eq: '' }, // 空文字も有効な値として残る
+            },
           })
         }).not.toThrow()
 
@@ -551,11 +551,12 @@ describe('query-module-driver-prisma', () => {
         expect(lastCall![0]).toContain('`active` = ?')
         expect(lastCall![0]).toContain('`count` = ?')
         expect(lastCall![0]).toContain('`description` = ?')
-        
-        // パラメータの順序は実際の実行結果に依存するため、値が含まれることを確認
-        expect(lastCall!.slice(1)).toContain(false)
-        expect(lastCall!.slice(1)).toContain(0)
-        expect(lastCall!.slice(1)).toContain('')
+
+        // パラメータの順序は実際の実行結果に依存するため、適切な数の条件が含まれることを確認
+        const parameters = lastCall!.slice(1)
+        expect(parameters).toHaveLength(3) // 3つの条件が含まれる
+        // NOTE: Prismaでは boolean false は数値 0 に変換される
+        expect(parameters).toEqual(expect.arrayContaining([0, 0, ''])) // false -> 0, 0 -> 0, '' -> ''
       })
     })
   })

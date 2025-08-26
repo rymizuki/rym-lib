@@ -643,7 +643,7 @@ describe('query-module-sql-builder', () => {
       })
 
       describe('when filter array contains null element', () => {
-        it('should throw TypeError at line 41 (keys function)', () => {
+        it('should NOT throw error because null elements are now filtered out', () => {
           // 正しい形式で作成
           const validFilter = {
             name: {
@@ -663,20 +663,21 @@ describe('query-module-sql-builder', () => {
             skip: undefined,
           }
 
+          // null要素はフィルタリングされるため、エラーは発生しない
           expect(() => {
             buildSQL(builder, criteria)
-          }).toThrow('Cannot convert undefined or null to object')
+          }).not.toThrow()
         })
       })
 
       describe('when filter object has property with null value object', () => {
-        it('should throw TypeError at line 185 (property keys)', () => {
+        it('should NOT throw error because null properties are now filtered out', () => {
           // Create malformed criteria that bypasses type checking at runtime
           const malformedFilter = {
             name: {
               column: null, // Runtime: intentionally null for error testing
               filter: undefined, // Runtime: intentionally undefined for error testing
-              value: null, // この時propertyが評価されてkeys(property)でエラー
+              value: null, // null propertyはフィルタリングされるため、エラーは発生しない
             },
           }
 
@@ -688,14 +689,15 @@ describe('query-module-sql-builder', () => {
             skip: undefined,
           }
 
+          // null propertyはフィルタリングされるため、エラーは発生しない
           expect(() => {
             buildSQL(builder, mockCriteria)
-          }).toThrow('Cannot convert undefined or null to object')
+          }).not.toThrow()
         })
       })
 
       describe('when using having filter with null', () => {
-        it('should throw TypeError for having filters', () => {
+        it('should NOT throw TypeError because null elements are now filtered out', () => {
           const criteria: QueryCriteriaInterface = {
             filter: [null] as unknown as QueryCriteriaInterface['filter'], // Test: null array element
             orderBy: [],
@@ -703,9 +705,10 @@ describe('query-module-sql-builder', () => {
             skip: undefined,
           }
 
+          // null要素はフィルタリングされるため、エラーは発生しない
           expect(() => {
             buildSQL(builder, criteria)
-          }).toThrow('Cannot convert undefined or null to object')
+          }).not.toThrow()
         })
       })
 

@@ -70,15 +70,18 @@ export function buildSQL<Driver extends QueryDriverInterface>(
     for (const filter of Array.isArray(criteria.filter)
       ? criteria.filter
       : [criteria.filter]) {
+      // null/undefined要素をスキップ
+      if (!filter) continue
+
       const cond = createConditions()
       let hasCondition = false
 
       // filter -> where
-      for (const name of keys(filter as any)) {
+      for (const name of keys(filter)) {
         if (typeof name !== 'string') continue
         if (/^having:/.test(name)) continue
 
-        const property = (filter as any)[name]
+        const property = filter[name]
         if (!property) continue
 
         const { value, filter: customFilter } = property as FilterPayload
@@ -107,15 +110,18 @@ export function buildSQL<Driver extends QueryDriverInterface>(
     for (const filter of Array.isArray(criteria.filter)
       ? criteria.filter
       : [criteria.filter]) {
+      // null/undefined要素をスキップ
+      if (!filter) continue
+
       const cond = createConditions()
       let hasHavingCondition = false
 
       // filter -> having
-      for (const having_name of keys(filter as any)) {
+      for (const having_name of keys(filter)) {
         if (typeof having_name !== 'string') continue
         if (!/^having:/.test(having_name)) continue
 
-        const property = (filter as any)[having_name]
+        const property = filter[having_name]
         if (!property) continue
 
         const { value, filter: customFilter } = property as FilterPayload
@@ -182,6 +188,12 @@ function createCond(
   options: BuildSqlOptions,
 ) {
   const field = name
+  // property がnull/undefinedの場合は処理をスキップ
+  if (!property || property === null || property === undefined) return
+
+  // property が object でない場合もスキップ
+  if (typeof property !== 'object') return
+
   for (const operator of keys(property) as QueryFilterOperator[]) {
     const value = property[operator] as any // string | string[]
 
