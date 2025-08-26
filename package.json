@@ -22,7 +22,7 @@
     "test": "turbo run test",
     "ncu": "npm-check-updates && turbo run ncu",
     "changeset": "changeset",
-    "version": "npm run format && npm run lint && changeset version",
+    "version": "npm run format && npm run lint && changeset version && npm install --package-lock-only",
     "publish": "changeset publish"
   },
   "devDependencies": {
