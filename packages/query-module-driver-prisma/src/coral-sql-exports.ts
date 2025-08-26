@@ -19,7 +19,7 @@ export {
 
 // Coral-sql functions
 export {
-  caseWhen,
+  case_when,
   coalesce,
   createBuilder,
   createConditions,
