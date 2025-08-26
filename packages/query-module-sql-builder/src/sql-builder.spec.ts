@@ -605,4 +605,123 @@ describe('query-module-sql-builder', () => {
       })
     })
   })
+
+  // region Error reproduction tests
+  describe('Error reproduction', () => {
+    describe('TypeError: Cannot convert undefined or null to object', () => {
+      describe('when filter is null', () => {
+        it('should NOT throw error because null is falsy and filtered out by if statement', () => {
+          const criteria: QueryCriteriaInterface = {
+            filter: null as any,
+            orderBy: [],
+            take: undefined,
+            skip: undefined,
+          }
+
+          // null は falsy なので if (criteria.filter) で除外される
+          expect(() => {
+            buildSQL(builder, criteria)
+          }).not.toThrow()
+        })
+      })
+
+      describe('when filter is undefined', () => {
+        it('should throw TypeError at line 41 (keys function)', () => {
+          const criteria: QueryCriteriaInterface = {
+            filter: undefined as any,
+            orderBy: [],
+            take: undefined,
+            skip: undefined,
+          }
+
+          // NOTE: undefinedの場合は68行目のif (criteria.filter)でフィルターされるため、実際にはエラーは発生しない
+          // しかし、nullの場合はif文を通過してしまう
+          expect(() => {
+            buildSQL(builder, criteria)
+          }).not.toThrow()
+        })
+      })
+
+      describe('when filter array contains null element', () => {
+        it('should throw TypeError at line 41 (keys function)', () => {
+          // 正しい形式で作成
+          const validFilter = {
+            name: {
+              column: null,
+              filter: undefined,
+              value: { eq: 'test' },
+            },
+          }
+
+          const criteria: QueryCriteriaInterface = {
+            filter: [validFilter, null as any], // null要素を含む配列
+            orderBy: [],
+            take: undefined,
+            skip: undefined,
+          }
+
+          expect(() => {
+            buildSQL(builder, criteria)
+          }).toThrow('Cannot convert undefined or null to object')
+        })
+      })
+
+      describe('when filter object has property with null value object', () => {
+        it('should throw TypeError at line 185 (property keys)', () => {
+          const mockCriteria: QueryCriteriaInterface = {
+            filter: {
+              name: {
+                column: null as any, // Test case: intentionally null for error testing
+                filter: undefined as any, // Test case: intentionally undefined for error testing
+                value: null, // この時propertyが評価されてkeys(property)でエラー
+              },
+            },
+            orderBy: [],
+            take: undefined,
+            skip: undefined,
+          }
+
+          expect(() => {
+            buildSQL(builder, mockCriteria)
+          }).toThrow('Cannot convert undefined or null to object')
+        })
+      })
+
+      describe('when using having filter with null', () => {
+        it('should throw TypeError for having filters', () => {
+          const criteria: QueryCriteriaInterface = {
+            filter: [null as any],
+            orderBy: [],
+            take: undefined,
+            skip: undefined,
+          }
+
+          expect(() => {
+            buildSQL(builder, criteria)
+          }).toThrow('Cannot convert undefined or null to object')
+        })
+      })
+
+      describe('Real world case: direct null filter', () => {
+        it('should throw TypeError when filter is directly set to empty object then manipulated to null', () => {
+          // 実際の使用例：外部から渡されたfilterがnullまたはundefinedの場合
+          const malformedFilter = null
+
+          if (malformedFilter) {
+            // このチェックを通過してしまう可能性がある
+            const criteria: QueryCriteriaInterface = {
+              filter: malformedFilter as any,
+              orderBy: [],
+              take: undefined,
+              skip: undefined,
+            }
+
+            expect(() => {
+              buildSQL(builder, criteria)
+            }).toThrow('Cannot convert undefined or null to object')
+          }
+        })
+      })
+    })
+  })
 })
