@@ -1,5 +1,11 @@
 # @rym-lib/exception
 
+## 1.3.0
+
+### Minor Changes
+
+- update query-module implementaions and breaking changes
+
 ## 1.2.10
 
 ### Patch Changes
