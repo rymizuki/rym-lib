@@ -1,10 +1,7 @@
 import { Exception } from '@rym-lib/exception'
 
 export abstract class HTTPException extends Exception {
-  constructor(
-    public status: number,
-    public message: string,
-  ) {
+  constructor(public status: number, public message: string) {
     super(message)
   }
 }

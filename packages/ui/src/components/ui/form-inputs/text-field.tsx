@@ -47,12 +47,12 @@ export const TextField = forwardRef<HTMLInputElement, Props>(
     const active = focus
       ? true
       : value
-        ? true
-        : props.defaultValue
-          ? true
-          : props.value
-            ? true
-            : false
+      ? true
+      : props.defaultValue
+      ? true
+      : props.value
+      ? true
+      : false
 
     const c = style({
       focus,

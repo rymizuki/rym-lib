@@ -105,7 +105,7 @@ export class QueryCriteria<Data extends QueryResultData>
         }
         return wasArray
           ? (results as QueryCriteriaFilter<Data>[])
-          : (results[0] ?? ({} as QueryCriteriaFilter<Data>))
+          : results[0] ?? ({} as QueryCriteriaFilter<Data>)
       })(input.filter),
       orderBy: input.orderBy,
       take: input.take,

@@ -1,4 +1,3 @@
-import { type PrismaClient } from '@prisma/client'
 import {
   QueryCriteriaInterface,
   QueryDriverInterface,
@@ -11,12 +10,16 @@ import {
   SQLBuilderPort,
 } from '@rym-lib/query-module-sql-builder'
 
+interface PrismaClientLike {
+  $queryRawUnsafe: (query: string, ...values: unknown[]) => Promise<unknown>
+}
+
 export class QueryDriverPrisma implements QueryDriverInterface {
   private setup: ((builder: SQLBuilderPort) => SQLBuilderPort) | null = null
   private builderSetup: () => SQLBuilderPort
 
   constructor(
-    private db: PrismaClient,
+    private db: PrismaClientLike,
     private context: {
       logger: QueryLoggerInterface
     },

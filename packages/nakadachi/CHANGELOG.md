@@ -1,5 +1,11 @@
 # @rym-lib/nakadachi
 
+## 1.3.1
+
+### Patch Changes
+
+- update dependencies and fix type problemns
+
 ## 1.3.0
 
 ### Minor Changes

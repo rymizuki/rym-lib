@@ -19,8 +19,8 @@ function escape(value: string, options: { quote?: string | null } = {}) {
     options.quote === null
       ? ''
       : options.quote !== undefined
-        ? options.quote
-        : '`'
+      ? options.quote
+      : '`'
   return `${quote}${encodeURIComponent(value)}${quote}`
 }
 
@@ -53,7 +53,9 @@ export class DataBase implements DataBasePort {
     const ret = await this.find<Row>(table, where)
     if (!ret) {
       throw new Error(
-        `record creation failed. table: ${table}, cond: ${JSON.stringify(where)}`,
+        `record creation failed. table: ${table}, cond: ${JSON.stringify(
+          where,
+        )}`,
       )
     }
     return ret
@@ -84,7 +86,12 @@ export class DataBase implements DataBasePort {
       .join(',')
     const replacements = Object.values(this.parse(data))
 
-    const sql = `INSERT INTO ${escape(table, this.toSqlOptions)} (${columns}) VALUES (${replacements.map((_, index) => `$${index + 1}`).join(',')})`
+    const sql = `INSERT INTO ${escape(
+      table,
+      this.toSqlOptions,
+    )} (${columns}) VALUES (${replacements
+      .map((_, index) => `$${index + 1}`)
+      .join(',')})`
     this.context.logger.debug(`[DataBase] create: ${sql} `, { replacements })
 
     await this.execute(sql, replacements, options)
@@ -101,12 +108,17 @@ export class DataBase implements DataBasePort {
     const setters = Object.keys(data)
       .map(
         (prop, index) =>
-          `${escape(prop, this.toSqlOptions)} = $${bindings.length + index + 1}`,
+          `${escape(prop, this.toSqlOptions)} = $${
+            bindings.length + index + 1
+          }`,
       )
       .join(', ')
     const values = Object.values(this.parse(data))
 
-    const sql = `UPDATE ${escape(table, this.toSqlOptions)} SET ${setters} WHERE ${cond_sql}`
+    const sql = `UPDATE ${escape(
+      table,
+      this.toSqlOptions,
+    )} SET ${setters} WHERE ${cond_sql}`
     const replacements = [...bindings, ...values]
     this.context.logger.debug(`[DataBase] update: ${sql} `, {
       replacements,
@@ -121,7 +133,10 @@ export class DataBase implements DataBasePort {
   ): Promise<void> {
     const cond = this.createCondition(where)
     const [cond_sql, replacements] = cond.toSQL(this.toSqlOptions)
-    const sql = `DELETE FROM ${escape(table, this.toSqlOptions)} WHERE ${cond_sql}`
+    const sql = `DELETE FROM ${escape(
+      table,
+      this.toSqlOptions,
+    )} WHERE ${cond_sql}`
     await this.execute(sql, replacements, options)
   }
 

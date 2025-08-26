@@ -22,13 +22,17 @@ export class Seeder {
       const pk_index = columns.findIndex((prop) => prop === pk)
       if (pk_index < 0)
         throw new Error(
-          `Seeder error: table(${table_name}) pk(${pk}) missing in (${columns.join(', ')})`,
+          `Seeder error: table(${table_name}) pk(${pk}) missing in (${columns.join(
+            ', ',
+          )})`,
         )
       const pk_value = record[pk_index]
-      const queryResult = await this.client.$queryRawUnsafe(
-        `SELECT * FROM ${this.escape(table_name)} WHERE ${this.escape(pk)} = $1 LIMIT 1`,
+      const queryResult = (await this.client.$queryRawUnsafe(
+        `SELECT * FROM ${this.escape(table_name)} WHERE ${this.escape(
+          pk,
+        )} = $1 LIMIT 1`,
         pk_value,
-      ) as Record<string, any>[]
+      )) as Record<string, any>[]
       const row = queryResult[0] as Record<string, any> | undefined
 
       if (row) {
@@ -50,7 +54,9 @@ export class Seeder {
           setters.push(`${this.escape('updated_at')} = $${++index}`)
           values.push(new Date())
         }
-        const sql = `UPDATE ${this.escape(table_name)} SET ${setters.join(', ')} WHERE ${this.escape(pk)} = $${++index}`
+        const sql = `UPDATE ${this.escape(table_name)} SET ${setters.join(
+          ', ',
+        )} WHERE ${this.escape(pk)} = $${++index}`
         try {
           await this.client.$executeRawUnsafe(sql, ...values, pk_value)
         } catch (error) {
@@ -68,7 +74,9 @@ export class Seeder {
           cols.push(this.escape('updated_at'))
           values.push(new Date())
         }
-        const sql = `INSERT INTO ${this.escape(table_name)} (${cols.join(', ')}) VALUES (${cols.map((_, index) => `$${index + 1}`).join(', ')})`
+        const sql = `INSERT INTO ${this.escape(table_name)} (${cols.join(
+          ', ',
+        )}) VALUES (${cols.map((_, index) => `$${index + 1}`).join(', ')})`
         try {
           await this.client.$executeRawUnsafe(sql, ...values)
         } catch (error) {
