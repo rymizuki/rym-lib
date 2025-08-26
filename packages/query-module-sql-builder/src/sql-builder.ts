@@ -80,6 +80,7 @@ export function buildSQL<Driver extends QueryDriverInterface>(
         const property = filter[name]
         if (!property) continue
 
+        const { value, filter: customFilter } = property as FilterPayload
         hasCondition = true
 
         const columnName = (() => {
@@ -91,7 +92,7 @@ export function buildSQL<Driver extends QueryDriverInterface>(
           return property.column() as SQLBuilderPort
         })()
 
-        createCond(cond, columnName, property as FilterPayload, o)
+        createCond(cond, columnName, { value, filter: customFilter }, o)
       }
 
       if (hasCondition) {
@@ -116,6 +117,7 @@ export function buildSQL<Driver extends QueryDriverInterface>(
         const property = filter[having_name]
         if (!property) continue
 
+        const { value, filter: customFilter } = property as FilterPayload
         const name = having_name.replace(/^having:/, '')
         hasHavingCondition = true
 
@@ -128,7 +130,7 @@ export function buildSQL<Driver extends QueryDriverInterface>(
           return property.column() as SQLBuilderPort
         })()
 
-        createCond(cond, columnName, property as FilterPayload, o)
+        createCond(cond, columnName, { value, filter: customFilter }, o)
       }
 
       if (hasHavingCondition) {

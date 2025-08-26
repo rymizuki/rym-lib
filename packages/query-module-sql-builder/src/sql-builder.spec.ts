@@ -1,38 +1,52 @@
 import { buildSQL } from './'
 
-import {
-  createBuilder,
-  SQLBuilderPort,
-} from 'coral-sql'
+import { createBuilder, SQLBuilderPort } from 'coral-sql'
 import { beforeEach, describe, expect, it } from 'vitest'
 
 import { QueryCriteriaInterface } from '@rym-lib/query-module'
 
-function createCriteria(attrs: Partial<QueryCriteriaInterface>) {
-  return {
-    ...{
-      filter: [],
-      orderBy: [],
-      take: undefined,
-      skip: undefined,
-    },
-    ...attrs,
+type TestCriteria = {
+  filter: Record<string, any> | Record<string, any>[]
+  orderBy: any
+  take: number
+  skip: number
+}
+
+function createCriteria(attrs: Partial<TestCriteria>): QueryCriteriaInterface {
+  const processFilter = (filter: Record<string, any>) => {
+    const processed: Record<string, any> = {}
+    for (const [key, value] of Object.entries(filter)) {
+      processed[key] = {
+        column: null,
+        filter: undefined,
+        value: value,
+      }
+    }
+    return processed
   }
+
+  const processedFilter = attrs.filter
+    ? Array.isArray(attrs.filter)
+      ? attrs.filter.map(processFilter)
+      : processFilter(attrs.filter)
+    : undefined
+
+  return {
+    filter: processedFilter,
+    orderBy: attrs.orderBy || [],
+    take: attrs.take,
+    skip: attrs.skip,
+  } as QueryCriteriaInterface
 }
 
 function xbr(value: string) {
   return value.replace(/\n/g, ' ').replace(/\s+/g, ' ')
 }
 
-function execute(
-  builder: SQLBuilderPort,
-  criteria: Partial<QueryCriteriaInterface>,
-) {
+function execute(builder: SQLBuilderPort, criteria: Partial<TestCriteria>) {
   const [sql, bindings] = buildSQL(builder, createCriteria(criteria))
   return { sql: xbr(sql), bindings }
 }
-
-
 
 describe('query-module-sql-builder', () => {
   let builder: SQLBuilderPort
@@ -47,7 +61,7 @@ describe('query-module-sql-builder', () => {
         // region .filter.eq
         describe('eq', () => {
           describe('given `null`', () => {
-            let criteria: Partial<QueryCriteriaInterface>
+            let criteria: Partial<TestCriteria>
             beforeEach(() => (criteria = { filter: { name: { eq: null } } }))
             describe('to SQL', () =>
               it('should be `name IS NULL', () => {
@@ -63,7 +77,7 @@ describe('query-module-sql-builder', () => {
               }))
           })
           describe('given `"example"`', () => {
-            let criteria: Partial<QueryCriteriaInterface>
+            let criteria: Partial<TestCriteria>
             beforeEach(
               () => (criteria = { filter: { name: { eq: 'example' } } }),
             )
@@ -84,7 +98,7 @@ describe('query-module-sql-builder', () => {
         // region .filter.ne
         describe('ne', () => {
           describe('given `null`', () => {
-            let criteria: Partial<QueryCriteriaInterface>
+            let criteria: Partial<TestCriteria>
             beforeEach(() => (criteria = { filter: { name: { ne: null } } }))
             describe('to SQL', () =>
               it('should be `name IS NOT NULL', () => {
@@ -100,7 +114,7 @@ describe('query-module-sql-builder', () => {
               }))
           })
           describe('given `"example"`', () => {
-            let criteria: Partial<QueryCriteriaInterface>
+            let criteria: Partial<TestCriteria>
             beforeEach(
               () => (criteria = { filter: { name: { ne: 'example' } } }),
             )
@@ -121,7 +135,7 @@ describe('query-module-sql-builder', () => {
         // region .filter.contains
         describe('contains', () => {
           describe('given `"example"`', () => {
-            let criteria: Partial<QueryCriteriaInterface>
+            let criteria: Partial<TestCriteria>
             beforeEach(
               () => (criteria = { filter: { name: { contains: 'example' } } }),
             )
@@ -139,7 +153,7 @@ describe('query-module-sql-builder', () => {
               }))
           })
           describe('given "example1 example2  example3"', () => {
-            let criteria: Partial<QueryCriteriaInterface>
+            let criteria: Partial<TestCriteria>
             beforeEach(
               () =>
                 (criteria = {
@@ -167,7 +181,7 @@ describe('query-module-sql-builder', () => {
         // region .filter.not_contains
         describe('not_contains', () => {
           describe('given `"example"`', () => {
-            let criteria: Partial<QueryCriteriaInterface>
+            let criteria: Partial<TestCriteria>
             beforeEach(
               () =>
                 (criteria = { filter: { name: { not_contains: 'example' } } }),
@@ -186,7 +200,7 @@ describe('query-module-sql-builder', () => {
               }))
           })
           describe('given "example1 example2  example3"', () => {
-            let criteria: Partial<QueryCriteriaInterface>
+            let criteria: Partial<TestCriteria>
             beforeEach(
               () =>
                 (criteria = {
@@ -216,7 +230,7 @@ describe('query-module-sql-builder', () => {
         // region .filter.in
         describe('in', () => {
           describe('given `[]`', () => {
-            let criteria: Partial<QueryCriteriaInterface>
+            let criteria: Partial<TestCriteria>
             beforeEach(() => (criteria = { filter: { name: { in: [] } } }))
             describe('to SQL', () =>
               it('should no be use `IN', () => {
@@ -230,7 +244,7 @@ describe('query-module-sql-builder', () => {
               }))
           })
           describe('given `["example1", "example2"]`', () => {
-            let criteria: Partial<QueryCriteriaInterface>
+            let criteria: Partial<TestCriteria>
             beforeEach(
               () =>
                 (criteria = {
@@ -254,7 +268,7 @@ describe('query-module-sql-builder', () => {
         // region .filter.lt
         describe('lt', () => {
           describe('given `100`', () => {
-            let criteria: Partial<QueryCriteriaInterface>
+            let criteria: Partial<TestCriteria>
             beforeEach(() => (criteria = { filter: { age: { lt: 100 } } }))
             describe('to SQL', () =>
               it('should be `age < ?', () => {
@@ -273,7 +287,7 @@ describe('query-module-sql-builder', () => {
         // region .filter.lte
         describe('lte', () => {
           describe('given `100`', () => {
-            let criteria: Partial<QueryCriteriaInterface>
+            let criteria: Partial<TestCriteria>
             beforeEach(() => (criteria = { filter: { age: { lte: 100 } } }))
             describe('to SQL', () =>
               it('should be `age <= ?', () => {
@@ -292,7 +306,7 @@ describe('query-module-sql-builder', () => {
         // region .filter.gt
         describe('gt', () => {
           describe('given `100`', () => {
-            let criteria: Partial<QueryCriteriaInterface>
+            let criteria: Partial<TestCriteria>
             beforeEach(() => (criteria = { filter: { age: { gt: 100 } } }))
             describe('to SQL', () =>
               it('should be `age > ?', () => {
@@ -311,7 +325,7 @@ describe('query-module-sql-builder', () => {
         // region .filter.gte
         describe('gte', () => {
           describe('given `100`', () => {
-            let criteria: Partial<QueryCriteriaInterface>
+            let criteria: Partial<TestCriteria>
             beforeEach(() => (criteria = { filter: { age: { gte: 100 } } }))
             describe('to SQL', () =>
               it('should be `age >= ?', () => {
@@ -331,7 +345,7 @@ describe('query-module-sql-builder', () => {
     })
 
     describe('given array', () => {
-      let criteria: Partial<QueryCriteriaInterface>
+      let criteria: Partial<TestCriteria>
       beforeEach(
         () =>
           (criteria = {
@@ -591,5 +605,4 @@ describe('query-module-sql-builder', () => {
       })
     })
   })
-
 })
