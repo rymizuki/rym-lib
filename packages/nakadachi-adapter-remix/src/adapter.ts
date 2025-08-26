@@ -1,4 +1,4 @@
-import { parse } from 'qs'
+import { parse, ParsedQs } from 'qs'
 
 import { json, TypedResponse, redirect } from '@remix-run/node'
 import {
@@ -8,6 +8,7 @@ import {
   NakadachiContext,
   NakadachiResult,
   NakadachiResponse,
+  Queries,
 } from '@rym-lib/nakadachi'
 
 import { parseBody } from './functions/parse-body'
@@ -15,6 +16,30 @@ import { ErrorHandler } from './interfaces'
 import { ServerFunctionArgs } from './interfaces'
 
 const PARSE_ARRAY_LIMIT = 1000
+
+function convertParsedQsToQueries(parsedQs: ParsedQs): Queries {
+  const result: Queries = {}
+  for (const [key, value] of Object.entries(parsedQs)) {
+    if (value === undefined) {
+      result[key] = undefined
+    } else if (typeof value === 'string') {
+      result[key] = value
+    } else if (Array.isArray(value)) {
+      // 配列内のアイテムを適切に型変換
+      const hasNestedObjects = value.some(item => typeof item === 'object')
+      if (hasNestedObjects) {
+        result[key] = value.map(item => 
+          typeof item === 'string' ? item : convertParsedQsToQueries(item)
+        ) as Queries[]
+      } else {
+        result[key] = value as string[]
+      }
+    } else {
+      result[key] = convertParsedQsToQueries(value)
+    }
+  }
+  return result
+}
 
 export class Adapter implements NakadachiAdapterInterface<TypedResponse> {
   constructor(
@@ -26,10 +51,11 @@ export class Adapter implements NakadachiAdapterInterface<TypedResponse> {
     const { request, params } = this.args
     const { method, headers } = request
     const url = new URL(request.url)
-    const queries = parse(url.search, {
+    const parsedQueries = parse(url.search, {
       ignoreQueryPrefix: true,
       arrayLimit: PARSE_ARRAY_LIMIT,
     })
+    const queries = convertParsedQsToQueries(parsedQueries)
     const body = /^HEAD|GET$/.test(method)
       ? null
       : /^DELETE$/.test(method) && !headers.get('Content-Type')
