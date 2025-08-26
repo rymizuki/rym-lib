@@ -1,6 +1,5 @@
 import { QueryDriverPrisma } from './'
 
-import { SQLBuilder, exists } from 'coral-sql'
 import { beforeEach, describe, expect, it, Mock, vi } from 'vitest'
 
 import {
@@ -8,6 +7,7 @@ import {
   QueryDriverInterface,
   QueryRunnerCriteria,
 } from '@rym-lib/query-module'
+import { SQLBuilder, exists } from '@rym-lib/query-module-sql-builder'
 import { createLogger } from '@rym-lib/query-module/test-utils'
 
 import prisma from './test-utils/prisma'
@@ -29,7 +29,7 @@ describe('query-module-driver-prisma', () => {
       })
 
       beforeEach(async () => {
-        await driver.source(setup).execute(new QueryCriteria({}, {}, driver))
+        await driver.source(setup).execute(new QueryCriteria({}, {}))
       })
 
       it('should be called with SQLBuilder', () => {
@@ -42,7 +42,7 @@ describe('query-module-driver-prisma', () => {
     describe('missing .source() call', () => {
       it('should be throw error', async () => {
         await expect(
-          async () => await driver.execute(new QueryCriteria({}, {}, driver)),
+          async () => await driver.execute(new QueryCriteria({}, {})),
         ).rejects.toThrowError(/QueryDriver must be required source\./)
       })
     })
@@ -61,16 +61,16 @@ describe('query-module-driver-prisma', () => {
 
       describe('returns', () => {
         it('should be returns prisma result rows', async () => {
-          expect(
-            await driver.execute(new QueryCriteria({}, {}, driver)),
-          ).toStrictEqual(data)
+          expect(await driver.execute(new QueryCriteria({}, {}))).toStrictEqual(
+            data,
+          )
         })
       })
 
       describe('execute prisma.$queryRawUnsafe', () => {
         describe('criteria is empty', () => {
           beforeEach(async () => {
-            await driver.execute(new QueryCriteria({}, {}, driver))
+            await driver.execute(new QueryCriteria({}, {}))
           })
 
           it('should be no condition sql', () => {
@@ -238,7 +238,9 @@ describe('query-module-driver-prisma', () => {
             describe('not in: value[]', () => {
               // NOTE: NOT IN operator is not currently supported in QueryFilterOperator type
               // This test demonstrates the missing functionality that should be implemented
-              it.todo('should be value NOT IN expected sql - requires not_in operator implementation')
+              it.todo(
+                'should be value NOT IN expected sql - requires not_in operator implementation',
+              )
             })
           })
 
@@ -272,19 +274,20 @@ describe('query-module-driver-prisma', () => {
                   order_id: {
                     column: null,
                     value: { eq: 'test-value' },
-                    filter: (payload: any, context: any) => exists(
-                      context.builder
-                        .createBuilder()
-                        .from('orders', 'o')
-                        .column('1')
-                        .where(
-                          context.builder
-                            .createConditions()
-                            .and('example.id', '=', 'o.user_id')
-                            .and('o.id', payload.op, payload.value)
-                        )
-                    )
-                  }
+                    filter: (payload: any, context: any) =>
+                      exists(
+                        context.builder
+                          .createBuilder()
+                          .from('orders', 'o')
+                          .column('1')
+                          .where(
+                            context.builder
+                              .createConditions()
+                              .and('example.id', '=', 'o.user_id')
+                              .and('o.id', payload.op, payload.value),
+                          ),
+                      ),
+                  },
                 },
                 orderBy: [],
                 take: undefined,
@@ -308,14 +311,15 @@ describe('query-module-driver-prisma', () => {
                   amount: {
                     column: null,
                     value: { gt: 100 },
-                    filter: (payload: any, context: any) => exists(
-                      context.builder
-                        .createBuilder()
-                        .from('transactions', 't')
-                        .column('1')
-                        .where('t.amount', payload.op, payload.value)
-                    )
-                  }
+                    filter: (payload: any, context: any) =>
+                      exists(
+                        context.builder
+                          .createBuilder()
+                          .from('transactions', 't')
+                          .column('1')
+                          .where('t.amount', payload.op, payload.value),
+                      ),
+                  },
                 },
                 orderBy: [],
                 take: undefined,
@@ -338,8 +342,8 @@ describe('query-module-driver-prisma', () => {
                   normal_field: {
                     column: null,
                     value: { eq: 'normal-value' },
-                    filter: undefined // No custom filter
-                  }
+                    filter: undefined, // No custom filter
+                  },
                 },
                 orderBy: [],
                 take: undefined,
@@ -420,15 +424,13 @@ describe('query-module-driver-prisma', () => {
   })
 })
 
-
 async function expectQuery<
   Data,
   Criteria extends QueryRunnerCriteria<Data> = QueryRunnerCriteria<Data>,
 >(driver: QueryDriverInterface, criteria: Criteria, expected: any[]) {
-  await driver.execute(new QueryCriteria({}, criteria, driver))
+  await driver.execute(new QueryCriteria({}, criteria))
 
   return expect(prismaMock.$queryRawUnsafe.mock.lastCall).toStrictEqual(
     expected,
   )
 }
-

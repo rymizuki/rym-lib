@@ -1,7 +1,10 @@
-import { describe, it, beforeEach, expect } from 'vitest'
 import { QueryDriverPrisma } from './'
-import prisma from './test-utils/prisma'
+
+import { describe, it, beforeEach, expect } from 'vitest'
+
 import { createLogger } from '@rym-lib/query-module/test-utils'
+
+import prisma from './test-utils/prisma'
 
 describe('QueryDriverPrisma - error handling', () => {
   it('should throw when execute called without source', async () => {
@@ -9,4 +12,3 @@ describe('QueryDriverPrisma - error handling', () => {
     await expect(async () => await driver.execute({} as any)).rejects.toThrow()
   })
 })
-
