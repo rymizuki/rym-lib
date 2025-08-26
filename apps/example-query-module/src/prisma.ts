@@ -1,20 +1,19 @@
 import {
-  caseWhen,
-  exists,
-  is_not_null,
-  json_array_aggregate,
-  json_object,
-  unescape,
-} from 'coral-sql'
-
-import {
   defineQuery,
   QueryLoggerInterface,
   QueryResultList,
   QueryRunnerCriteria,
   QuerySpecification,
 } from '@rym-lib/query-module'
-import { QueryDriverPrisma } from '@rym-lib/query-module-driver-prisma'
+import {
+  QueryDriverPrisma,
+  case_when,
+  exists,
+  is_not_null,
+  json_array_aggregate,
+  json_object,
+  unescape,
+} from '@rym-lib/query-module-driver-prisma'
 
 import { PrismaClient } from '../generated/prisma/client.js'
 
@@ -76,7 +75,10 @@ const spec: QuerySpecification<Data, QueryDriverPrisma, List, Params> = {
       .column('u.name')
       .column('u.birthdate')
       .column(
-        caseWhen().when('ui.id', is_not_null()).then('active').else('inactive'),
+        case_when()
+          .when('ui.id', is_not_null())
+          .then('active')
+          .else('inactive'),
         'status',
       )
       .column(
@@ -99,7 +101,10 @@ const spec: QuerySpecification<Data, QueryDriverPrisma, List, Params> = {
     name: 'u.name',
     status: {
       column: () =>
-        caseWhen().when('ui.id', is_not_null()).then('active').else('inactive'),
+        case_when()
+          .when('ui.id', is_not_null())
+          .then('active')
+          .else('inactive'),
     },
     order_id: {
       filter: ({ op, value }, { builder }) =>
