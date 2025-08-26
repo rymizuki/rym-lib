@@ -81,7 +81,9 @@ export class QueryCriteria<Data extends QueryResultData>
               return null
             })()
             const filter =
-              typeof mappingValue === 'object' ? mappingValue.filter : undefined
+              typeof mappingValue === 'object' && mappingValue !== null
+                ? mappingValue.filter
+                : undefined
             const rename = typeof column === 'string' ? column : prev
 
             ret[rename] = {

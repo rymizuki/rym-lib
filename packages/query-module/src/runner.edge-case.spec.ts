@@ -181,10 +181,12 @@ describe('QueryRunner - Edge cases and boundary conditions', () => {
       const calledFilter = driver.called[0]!.args[0].filter
       expect(calledFilter.name).toEqual({
         column: null,
+        filter: undefined,
         value: { eq: 'Alice' },
       }) // マッピングされない
       expect(calledFilter.mapped_status).toEqual({
         column: 'mapped_status',
+        filter: undefined,
         value: { eq: 'active' },
       }) // マッピングされる
     })
