@@ -25,12 +25,11 @@ export class Seeder {
           `Seeder error: table(${table_name}) pk(${pk}) missing in (${columns.join(', ')})`,
         )
       const pk_value = record[pk_index]
-      const row = (
-        await this.client.$queryRawUnsafe(
-          `SELECT * FROM ${this.escape(table_name)} WHERE ${this.escape(pk)} = $1 LIMIT 1`,
-          pk_value,
-        )
-      )[0]
+      const queryResult = await this.client.$queryRawUnsafe(
+        `SELECT * FROM ${this.escape(table_name)} WHERE ${this.escape(pk)} = $1 LIMIT 1`,
+        pk_value,
+      ) as Record<string, any>[]
+      const row = queryResult[0] as Record<string, any> | undefined
 
       if (row) {
         if (

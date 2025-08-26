@@ -422,6 +422,144 @@ describe('query-module-driver-prisma', () => {
       })
     })
   })
+
+  // region Null value handling tests (Fixed behavior)
+  describe('Null value handling (regression test)', () => {
+    describe('null values in filter should be filtered out before sql-builder', () => {
+      it('should not cause TypeError when filter contains null values', async () => {
+        const { defineQuery } = await import('@rym-lib/query-module')
+
+        const testQuery = defineQuery(driver, {
+          name: 'null-value-test',
+          source: (builder) => builder.from('example'),
+          rules: {
+            name: 'name',
+            value: 'value',
+          },
+        })
+
+        // この呼び出しは修正前はエラーになっていた:
+        // "TypeError: Cannot convert undefined or null to object"
+        await expect(async () => {
+          await testQuery.many({
+            filter: {
+              name: null, // この null が QueryCriteria.remap でフィルタリングされる
+              value: { eq: 'test' }, // これは正常に処理される
+            },
+          })
+        }).not.toThrow()
+
+        // SQL が正常に生成されることを確認
+        const lastCall = prismaMock.$queryRawUnsafe.mock.lastCall
+        expect(lastCall).toBeDefined()
+        expect(lastCall![0]).toContain('`value` = ?')
+        expect(lastCall![0]).not.toContain('`name`') // null でフィルタリングされたため含まれない
+        expect(lastCall![1]).toBe('test')
+      })
+
+      it('should handle undefined values correctly (existing behavior)', async () => {
+        const { defineQuery } = await import('@rym-lib/query-module')
+
+        const testQuery = defineQuery(driver, {
+          name: 'undefined-value-test',
+          source: (builder) => builder.from('example'),
+          rules: {
+            name: 'name',
+            value: 'value',
+          },
+        })
+
+        await expect(async () => {
+          await testQuery.many({
+            filter: {
+              name: undefined, // undefined も同様にフィルタリングされる
+              value: { eq: 'test' },
+            },
+          })
+        }).not.toThrow()
+
+        // SQL が正常に生成されることを確認
+        const lastCall = prismaMock.$queryRawUnsafe.mock.lastCall
+        expect(lastCall).toBeDefined()
+        expect(lastCall![0]).toContain('`value` = ?')
+        expect(lastCall![0]).not.toContain('`name`')
+        expect(lastCall![1]).toBe('test')
+      })
+
+      it('should handle mixed null and valid values in filter arrays', async () => {
+        const { defineQuery } = await import('@rym-lib/query-module')
+
+        const testQuery = defineQuery(driver, {
+          name: 'mixed-array-test',
+          source: (builder) => builder.from('example'),
+          rules: {
+            name: 'name',
+            value: 'value',
+            age: 'age',
+          },
+        })
+
+        await expect(async () => {
+          await testQuery.many({
+            filter: [
+              {
+                name: { eq: 'test1' },
+                value: null, // この null はフィルタリングされる
+              },
+              {
+                name: undefined, // この undefined もフィルタリングされる
+                age: { gt: 18 },
+              },
+            ],
+          })
+        }).not.toThrow()
+
+        // OR 条件のSQLが生成されることを確認
+        const lastCall = prismaMock.$queryRawUnsafe.mock.lastCall
+        expect(lastCall).toBeDefined()
+        expect(lastCall![0]).toContain('OR')
+        expect(lastCall![0]).toContain('`name` = ?')
+        expect(lastCall![0]).toContain('`age` > ?')
+      })
+
+      it('should preserve valid falsy values (false, 0, empty string)', async () => {
+        const { defineQuery } = await import('@rym-lib/query-module')
+
+        const testQuery = defineQuery(driver, {
+          name: 'falsy-values-test',
+          source: (builder) => builder.from('example'),
+          rules: {
+            active: 'active',
+            count: 'count',
+            description: 'description',
+          },
+        })
+
+        await expect(async () => {
+          await testQuery.many({
+            filter: {
+              active: { eq: false }, // false は有効な値として残る
+              count: { eq: 0 }, // 0 も有効な値として残る
+              description: { eq: '' }, // 空文字も有効な値として残る
+            },
+          })
+        }).not.toThrow()
+
+        // 全ての条件がSQLに含まれることを確認
+        const lastCall = prismaMock.$queryRawUnsafe.mock.lastCall
+        expect(lastCall).toBeDefined()
+        expect(lastCall![0]).toContain('`active` = ?')
+        expect(lastCall![0]).toContain('`count` = ?')
+        expect(lastCall![0]).toContain('`description` = ?')
+
+        // パラメータの順序は実際の実行結果に依存するため、適切な数の条件が含まれることを確認
+        const parameters = lastCall!.slice(1)
+        expect(parameters).toHaveLength(3) // 3つの条件が含まれる
+        // NOTE: Prismaでは boolean false は数値 0 に変換される
+        expect(parameters).toEqual(expect.arrayContaining([0, 0, ''])) // false -> 0, 0 -> 0, '' -> ''
+      })
+    })
+  })
 })
 
 async function expectQuery<

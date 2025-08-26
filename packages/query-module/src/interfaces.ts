@@ -33,6 +33,11 @@ export type QueryCriteriaOrderBy<Data> =
   | undefined
 export type QueryCriteriaTake = number | undefined
 export type QueryCriteriaSkip = number | undefined
+
+/**
+ * Public API criteria interface for QueryRunner methods (one, many, find)
+ * This is the interface users interact with when calling query methods
+ */
 export interface QueryRunnerCriteria<
   Data extends QueryResultData,
   DataExtra extends Partial<Record<string, any>> = {},
@@ -43,6 +48,10 @@ export interface QueryRunnerCriteria<
   skip?: QueryCriteriaSkip
 }
 
+/**
+ * Internal filter representation after mapping transformation
+ * Used by QueryCriteria class to represent processed filter rules
+ */
 export type QueryCriteriaFilter<
   Data extends QueryResultData = any,
   Driver extends QueryDriverInterface = any,
@@ -60,12 +69,13 @@ export type QueryCriteriaFilter<
   >
 >
 
+/**
+ * Internal criteria interface for driver execution
+ * NOTE: This interface handles both raw user input (QueryFilter) and
+ * processed mapping results (QueryCriteriaFilter) from QueryCriteria class
+ */
 export interface QueryCriteriaInterface<Data extends QueryResultData = any> {
-  readonly filter: // FIXME: これではCriteriaがwrapしてる意味がない。複雑性を外に拡散してるだけだ
-  | QueryCriteriaFilter<Data>
-    | QueryCriteriaFilter<Data>[]
-    | QueryFilter<Data>
-    | QueryFilter<Data>[]
+  readonly filter: QueryCriteriaFilter<Data> | QueryCriteriaFilter<Data>[]
   readonly orderBy: QueryCriteriaOrderBy<Data>
   readonly take: QueryCriteriaTake
   readonly skip: QueryCriteriaSkip

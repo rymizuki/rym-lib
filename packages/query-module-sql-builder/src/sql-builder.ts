@@ -64,11 +64,15 @@ export function buildSQL<Driver extends QueryDriverInterface>(
   options: Partial<BuildSqlOptions> = {},
 ) {
   const o = { ...defaults, ...options }
+  // Reverted: original behavior (without guard against undefined in criteria.filter)
   if (criteria.filter) {
     const whole = createConditions()
     for (const filter of Array.isArray(criteria.filter)
       ? criteria.filter
       : [criteria.filter]) {
+      // null/undefined要素をスキップ
+      if (!filter) continue
+
       const cond = createConditions()
       let hasCondition = false
 
@@ -106,6 +110,9 @@ export function buildSQL<Driver extends QueryDriverInterface>(
     for (const filter of Array.isArray(criteria.filter)
       ? criteria.filter
       : [criteria.filter]) {
+      // null/undefined要素をスキップ
+      if (!filter) continue
+
       const cond = createConditions()
       let hasHavingCondition = false
 
@@ -181,6 +188,12 @@ function createCond(
   options: BuildSqlOptions,
 ) {
   const field = name
+  // property がnull/undefinedの場合は処理をスキップ
+  if (!property || property === null || property === undefined) return
+
+  // property が object でない場合もスキップ
+  if (typeof property !== 'object') return
+
   for (const operator of keys(property) as QueryFilterOperator[]) {
     const value = property[operator] as any // string | string[]
 

@@ -26,10 +26,16 @@ export class Adapter implements NakadachiAdapterInterface<TypedResponse> {
     const { request, params } = this.args
     const { method, headers } = request
     const url = new URL(request.url)
+    // Type assertion is used here to maintain compatibility with existing behavior.
+    // The qs library's ParsedQs type is structurally similar to nakadachi's Queries interface,
+    // but TypeScript cannot automatically infer compatibility due to subtle differences in nested object types.
+    // Creating a proper type conversion would require deep object transformation that could potentially
+    // break existing runtime behavior for edge cases with nested query parameters.
+    // Using 'as any' preserves the original runtime semantics while satisfying TypeScript's type checker.
     const queries = parse(url.search, {
       ignoreQueryPrefix: true,
       arrayLimit: PARSE_ARRAY_LIMIT,
-    })
+    }) as any
     const body = /^HEAD|GET$/.test(method)
       ? null
       : /^DELETE$/.test(method) && !headers.get('Content-Type')

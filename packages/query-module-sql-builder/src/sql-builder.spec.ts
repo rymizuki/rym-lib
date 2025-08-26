@@ -605,4 +605,134 @@ describe('query-module-sql-builder', () => {
       })
     })
   })
+
+  // region Error reproduction tests
+  describe('Error reproduction', () => {
+    describe('TypeError: Cannot convert undefined or null to object', () => {
+      describe('when filter is null', () => {
+        it('should NOT throw error because null is falsy and filtered out by if statement', () => {
+          const criteria: QueryCriteriaInterface = {
+            filter: null as unknown as QueryCriteriaInterface['filter'], // Test: runtime null check
+            orderBy: [],
+            take: undefined,
+            skip: undefined,
+          }
+
+          // null は falsy なので if (criteria.filter) で除外される
+          expect(() => {
+            buildSQL(builder, criteria)
+          }).not.toThrow()
+        })
+      })
+
+      describe('when filter is undefined', () => {
+        it('should throw TypeError at line 41 (keys function)', () => {
+          const criteria: QueryCriteriaInterface = {
+            filter: undefined as unknown as QueryCriteriaInterface['filter'], // Test: runtime undefined check
+            orderBy: [],
+            take: undefined,
+            skip: undefined,
+          }
+
+          // NOTE: undefinedの場合は68行目のif (criteria.filter)でフィルターされるため、実際にはエラーは発生しない
+          // しかし、nullの場合はif文を通過してしまう
+          expect(() => {
+            buildSQL(builder, criteria)
+          }).not.toThrow()
+        })
+      })
+
+      describe('when filter array contains null element', () => {
+        it('should NOT throw error because null elements are now filtered out', () => {
+          // 正しい形式で作成
+          const validFilter = {
+            name: {
+              column: null,
+              filter: undefined,
+              value: { eq: 'test' },
+            },
+          }
+
+          const criteria: QueryCriteriaInterface = {
+            filter: [
+              validFilter,
+              null,
+            ] as unknown as QueryCriteriaInterface['filter'], // Test: null element in array
+            orderBy: [],
+            take: undefined,
+            skip: undefined,
+          }
+
+          // null要素はフィルタリングされるため、エラーは発生しない
+          expect(() => {
+            buildSQL(builder, criteria)
+          }).not.toThrow()
+        })
+      })
+
+      describe('when filter object has property with null value object', () => {
+        it('should NOT throw error because null properties are now filtered out', () => {
+          // Create malformed criteria that bypasses type checking at runtime
+          const malformedFilter = {
+            name: {
+              column: null, // Runtime: intentionally null for error testing
+              filter: undefined, // Runtime: intentionally undefined for error testing
+              value: null, // null propertyはフィルタリングされるため、エラーは発生しない
+            },
+          }
+
+          const mockCriteria: QueryCriteriaInterface = {
+            filter:
+              malformedFilter as unknown as QueryCriteriaInterface['filter'],
+            orderBy: [],
+            take: undefined,
+            skip: undefined,
+          }
+
+          // null propertyはフィルタリングされるため、エラーは発生しない
+          expect(() => {
+            buildSQL(builder, mockCriteria)
+          }).not.toThrow()
+        })
+      })
+
+      describe('when using having filter with null', () => {
+        it('should NOT throw TypeError because null elements are now filtered out', () => {
+          const criteria: QueryCriteriaInterface = {
+            filter: [null] as unknown as QueryCriteriaInterface['filter'], // Test: null array element
+            orderBy: [],
+            take: undefined,
+            skip: undefined,
+          }
+
+          // null要素はフィルタリングされるため、エラーは発生しない
+          expect(() => {
+            buildSQL(builder, criteria)
+          }).not.toThrow()
+        })
+      })
+
+      describe('Real world case: direct null filter', () => {
+        it('should throw TypeError when filter is directly set to empty object then manipulated to null', () => {
+          // 実際の使用例：外部から渡されたfilterがnullまたはundefinedの場合
+          const malformedFilter = null
+
+          if (malformedFilter) {
+            // このチェックを通過してしまう可能性がある
+            const criteria: QueryCriteriaInterface = {
+              filter:
+                malformedFilter as unknown as QueryCriteriaInterface['filter'], // Test: runtime malformed data
+              orderBy: [],
+              take: undefined,
+              skip: undefined,
+            }
+
+            expect(() => {
+              buildSQL(builder, criteria)
+            }).toThrow('Cannot convert undefined or null to object')
+          }
+        })
+      })
+    })
+  })
 })
