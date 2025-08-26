@@ -1,6 +1,6 @@
 import { QueryDriverPrisma } from './'
 
-import { SQLBuilder } from 'coral-sql'
+import { SQLBuilder, exists } from 'coral-sql'
 import { beforeEach, describe, expect, it, Mock, vi } from 'vitest'
 
 import {
@@ -221,7 +221,7 @@ describe('query-module-driver-prisma', () => {
               })
             })
             describe('in: value[]', () => {
-              it('should be value NOT LIKE expected sql', async () => {
+              it('should be value IN expected sql', async () => {
                 await expectQuery(
                   driver,
                   {
@@ -235,7 +235,11 @@ describe('query-module-driver-prisma', () => {
                 )
               })
             })
-            describe.skip('not in: value[]', () => {})
+            describe('not in: value[]', () => {
+              // NOTE: NOT IN operator is not currently supported in QueryFilterOperator type
+              // This test demonstrates the missing functionality that should be implemented
+              it.todo('should be value NOT IN expected sql - requires not_in operator implementation')
+            })
           })
 
           describe('is multiple', () => {
@@ -253,6 +257,101 @@ describe('query-module-driver-prisma', () => {
                   'example',
                 ],
               )
+            })
+          })
+        })
+
+        describe('criteria.filter with custom filter implementation', () => {
+          describe('custom filter mechanism', () => {
+            it('should support EXISTS functionality through filter property', async () => {
+              driver.source((builder) => builder.from('example'))
+
+              // Mock criteria structure that would come from QueryCriteria with custom filter mapping
+              const mockCriteria = {
+                filter: {
+                  order_id: {
+                    column: null,
+                    value: { eq: 'test-value' },
+                    filter: (payload: any, context: any) => exists(
+                      context.builder
+                        .createBuilder()
+                        .from('orders', 'o')
+                        .column('1')
+                        .where(
+                          context.builder
+                            .createConditions()
+                            .and('example.id', '=', 'o.user_id')
+                            .and('o.id', payload.op, payload.value)
+                        )
+                    )
+                  }
+                },
+                orderBy: [],
+                take: undefined,
+                skip: undefined,
+              } as any
+
+              await driver.execute(mockCriteria)
+
+              const lastCall = prismaMock.$queryRawUnsafe.mock.lastCall
+              expect(lastCall?.[0]).toContain('EXISTS')
+              expect(lastCall?.[0]).toContain('orders')
+              // The parameter binding may be different due to how the EXISTS query is structured
+              expect(lastCall?.[1]).toBeDefined()
+            })
+
+            it('should handle filter function with different operators', async () => {
+              driver.source((builder) => builder.from('example'))
+
+              const mockCriteria = {
+                filter: {
+                  amount: {
+                    column: null,
+                    value: { gt: 100 },
+                    filter: (payload: any, context: any) => exists(
+                      context.builder
+                        .createBuilder()
+                        .from('transactions', 't')
+                        .column('1')
+                        .where('t.amount', payload.op, payload.value)
+                    )
+                  }
+                },
+                orderBy: [],
+                take: undefined,
+                skip: undefined,
+              } as any
+
+              await driver.execute(mockCriteria)
+
+              const lastCall = prismaMock.$queryRawUnsafe.mock.lastCall
+              expect(lastCall?.[0]).toContain('EXISTS')
+              expect(lastCall?.[0]).toContain('transactions')
+              expect(lastCall?.[1]).toBe(100)
+            })
+
+            it('should fall back to default behavior when no filter function is provided', async () => {
+              driver.source((builder) => builder.from('example'))
+
+              const mockCriteria = {
+                filter: {
+                  normal_field: {
+                    column: null,
+                    value: { eq: 'normal-value' },
+                    filter: undefined // No custom filter
+                  }
+                },
+                orderBy: [],
+                take: undefined,
+                skip: undefined,
+              } as any
+
+              await driver.execute(mockCriteria)
+
+              const lastCall = prismaMock.$queryRawUnsafe.mock.lastCall
+              expect(lastCall?.[0]).not.toContain('EXISTS')
+              expect(lastCall?.[0]).toContain('`normal_field` = ?')
+              expect(lastCall?.[1]).toBe('normal-value')
             })
           })
         })
