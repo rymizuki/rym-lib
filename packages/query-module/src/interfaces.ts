@@ -33,20 +33,36 @@ export type QueryCriteriaOrderBy<Data> =
   | undefined
 export type QueryCriteriaTake = number | undefined
 export type QueryCriteriaSkip = number | undefined
-export interface QueryRunnerCriteria<Data extends QueryResultData> {
-  filter?: QueryFilter<Data> | QueryFilter<Data>[]
+export interface QueryRunnerCriteria<
+  Data extends QueryResultData,
+  DataExtra extends Partial<Record<string, any>> = {},
+> {
+  filter?: QueryFilter<Data & DataExtra> | QueryFilter<Data & DataExtra>[]
   orderBy?: QueryCriteriaOrderBy<Data>
   take?: QueryCriteriaTake
   skip?: QueryCriteriaSkip
 }
 
-export type QueryCriteriaFilter<Data extends QueryResultData = any> = Partial<
-  Record<string, { column: string | (() => any); value: any }>
+export type QueryCriteriaFilter<
+  Data extends QueryResultData = any,
+  Driver extends QueryDriverInterface = any,
+> = Partial<
+  Record<
+    string,
+    {
+      column: string | (() => any)
+      value: any
+      filter: (
+        value: Parameters<NonNullable<Driver['customFilter']>>[0],
+        context: Parameters<NonNullable<Driver['customFilter']>>[1],
+      ) => ReturnType<NonNullable<Driver['customFilter']>>[0]
+    }
+  >
 >
 
 export interface QueryCriteriaInterface<Data extends QueryResultData = any> {
-  readonly filter:
-    | QueryCriteriaFilter<Data>
+  readonly filter: // FIXME: これではCriteriaがwrapしてる意味がない。複雑性を外に拡散してるだけだ
+  | QueryCriteriaFilter<Data>
     | QueryCriteriaFilter<Data>[]
     | QueryFilter<Data>
     | QueryFilter<Data>[]
@@ -69,11 +85,26 @@ export interface QueryRunnerContext {
   logger: QueryLoggerInterface
 }
 
+export type CustomFilterFieldFunction<
+  Payload = any,
+  Context = any,
+  Result = any,
+> = (payload: Payload, context: Context) => Result
+export type QueryDriverCustomFilterFunction<
+  Payload = any,
+  Context = any,
+  Result = any,
+> = (
+  payload: Payload,
+  context: Context,
+  fn: CustomFilterFieldFunction<Payload, Context, Result>,
+) => Result
 export interface QueryDriverInterface {
   source(fn: (...args: any[]) => any): this
   execute<D>(
     criteria: QueryCriteriaInterface<D>,
   ): Promise<Record<string, any>[]>
+  customFilter?: QueryDriverCustomFilterFunction
 }
 
 interface QuerySourceInterface<
@@ -112,7 +143,19 @@ export interface QueryRunnerMiddleware<
 
 type UnpackArray<T> = T extends Array<infer U> ? U : T
 
-type QueryRule = string | { column: () => any }
+type UnpackQueryRunnerCriteriaFilter<
+  Data,
+  Params extends QueryRunnerCriteria<Data>,
+> = UnpackArray<NonNullable<Params['filter']>>
+type QueryRule<Driver extends QueryDriverInterface> =
+  | string
+  | {
+      column?: () => any
+      filter?: (
+        value: Parameters<NonNullable<Driver['customFilter']>>[0],
+        context: Parameters<NonNullable<Driver['customFilter']>>[1],
+      ) => ReturnType<NonNullable<Driver['customFilter']>>[0]
+    }
 
 export interface QuerySpecification<
   Data extends QueryResultData,
@@ -125,7 +168,10 @@ export interface QuerySpecification<
   // Rules must map existing filter keys to source field names. Arbitrary
   // string keys are not allowed to keep the type-safety of filter keys.
   rules: Partial<
-    Record<keyof UnpackArray<NonNullable<Params['filter']>>, QueryRule>
+    Record<
+      keyof UnpackQueryRunnerCriteriaFilter<Data, Params>,
+      QueryRule<Driver>
+    >
   >
   criteria?: (params: Partial<Params>) => Partial<Params>
   middlewares?: QueryRunnerMiddleware<Data, List, Params>[]

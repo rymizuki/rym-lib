@@ -1,4 +1,4 @@
-import { beforeEach, describe, expect, it, MockInstance, vi } from 'vitest'
+import { beforeEach, describe, expect, it, type MockInstance, vi } from 'vitest'
 
 import { QueryCriteria } from './criteria'
 import { QueryRunnerResourceNotFoundException } from './exceptions'
@@ -72,7 +72,7 @@ describe('QueryRunner', () => {
         })
         it('should be call with specified criteria', () => {
           expect(driver.called[0]?.args[0].filter).toStrictEqual({
-            index: { column: null, value: { eq: 1 } },
+            index: { column: null, filter: undefined, value: { eq: 1 } },
           })
           expect(driver.called[0]?.args[0].orderBy).toBe(criteria.orderBy)
           expect(driver.called[0]?.args[0].skip).toBe(criteria.skip)
@@ -93,8 +93,8 @@ describe('QueryRunner', () => {
         })
         it('should be call with specified criteria', () => {
           expect(driver.called[0]?.args[0].filter).toStrictEqual([
-            { index: { column: null, value: { eq: 1 } } },
-            { index: { column: null, value: { ne: 5 } } },
+            { index: { column: null, filter: undefined, value: { eq: 1 } } },
+            { index: { column: null, filter: undefined, value: { ne: 5 } } },
           ])
         })
       })
@@ -136,7 +136,7 @@ describe('QueryRunner', () => {
         })
         it('should be call with specified criteria', () => {
           expect(driver.called[0]?.args[0].filter).toStrictEqual({
-            index: { column: null, value: { eq: 1 } },
+            index: { column: null, filter: undefined, value: { eq: 1 } },
           })
           expect(driver.called[0]?.args[0].orderBy).toBe(criteria.orderBy)
           expect(driver.called[0]?.args[0].skip).toBe(criteria.skip)
@@ -171,7 +171,7 @@ describe('QueryRunner', () => {
         })
         it('should be call with specified criteria', () => {
           expect(driver.called[0]?.args[0].filter).toStrictEqual({
-            index: { column: null, value: { eq: 1 } },
+            index: { column: null, filter: undefined, value: { eq: 1 } },
           })
           expect(driver.called[0]?.args[0].orderBy).toBe(criteria.orderBy)
           expect(driver.called[0]?.args[0].skip).toBe(criteria.skip)
@@ -226,8 +226,16 @@ describe('QueryRunner', () => {
       describe('criteria.filter', () => {
         it('should be replaced name for index, value', () => {
           expect(driver.called[0]?.args[0]?.filter).toStrictEqual({
-            'record.id': { column: 'record.id', value: { gte: 0 } },
-            'record.value': { column: 'record.value', value: { ne: 'item-1' } },
+            'record.id': {
+              column: 'record.id',
+              filter: undefined,
+              value: { gte: 0 },
+            },
+            'record.value': {
+              column: 'record.value',
+              filter: undefined,
+              value: { ne: 'item-1' },
+            },
           })
         })
       })

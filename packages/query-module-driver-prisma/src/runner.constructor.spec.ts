@@ -1,7 +1,10 @@
-import { describe, it, expect } from 'vitest'
 import { QueryDriverPrisma } from './'
-import prisma from './test-utils/prisma'
+
+import { describe, it, expect } from 'vitest'
+
 import { createLogger } from '@rym-lib/query-module/test-utils'
+
+import prisma from './test-utils/prisma'
 
 describe('QueryDriverPrisma - Constructor', () => {
   it('should create instance when valid params provided', () => {
@@ -10,7 +13,10 @@ describe('QueryDriverPrisma - Constructor', () => {
   })
 
   it('should allow construction with invalid params but fail on execution', async () => {
-    const driver = new QueryDriverPrisma(null as any, { logger: createLogger() } as any)
+    const driver = new QueryDriverPrisma(
+      null as any,
+      { logger: createLogger() } as any,
+    )
     expect(driver).toBeDefined()
 
     // set a source so execute proceeds to use the DB instance (which is null)

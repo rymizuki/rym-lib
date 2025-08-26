@@ -1,9 +1,12 @@
-import { describe, it, beforeEach, expect } from 'vitest'
 import { QueryDriverPrisma } from './'
+
+import { describe, it, beforeEach, expect } from 'vitest'
+
+import { createLogger } from '@rym-lib/query-module/test-utils'
+
+import { expectQuery } from './test-utils/assertions'
 import prisma from './test-utils/prisma'
 import { prismaMock } from './test-utils/prisma-mock'
-import { createLogger } from '@rym-lib/query-module/test-utils'
-import { expectQuery } from './test-utils/assertions'
 
 describe('QueryDriverPrisma - SQL generation', () => {
   let driver: any
@@ -14,9 +17,7 @@ describe('QueryDriverPrisma - SQL generation', () => {
   })
 
   it('no criteria -> select *', async () => {
-    await expectQuery(driver, {}, [
-      'SELECT\n  *\nFROM\n  `example`',
-    ])
+    await expectQuery(driver, {}, ['SELECT\n  *\nFROM\n  `example`'])
   })
 
   it('filter eq -> where equals', async () => {
@@ -32,4 +33,3 @@ describe('QueryDriverPrisma - SQL generation', () => {
     ])
   })
 })
-

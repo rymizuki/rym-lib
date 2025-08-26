@@ -31,7 +31,7 @@
   "scripts": {
     "build": "tsup",
     "test": "vitest run --coverage",
-    "lint": "eslint --max-warnings 0 .",
+    "lint": "eslint --max-warnings 0 . && tsc --noEmit && prettier --check \"src/**/*.{ts,js,json}\"",
     "format": "prettier -w './**/*.{ts,tsx,js,json,css}' --check",
     "ncu": "npm-check-updates"
   },
@@ -44,6 +44,6 @@
     "vitest": "^3.0.3"
   },
   "dependencies": {
-    "coral-sql": "^1.5.1"
+    "coral-sql": "^1.5.3"
   }
 }

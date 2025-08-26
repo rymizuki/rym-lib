@@ -31,7 +31,7 @@
   "scripts": {
     "build": "tsup",
     "test": "vitest run --coverage",
-    "lint": "eslint --max-warnings 0 .",
+    "lint": "eslint --max-warnings 0 . && tsc --noEmit && prettier --check \"src/**/*.{ts,js,json}\"",
     "format": "prettier -w './**/*.{ts,tsx,js,json,css}' --check",
     "ncu": "npm-check-updates"
   },
@@ -42,14 +42,12 @@
     "@prisma/client": "^5.22.0",
     "@rym-lib/dev-config": "*",
     "@rym-lib/query-module": "1.2.10",
-    "@rym-lib/query-module-sql-builder": "1.2.10",
     "@types/node": "^22.4.1",
-    "@vitest/coverage-v8": "^3.0.3",
-    "coral-sql": "^1.5.1",
+    "@vitest/coverage-v8": "^3.2.4",
     "npm-check-updates": "^17.0.6",
     "prisma": "^5.22.0",
     "tsup": "^8.2.4",
-    "vitest": "^3.0.3",
+    "vitest": "^3.2.4",
     "vitest-mock-extended": "^2.0.2"
   },
   "peerDependencies": {

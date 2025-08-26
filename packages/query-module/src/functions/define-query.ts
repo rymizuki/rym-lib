@@ -24,9 +24,9 @@ export function defineQuery<
       driver: Driver,
       spec: QuerySpecification<Data, Driver, List, Params>,
       context: QueryRunnerContext,
-    ) => QueryRunnerInterface<Data>
+    ) => QueryRunnerInterface<Data, List, Params>
   },
-) {
+): QueryRunnerInterface<Data, List, Params> {
   const ctx: QueryRunnerContext = {
     ...context,
     logger: context.logger ? context.logger : createLogger(),

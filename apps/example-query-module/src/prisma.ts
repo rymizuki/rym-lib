@@ -1,20 +1,19 @@
 import {
-  caseWhen,
-  coalesce,
-  is_not_null,
-  json_array_aggregate,
-  json_object,
-  unescape,
-} from 'coral-sql'
-
-import {
   defineQuery,
   QueryLoggerInterface,
   QueryResultList,
   QueryRunnerCriteria,
   QuerySpecification,
 } from '@rym-lib/query-module'
-import { QueryDriverPrisma } from '@rym-lib/query-module-driver-prisma'
+import {
+  QueryDriverPrisma,
+  case_when,
+  exists,
+  is_not_null,
+  json_array_aggregate,
+  json_object,
+  unescape,
+} from '@rym-lib/query-module-driver-prisma'
 
 import { PrismaClient } from '../generated/prisma/client.js'
 
@@ -23,10 +22,19 @@ type Data = {
   name: string
   birthdate: string
   status: 'active' | 'inactive'
+  orders: {
+    id: string
+    ordered_at: Date
+  }[]
 }
 
 type List = QueryResultList<Data>
-type Params = QueryRunnerCriteria<Data>
+type Params = QueryRunnerCriteria<
+  Data,
+  {
+    order_id: string
+  }
+>
 
 const prisma = new PrismaClient().$extends({
   query: {
@@ -67,7 +75,10 @@ const spec: QuerySpecification<Data, QueryDriverPrisma, List, Params> = {
       .column('u.name')
       .column('u.birthdate')
       .column(
-        caseWhen().when('ui.id', is_not_null()).then('active').else('inactive'),
+        case_when()
+          .when('ui.id', is_not_null())
+          .then('active')
+          .else('inactive'),
         'status',
       )
       .column(
@@ -90,13 +101,31 @@ const spec: QuerySpecification<Data, QueryDriverPrisma, List, Params> = {
     name: 'u.name',
     status: {
       column: () =>
-        caseWhen().when('ui.id', is_not_null()).then('active').else('inactive'),
+        case_when()
+          .when('ui.id', is_not_null())
+          .then('active')
+          .else('inactive'),
+    },
+    order_id: {
+      filter: ({ op, value }, { builder }) =>
+        exists(
+          builder
+            .createBuilder()
+            .from('order', 'o')
+            .column(unescape('1'))
+            .where(
+              builder
+                .createConditions()
+                .and('u.id', unescape('o.user_id'))
+                .and('o.id', op, value),
+            ),
+        ),
     },
   },
 }
 
 const main = async () => {
-  const query = defineQuery(driver, spec)
+  const query = defineQuery<Data, QueryDriverPrisma, List, Params>(driver, spec)
 
   console.info('params: undefined', await query.many())
 
@@ -120,6 +149,10 @@ const main = async () => {
   console.info(
     'params: filter for case-when',
     await query.many({ filter: { status: { eq: 'active' } } }),
+  )
+  console.info(
+    'params: filter for exists',
+    await query.many({ filter: { order_id: { eq: '1234' } } }),
   )
 }
 

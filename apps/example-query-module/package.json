@@ -5,6 +5,7 @@
   "type": "module",
   "scripts": {
     "build": "prisma generate",
+    "lint": "tsc --noEmit && prettier ./src -w --check",
     "exec:prisma": "tsx ./src/prisma.ts"
   },
   "devDependencies": {
@@ -19,7 +20,7 @@
     "vitest": "^3.2.4"
   },
   "dependencies": {
-    "coral-sql": "^1.5.1",
+    "coral-sql": "^1.5.2",
     "tsx": "^4.20.5"
   }
 }

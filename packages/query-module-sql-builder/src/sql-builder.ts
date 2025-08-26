@@ -3,27 +3,58 @@ import {
   createConditions,
   is_not_null,
   is_null,
-  SQLBuilderPort,
+  SQLBuilderConditionExpressionPort,
   SQLBuilderConditionsPort,
+  SQLBuilderOperator,
+  SQLBuilderPort,
 } from 'coral-sql'
 
 import type {
+  CustomFilterFieldFunction,
   QueryCriteriaInterface,
+  QueryDriverCustomFilterFunction,
   QueryDriverInterface,
   QueryFilter,
+  QueryFilterOperator,
 } from '@rym-lib/query-module'
 
 export { createBuilder }
 
+export type CustomFilterFunction = QueryDriverCustomFilterFunction<
+  { op: SQLBuilderOperator; value: string | string[] },
+  { builder: SQLBuilderPort },
+  SQLBuilderPort | SQLBuilderConditionExpressionPort
+>
+
 type BuildSqlOptions = {
   containsSplitSpaces: boolean
+  builder: SQLBuilderPort
+  customFilter?: CustomFilterFunction
+}
+
+type FilterPayload = {
+  value: QueryFilter<any>
+  filter?: CustomFilterFieldFunction
 }
 
 function keys<T extends Record<string, unknown>>(value: T) {
   return Object.keys(value) as (keyof T)[]
 }
 
+const operatorMap: Record<QueryFilterOperator, SQLBuilderOperator> = {
+  in: 'in',
+  contains: 'like',
+  not_contains: 'not like',
+  eq: '=',
+  ne: '<>',
+  gt: '>',
+  gte: '>=',
+  lt: '<',
+  lte: '<=',
+}
+
 const defaults: BuildSqlOptions = {
+  builder: createBuilder(),
   containsSplitSpaces: true,
 }
 
@@ -49,18 +80,19 @@ export function buildSQL<Driver extends QueryDriverInterface>(
         const property = filter[name]
         if (!property) continue
 
+        const { value, filter: customFilter } = property as FilterPayload
         hasCondition = true
-        
-        // Handle new QueryCriteriaFilter format: { column, value }
-        if (property && typeof property === 'object' && 'value' in property && 'column' in property) {
-          const columnName = property.column && typeof property.column === 'function' 
-            ? property.column().toSQL()[0] // Use toSQL() method for coral-sql objects
-            : (typeof property.column === 'string' ? property.column : name) // Use column name or fallback to field name
-          createCond(cond, columnName, property.value as QueryFilter<any>, o)
-        } else {
-          // Handle legacy QueryFilter format
-          createCond(cond, name, property as QueryFilter<any>, o)
-        }
+
+        const columnName = (() => {
+          if (!property) return name
+          if (typeof property !== 'object') return name
+          if (!('column' in property)) return name
+          if (!property.column) return name
+          if (typeof property.column === 'string') return property.column
+          return property.column() as SQLBuilderPort
+        })()
+
+        createCond(cond, columnName, { value, filter: customFilter }, o)
       }
 
       if (hasCondition) {
@@ -78,26 +110,27 @@ export function buildSQL<Driver extends QueryDriverInterface>(
       let hasHavingCondition = false
 
       // filter -> having
-      for (const name of keys(filter)) {
-        if (typeof name !== 'string') continue
-        if (!/^having:/.test(name)) continue
+      for (const having_name of keys(filter)) {
+        if (typeof having_name !== 'string') continue
+        if (!/^having:/.test(having_name)) continue
 
-        const property = filter[name]
+        const property = filter[having_name]
         if (!property) continue
 
-        const column_name = name.replace(/^having:/, '')
+        const { value, filter: customFilter } = property as FilterPayload
+        const name = having_name.replace(/^having:/, '')
         hasHavingCondition = true
-        
-        // Handle new QueryCriteriaFilter format: { column, value }
-        if (property && typeof property === 'object' && 'value' in property && 'column' in property) {
-          const columnName = property.column && typeof property.column === 'function' 
-            ? property.column().toSQL()[0] // Use toSQL() method for coral-sql objects
-            : (typeof property.column === 'string' ? property.column : column_name) // Use column name or fallback to parsed name
-          createCond(cond, columnName, property.value as QueryFilter<any>, o)
-        } else {
-          // Handle legacy QueryFilter format
-          createCond(cond, column_name, property as QueryFilter<any>, o)
-        }
+
+        const columnName = (() => {
+          if (!property) return name
+          if (typeof property !== 'object') return name
+          if (!('column' in property)) return name
+          if (!property.column) return name
+          if (typeof property.column === 'string') return property.column
+          return property.column() as SQLBuilderPort
+        })()
+
+        createCond(cond, columnName, { value, filter: customFilter }, o)
       }
 
       if (hasHavingCondition) {
@@ -131,16 +164,38 @@ export function buildSQL<Driver extends QueryDriverInterface>(
   return builder.toSQL()
 }
 
+type FilterValue = {
+  value:
+    | string
+    | string[]
+    | null
+    | ((
+        op: SQLBuilderOperator,
+        value: string | string[],
+      ) => SQLBuilderPort | SQLBuilderConditionExpressionPort)
+}
 function createCond(
   cond: SQLBuilderConditionsPort,
-  name: string,
-  property: QueryFilter<any>,
+  name: string | SQLBuilderPort,
+  { value: property, filter }: FilterPayload,
   options: BuildSqlOptions,
 ) {
   const field = name
-  for (const operator of keys(property)) {
-    const value = property[operator] as string | string[]
+  for (const operator of keys(property) as QueryFilterOperator[]) {
+    const value = property[operator] as any // string | string[]
 
+    if (filter && options.customFilter) {
+      const op = operatorMap[operator]
+      const builder = options.customFilter(
+        { op, value },
+        { builder: options.builder },
+        filter,
+      )
+      if (!builder) continue
+
+      cond.and(builder)
+      continue
+    }
 
     switch (operator) {
       case 'eq': {
