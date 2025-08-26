@@ -60,12 +60,13 @@ export type QueryCriteriaFilter<
   >
 >
 
+/**
+ * Internal criteria interface for driver execution
+ * NOTE: This interface handles both raw user input (QueryFilter) and
+ * processed mapping results (QueryCriteriaFilter) from QueryCriteria class
+ */
 export interface QueryCriteriaInterface<Data extends QueryResultData = any> {
-  readonly filter: // FIXME: これではCriteriaがwrapしてる意味がない。複雑性を外に拡散してるだけだ
-  | QueryCriteriaFilter<Data>
-    | QueryCriteriaFilter<Data>[]
-    | QueryFilter<Data>
-    | QueryFilter<Data>[]
+  readonly filter: QueryCriteriaFilter<Data> | QueryCriteriaFilter<Data>[]
   readonly orderBy: QueryCriteriaOrderBy<Data>
   readonly take: QueryCriteriaTake
   readonly skip: QueryCriteriaSkip
