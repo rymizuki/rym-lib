@@ -8,6 +8,7 @@ import {
 import {
   buildSQL,
   createBuilder,
+  CustomFilterFunction,
   SQLBuilderPort,
 } from '@rym-lib/query-module-sql-builder'
 
@@ -30,17 +31,21 @@ export class QueryDriverSequelize implements QueryDriverInterface {
     return this
   }
 
-
   async execute(
     criteria: QueryCriteriaInterface,
   ): Promise<Record<string, any>[]> {
     if (!this.setup) {
       throw new Error('QueryDriver must be required source.')
     }
+
+    const builder = this
     const [sql, replacements] = buildSQL(
       this.setup(this.builderSetup()),
       criteria,
-      {},
+      {
+        builder: this.builderSetup(),
+        customFilter: this.customFilter,
+      },
     )
     this.context.logger.verbose(`[QueryDriverSequelize] ${sql}`, {
       sql,
@@ -52,5 +57,9 @@ export class QueryDriverSequelize implements QueryDriverInterface {
       type: QueryTypes.SELECT,
     })
     return rows as Record<string, any>[]
+  }
+
+  customFilter: CustomFilterFunction = (content, context, fn) => {
+    return fn(content, context)
   }
 }

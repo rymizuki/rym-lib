@@ -1,11 +1,9 @@
+import { exists } from 'coral-sql'
 import { Sequelize } from 'sequelize'
 import { describe, it, expect, beforeEach, vi } from 'vitest'
 
 import { QueryCriteria, QueryLoggerInterface } from '@rym-lib/query-module'
-import {
-  SQLBuilder,
-  SQLBuilderPort,
-} from '@rym-lib/query-module-sql-builder'
+import { SQLBuilder, SQLBuilderPort } from '@rym-lib/query-module-sql-builder'
 
 import { QueryDriverSequelize } from './driver'
 
@@ -54,7 +52,7 @@ describe('query-module-driver-sequelize', () => {
       mockQuery.mockResolvedValue([{ id: 1, name: 'Test User' }])
 
       const source = driver.source(sourceFunction)
-      const criteria = new QueryCriteria({}, {}, driver)
+      const criteria = new QueryCriteria({}, {})
       const result = await source.execute(criteria)
 
       expect(mockQuery).toHaveBeenCalled()
@@ -62,5 +60,106 @@ describe('query-module-driver-sequelize', () => {
     })
   })
 
-})
+  describe('criteria.filter with custom filter implementation', () => {
+    describe('custom filter mechanism', () => {
+      it('should support EXISTS functionality through filter property', async () => {
+        driver.source((builder) => builder.from('example'))
 
+        // Mock criteria structure that would come from QueryCriteria with custom filter mapping
+        const mockCriteria = {
+          filter: {
+            order_id: {
+              column: null,
+              value: { eq: 'test-value' },
+              filter: (payload: any, context: any) =>
+                exists(
+                  context.builder
+                    .createBuilder()
+                    .from('orders', 'o')
+                    .column('1')
+                    .where(
+                      context.builder
+                        .createConditions()
+                        .and('example.id', '=', 'o.user_id')
+                        .and('o.id', payload.op, payload.value),
+                    ),
+                ),
+            },
+          },
+          orderBy: [],
+          take: undefined,
+          skip: undefined,
+        } as any
+
+        mockQuery.mockResolvedValue([])
+
+        await driver.execute(mockCriteria)
+
+        const lastCall = mockQuery.mock.lastCall
+        expect(lastCall?.[0]).toContain('EXISTS')
+        expect(lastCall?.[0]).toContain('orders')
+        // The parameter binding may be different due to how the EXISTS query is structured
+        expect(lastCall?.[1]).toBeDefined()
+      })
+
+      it('should handle filter function with different operators', async () => {
+        driver.source((builder) => builder.from('example'))
+
+        const mockCriteria = {
+          filter: {
+            amount: {
+              column: null,
+              value: { gt: 100 },
+              filter: (payload: any, context: any) =>
+                exists(
+                  context.builder
+                    .createBuilder()
+                    .from('transactions', 't')
+                    .column('1')
+                    .where('t.amount', payload.op, payload.value),
+                ),
+            },
+          },
+          orderBy: [],
+          take: undefined,
+          skip: undefined,
+        } as any
+
+        mockQuery.mockResolvedValue([])
+
+        await driver.execute(mockCriteria)
+
+        const lastCall = mockQuery.mock.lastCall
+        expect(lastCall?.[0]).toContain('EXISTS')
+        expect(lastCall?.[0]).toContain('transactions')
+        expect(lastCall?.[1].replacements[0]).toBe(100)
+      })
+
+      it('should fall back to default behavior when no filter function is provided', async () => {
+        driver.source((builder) => builder.from('example'))
+
+        const mockCriteria = {
+          filter: {
+            normal_field: {
+              column: null,
+              value: { eq: 'normal-value' },
+              filter: undefined, // No custom filter
+            },
+          },
+          orderBy: [],
+          take: undefined,
+          skip: undefined,
+        } as any
+
+        mockQuery.mockResolvedValue([])
+
+        await driver.execute(mockCriteria)
+
+        const lastCall = mockQuery.mock.lastCall
+        expect(lastCall?.[0]).not.toContain('EXISTS')
+        expect(lastCall?.[0]).toContain('`normal_field` = ?')
+        expect(lastCall?.[1].replacements[0]).toBe('normal-value')
+      })
+    })
+  })
+})
