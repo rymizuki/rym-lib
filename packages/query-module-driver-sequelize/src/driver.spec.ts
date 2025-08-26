@@ -1,9 +1,12 @@
-import { exists } from 'coral-sql'
 import { Sequelize } from 'sequelize'
 import { describe, it, expect, beforeEach, vi } from 'vitest'
 
 import { QueryCriteria, QueryLoggerInterface } from '@rym-lib/query-module'
-import { SQLBuilder, SQLBuilderPort } from '@rym-lib/query-module-sql-builder'
+import {
+  SQLBuilder,
+  SQLBuilderPort,
+  exists,
+} from '@rym-lib/query-module-sql-builder'
 
 import { QueryDriverSequelize } from './driver'
 
