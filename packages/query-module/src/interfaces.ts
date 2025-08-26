@@ -43,13 +43,26 @@ export interface QueryRunnerCriteria<
   skip?: QueryCriteriaSkip
 }
 
-export type QueryCriteriaFilter<Data extends QueryResultData = any> = Partial<
-  Record<string, { column: string | (() => any); value: any }>
+export type QueryCriteriaFilter<
+  Data extends QueryResultData = any,
+  Driver extends QueryDriverInterface = any,
+> = Partial<
+  Record<
+    string,
+    {
+      column: string | (() => any)
+      value: any
+      filter: (
+        value: Parameters<NonNullable<Driver['customFilter']>>[0],
+        context: Parameters<NonNullable<Driver['customFilter']>>[1],
+      ) => ReturnType<NonNullable<Driver['customFilter']>>[0]
+    }
+  >
 >
 
 export interface QueryCriteriaInterface<Data extends QueryResultData = any> {
-  readonly filter:
-    | QueryCriteriaFilter<Data>
+  readonly filter: // FIXME: これではCriteriaがwrapしてる意味がない。複雑性を外に拡散してるだけだ
+  | QueryCriteriaFilter<Data>
     | QueryCriteriaFilter<Data>[]
     | QueryFilter<Data>
     | QueryFilter<Data>[]
@@ -72,12 +85,26 @@ export interface QueryRunnerContext {
   logger: QueryLoggerInterface
 }
 
+export type CustomFilterFieldFunction<
+  Payload = any,
+  Context = any,
+  Result = any,
+> = (payload: Payload, context: Context) => Result
+export type QueryDriverCustomFilterFunction<
+  Payload = any,
+  Context = any,
+  Result = any,
+> = (
+  payload: Payload,
+  context: Context,
+  fn: CustomFilterFieldFunction<Payload, Context, Result>,
+) => Result
 export interface QueryDriverInterface {
   source(fn: (...args: any[]) => any): this
   execute<D>(
     criteria: QueryCriteriaInterface<D>,
   ): Promise<Record<string, any>[]>
-  customFilter?: (value: any, context: any) => any
+  customFilter?: QueryDriverCustomFilterFunction
 }
 
 interface QuerySourceInterface<

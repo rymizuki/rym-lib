@@ -7,8 +7,7 @@ import {
 import {
   buildSQL,
   createBuilder,
-  SQLBuilderConditionExpressionPort,
-  SQLBuilderOperator,
+  CustomFilterFunction,
   SQLBuilderPort,
 } from '@rym-lib/query-module-sql-builder'
 
@@ -39,10 +38,14 @@ export class QueryDriverPrisma implements QueryDriverInterface {
       throw new Error('QueryDriver must be required source.')
     }
 
+    const builder = this
     const [sql, replacements] = buildSQL(
       this.setup(this.builderSetup()),
       criteria,
-      {},
+      {
+        builder: this.builderSetup(),
+        customFilter: this.customFilter,
+      },
     )
     this.context.logger.verbose(`[QueryDriverPrisma] ${sql}`, { replacements })
 
@@ -52,10 +55,7 @@ export class QueryDriverPrisma implements QueryDriverInterface {
     return rows as Record<string, any>[]
   }
 
-  customFilter?:
-    | ((
-        content: { op: SQLBuilderOperator; value: string | string[] },
-        context: { builder: SQLBuilderPort },
-      ) => SQLBuilderPort | SQLBuilderConditionExpressionPort)
-    | undefined
+  customFilter: CustomFilterFunction = (content, context, fn) => {
+    return fn(content, context)
+  }
 }

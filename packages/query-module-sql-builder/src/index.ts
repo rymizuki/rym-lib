@@ -1,2 +1,2 @@
 export * from 'coral-sql'
-export { buildSQL } from './sql-builder'
+export { type CustomFilterFunction, buildSQL } from './sql-builder'

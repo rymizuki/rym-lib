@@ -1,11 +1,15 @@
 export { QueryCriteria } from './criteria'
+export { QueryRunnerResourceNotFoundException } from './exceptions'
 export { defineQuery } from './functions/define-query'
 export { QueryRunner } from './runner'
-export { QueryRunnerResourceNotFoundException } from './exceptions'
 
 export type {
+  CustomFilterFieldFunction,
   QueryCriteriaInterface,
+  QueryDriverCustomFilterFunction,
   QueryDriverInterface,
+  QueryFilter,
+  QueryFilterOperator,
   QueryLoggerInterface,
   QueryResultData,
   QueryResultList,
@@ -14,6 +18,4 @@ export type {
   QueryRunnerInterface,
   QueryRunnerMiddleware,
   QuerySpecification,
-  QueryFilter,
-  QueryFilterOperator,
 } from './interfaces'

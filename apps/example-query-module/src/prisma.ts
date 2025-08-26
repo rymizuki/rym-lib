@@ -120,7 +120,7 @@ const spec: QuerySpecification<Data, QueryDriverPrisma, List, Params> = {
 }
 
 const main = async () => {
-  const query = defineQuery(driver, spec)
+  const query = defineQuery<Data, QueryDriverPrisma, List, Params>(driver, spec)
 
   console.info('params: undefined', await query.many())
 
@@ -144,6 +144,10 @@ const main = async () => {
   console.info(
     'params: filter for case-when',
     await query.many({ filter: { status: { eq: 'active' } } }),
+  )
+  console.info(
+    'params: filter for exists',
+    await query.many({ filter: { order_id: { eq: '1234' } } }),
   )
 }
 
