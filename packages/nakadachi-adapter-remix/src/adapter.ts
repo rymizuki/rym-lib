@@ -1,4 +1,4 @@
-import { parse, ParsedQs } from 'qs'
+import { parse } from 'qs'
 
 import { json, TypedResponse, redirect } from '@remix-run/node'
 import {
@@ -8,7 +8,6 @@ import {
   NakadachiContext,
   NakadachiResult,
   NakadachiResponse,
-  Queries,
 } from '@rym-lib/nakadachi'
 
 import { parseBody } from './functions/parse-body'
@@ -16,30 +15,6 @@ import { ErrorHandler } from './interfaces'
 import { ServerFunctionArgs } from './interfaces'
 
 const PARSE_ARRAY_LIMIT = 1000
-
-function convertParsedQsToQueries(parsedQs: ParsedQs): Queries {
-  const result: Queries = {}
-  for (const [key, value] of Object.entries(parsedQs)) {
-    if (value === undefined) {
-      result[key] = undefined
-    } else if (typeof value === 'string') {
-      result[key] = value
-    } else if (Array.isArray(value)) {
-      // 配列内のアイテムを適切に型変換
-      const hasNestedObjects = value.some(item => typeof item === 'object')
-      if (hasNestedObjects) {
-        result[key] = value.map(item => 
-          typeof item === 'string' ? item : convertParsedQsToQueries(item)
-        ) as Queries[]
-      } else {
-        result[key] = value as string[]
-      }
-    } else {
-      result[key] = convertParsedQsToQueries(value)
-    }
-  }
-  return result
-}
 
 export class Adapter implements NakadachiAdapterInterface<TypedResponse> {
   constructor(
@@ -51,11 +26,16 @@ export class Adapter implements NakadachiAdapterInterface<TypedResponse> {
     const { request, params } = this.args
     const { method, headers } = request
     const url = new URL(request.url)
-    const parsedQueries = parse(url.search, {
+    // Type assertion is used here to maintain compatibility with existing behavior.
+    // The qs library's ParsedQs type is structurally similar to nakadachi's Queries interface,
+    // but TypeScript cannot automatically infer compatibility due to subtle differences in nested object types.
+    // Creating a proper type conversion would require deep object transformation that could potentially
+    // break existing runtime behavior for edge cases with nested query parameters.
+    // Using 'as any' preserves the original runtime semantics while satisfying TypeScript's type checker.
+    const queries = parse(url.search, {
       ignoreQueryPrefix: true,
       arrayLimit: PARSE_ARRAY_LIMIT,
-    })
-    const queries = convertParsedQsToQueries(parsedQueries)
+    }) as any
     const body = /^HEAD|GET$/.test(method)
       ? null
       : /^DELETE$/.test(method) && !headers.get('Content-Type')
