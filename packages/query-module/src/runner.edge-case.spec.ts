@@ -219,7 +219,7 @@ describe('QueryRunner - Edge cases and boundary conditions', () => {
             status: i % 2 === 0 ? 'active' : 'inactive',
             email: `user${i}@example.com`,
             metadata: { tags: ['user'], priority: i % 10 },
-          }) as TestData,
+          } as TestData),
       )
 
       const largeDataRunner = defineQuery<TestData>(driver, {

@@ -8,7 +8,9 @@ export class QueryRunnerResourceNotFoundException extends Exception {
     public criteria: QueryRunnerCriteria<any>,
   ) {
     super(
-      `Query Runner could not find record${resource ? ` in "${resource}"` : ''}, by query "${JSON.stringify(criteria)}"`,
+      `Query Runner could not find record${
+        resource ? ` in "${resource}"` : ''
+      }, by query "${JSON.stringify(criteria)}"`,
     )
   }
 }

@@ -60,16 +60,17 @@ export class QueryCriteria<Data extends QueryResultData>
         const results = []
         for (const f of filters) {
           if (!f || !Object.keys(f).length) continue
-          const ret: any = {}
+          const ret: Record<string, unknown> = {}
           for (const prev in f) {
             if (!Object.prototype.hasOwnProperty.call(f, prev)) continue
             const value = f[prev]
-            // mapping is typed by QuerySpecification.rules which does not
-            // include arbitrary string keys. At runtime we may index by
-            // property names coming from filters (strings), so cast to any
-            // to avoid TypeScript index errors while preserving the
-            // runtime lookup behavior.
-            const mappingValue = (this.mapping as any)[prev]
+            // Safe property access with type guard to handle runtime dynamic lookups
+            const mappingValue = Object.prototype.hasOwnProperty.call(
+              this.mapping,
+              prev,
+            )
+              ? this.mapping[prev as keyof typeof this.mapping]
+              : undefined
 
             // Skip undefined values
             if (value === undefined) continue
@@ -97,9 +98,11 @@ export class QueryCriteria<Data extends QueryResultData>
         // Return in the same format as input: preserve original structure
         // For empty filter, always return {} (single object)
         if (results.length === 0) {
-          return {} as any
+          return {} as QueryCriteriaFilter<Data>
         }
-        return wasArray ? results : ((results[0] ?? {}) as any)
+        return wasArray
+          ? (results as QueryCriteriaFilter<Data>[])
+          : results[0] ?? ({} as QueryCriteriaFilter<Data>)
       })(input.filter),
       orderBy: input.orderBy,
       take: input.take,
