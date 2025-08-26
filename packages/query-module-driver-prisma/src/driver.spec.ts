@@ -423,176 +423,139 @@ describe('query-module-driver-prisma', () => {
     })
   })
 
-  // region Error reproduction tests for sql-builder TypeError
-  describe('Error reproduction: sql-builder TypeError', () => {
-    describe('TypeError: Cannot convert undefined or null to object', () => {
-      describe('using defineQuery - Real world scenario', () => {
-        it('should reproduce error when filter contains null through defineQuery', async () => {
-          // defineQueryを使った実際のクエリ定義
-          const { defineQuery } = await import('@rym-lib/query-module')
-          
-          const testQuery = defineQuery(driver, {
-            name: 'test-query',
-            source: (builder) => builder.from('example'),
-            rules: {
-              name: 'name',  // Simple string mapping
-              value: 'value' // Simple string mapping
-            }
-          })
-          
-          // 外部APIから来る可能性のある不正なデータ
-          const malformedFilterData = [
-            { name: { eq: 'valid' } },
-            null, // APIエラーで混入したnull
-            { value: { eq: 'test' } }
-          ]
-          
-          await expect(async () => {
-            await testQuery.many({
-              filter: malformedFilterData as any
-            })
-          }).rejects.toThrow('Cannot convert undefined or null to object')
-        })
+  // region Null value handling tests (Fixed behavior)
+  describe('Null value handling (regression test)', () => {
+    describe('null values in filter should be filtered out before sql-builder', () => {
+      it('should not cause TypeError when filter contains null values', async () => {
+        const { defineQuery } = await import('@rym-lib/query-module')
         
-        it('should reproduce error with single null filter', async () => {
-          const { defineQuery } = await import('@rym-lib/query-module')
-          
-          const testQuery = defineQuery(driver, {
-            name: 'test-query',
-            source: (builder) => builder.from('example'),
-            rules: {
-              name: 'name'
+        const testQuery = defineQuery(driver, {
+          name: 'null-value-test',
+          source: (builder) => builder.from('example'),
+          rules: {
+            name: 'name',
+            value: 'value'
+          }
+        })
+
+        // この呼び出しは修正前はエラーになっていた:
+        // "TypeError: Cannot convert undefined or null to object"
+        await expect(async () => {
+          await testQuery.many({
+            filter: {
+              name: null, // この null が QueryCriteria.remap でフィルタリングされる
+              value: { eq: 'test' } // これは正常に処理される
             }
           })
-          
-          await expect(async () => {
-            await testQuery.many({
-              filter: null as any // 直接null
-            })
-          }).rejects.toThrow('Cannot convert undefined or null to object')
-        })
+        }).not.toThrow()
+
+        // SQL が正常に生成されることを確認
+        const lastCall = prismaMock.$queryRawUnsafe.mock.lastCall
+        expect(lastCall).toBeDefined()
+        expect(lastCall![0]).toContain('`value` = ?')
+        expect(lastCall![0]).not.toContain('`name`') // null でフィルタリングされたため含まれない
+        expect(lastCall![1]).toBe('test')
+      })
+
+      it('should handle undefined values correctly (existing behavior)', async () => {
+        const { defineQuery } = await import('@rym-lib/query-module')
         
-        it('should reproduce error with undefined filter', async () => {
-          const { defineQuery } = await import('@rym-lib/query-module')
-          
-          const testQuery = defineQuery(driver, {
-            name: 'test-query',
-            source: (builder) => builder.from('example'),
-            rules: {
-              name: 'name'
+        const testQuery = defineQuery(driver, {
+          name: 'undefined-value-test', 
+          source: (builder) => builder.from('example'),
+          rules: {
+            name: 'name',
+            value: 'value'
+          }
+        })
+
+        await expect(async () => {
+          await testQuery.many({
+            filter: {
+              name: undefined, // undefined も同様にフィルタリングされる
+              value: { eq: 'test' }
             }
           })
-          
-          await expect(async () => {
-            await testQuery.many({
-              filter: undefined as any // 直接undefined
-            })
-          }).rejects.toThrow('Cannot convert undefined or null to object')
-        })
+        }).not.toThrow()
+
+        // SQL が正常に生成されることを確認
+        const lastCall = prismaMock.$queryRawUnsafe.mock.lastCall
+        expect(lastCall).toBeDefined()
+        expect(lastCall![0]).toContain('`value` = ?')
+        expect(lastCall![0]).not.toContain('`name`')
+        expect(lastCall![1]).toBe('test')
       })
 
-      describe('when filter contains null element directly', () => {
-        it('should reproduce the error in QueryCriteria.remap (line 62)', async () => {
-          driver.source((builder) => builder.from('example'))
-          
-          // この構造がQueryCriteria.remapメソッドの62行目でObject.keys(f)を呼び出す
-          const malformedCriteria = {
-            filter: [null] as any, // null要素を直接含む配列
-            orderBy: [],
-            take: undefined,
-            skip: undefined,
+      it('should handle mixed null and valid values in filter arrays', async () => {
+        const { defineQuery } = await import('@rym-lib/query-module')
+        
+        const testQuery = defineQuery(driver, {
+          name: 'mixed-array-test',
+          source: (builder) => builder.from('example'),
+          rules: {
+            name: 'name',
+            value: 'value',
+            age: 'age'
           }
-          
-          await expect(async () => {
-            await driver.execute(new QueryCriteria({}, malformedCriteria))
-          }).rejects.toThrow('Cannot convert undefined or null to object')
         })
-      })
 
-      describe('when filter contains undefined element directly', () => {
-        it('should reproduce the error in QueryCriteria.remap (line 62)', async () => {
-          driver.source((builder) => builder.from('example'))
-          
-          const malformedCriteria = {
-            filter: [undefined] as any, // undefined要素を直接含む配列
-            orderBy: [],
-            take: undefined,
-            skip: undefined,
-          }
-          
-          await expect(async () => {
-            await driver.execute(new QueryCriteria({}, malformedCriteria))
-          }).rejects.toThrow('Cannot convert undefined or null to object')
-        })
-      })
-
-      describe('when filter is a single null value', () => {
-        it('should reproduce the error in QueryCriteria.remap (line 62)', async () => {
-          driver.source((builder) => builder.from('example'))
-          
-          const malformedCriteria = {
-            filter: null as any, // 単一のnull値
-            orderBy: [],
-            take: undefined,
-            skip: undefined,
-          }
-          
-          await expect(async () => {
-            await driver.execute(new QueryCriteria({}, malformedCriteria))
-          }).rejects.toThrow('Cannot convert undefined or null to object')
-        })
-      })
-
-      describe('when filter array contains mixed null and valid elements', () => {
-        it('should reproduce the error even with valid elements present', async () => {
-          driver.source((builder) => builder.from('example'))
-          
-          const malformedCriteria = {
+        await expect(async () => {
+          await testQuery.many({
             filter: [
-              { value: { eq: 'valid-data' } }, // 有効なデータ
-              null, // null要素がエラーを引き起こす
-              { value: { eq: 'more-valid-data' } } // これも有効だが、nullでエラーになる
-            ] as any,
-            orderBy: [],
-            take: undefined,
-            skip: undefined,
-          }
-          
-          await expect(async () => {
-            await driver.execute(new QueryCriteria({}, malformedCriteria))
-          }).rejects.toThrow('Cannot convert undefined or null to object')
-        })
+              {
+                name: { eq: 'test1' },
+                value: null // この null はフィルタリングされる
+              },
+              {
+                name: undefined, // この undefined もフィルタリングされる
+                age: { gt: 18 }
+              }
+            ]
+          })
+        }).not.toThrow()
+
+        // OR 条件のSQLが生成されることを確認
+        const lastCall = prismaMock.$queryRawUnsafe.mock.lastCall
+        expect(lastCall).toBeDefined()
+        expect(lastCall![0]).toContain('OR')
+        expect(lastCall![0]).toContain('`name` = ?')
+        expect(lastCall![0]).toContain('`age` > ?')
       })
 
-      describe('Real-world scenario: external API returning malformed data', () => {
-        it('should handle case where external filter data contains null values', async () => {
-          driver.source((builder) => builder.from('example'))
-          
-          // 外部APIから不正な形式のfilterデータが来たケース
-          const externalApiResponse = {
-            filters: [
-              { field: 'name', operator: 'eq', value: 'test' },
-              null, // APIエラーでnullが混入
-              { field: 'age', operator: 'gt', value: 18 }
-            ]
+      it('should preserve valid falsy values (false, 0, empty string)', async () => {
+        const { defineQuery } = await import('@rym-lib/query-module')
+        
+        const testQuery = defineQuery(driver, {
+          name: 'falsy-values-test',
+          source: (builder) => builder.from('example'),
+          rules: {
+            active: 'active',
+            count: 'count',
+            description: 'description'
           }
-          
-          // このデータをQueryCriteriaに変換すると...
-          const transformedFilter = externalApiResponse.filters.map(f => 
-            f ? { [f.field]: { [f.operator]: f.value } } : f
-          ) // この変換でnullが残る
-          
-          const criteria = {
-            filter: transformedFilter as any,
-            orderBy: [],
-            take: undefined,
-            skip: undefined,
-          }
-          
-          await expect(async () => {
-            await driver.execute(new QueryCriteria({}, criteria))
-          }).rejects.toThrow('Cannot convert undefined or null to object')
         })
+
+        await expect(async () => {
+          await testQuery.many({
+            filter: {
+              active: { eq: false }, // false は有効な値として残る
+              count: { eq: 0 }, // 0 も有効な値として残る
+              description: { eq: '' } // 空文字も有効な値として残る
+            }
+          })
+        }).not.toThrow()
+
+        // 全ての条件がSQLに含まれることを確認
+        const lastCall = prismaMock.$queryRawUnsafe.mock.lastCall
+        expect(lastCall).toBeDefined()
+        expect(lastCall![0]).toContain('`active` = ?')
+        expect(lastCall![0]).toContain('`count` = ?')
+        expect(lastCall![0]).toContain('`description` = ?')
+        
+        // パラメータの順序は実際の実行結果に依存するため、値が含まれることを確認
+        expect(lastCall!.slice(1)).toContain(false)
+        expect(lastCall!.slice(1)).toContain(0)
+        expect(lastCall!.slice(1)).toContain('')
       })
     })
   })

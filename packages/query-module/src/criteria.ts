@@ -72,8 +72,8 @@ export class QueryCriteria<Data extends QueryResultData>
               ? this.mapping[prev as keyof typeof this.mapping]
               : undefined
 
-            // Skip undefined values
-            if (value === undefined) continue
+            // Skip undefined and null values
+            if (value === undefined || value === null) continue
 
             // Static string mapping (rename)
             const column = (() => {
@@ -93,7 +93,10 @@ export class QueryCriteria<Data extends QueryResultData>
               filter,
             }
           }
-          results.push(ret)
+          // Only push non-empty filter objects
+          if (Object.keys(ret).length > 0) {
+            results.push(ret)
+          }
         }
         // Return in the same format as input: preserve original structure
         // For empty filter, always return {} (single object)
