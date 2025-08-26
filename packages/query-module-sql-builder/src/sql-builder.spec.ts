@@ -612,7 +612,7 @@ describe('query-module-sql-builder', () => {
       describe('when filter is null', () => {
         it('should NOT throw error because null is falsy and filtered out by if statement', () => {
           const criteria: QueryCriteriaInterface = {
-            filter: null as any,
+            filter: null as unknown as QueryCriteriaInterface['filter'], // Test: runtime null check
             orderBy: [],
             take: undefined,
             skip: undefined,
@@ -628,7 +628,7 @@ describe('query-module-sql-builder', () => {
       describe('when filter is undefined', () => {
         it('should throw TypeError at line 41 (keys function)', () => {
           const criteria: QueryCriteriaInterface = {
-            filter: undefined as any,
+            filter: undefined as unknown as QueryCriteriaInterface['filter'], // Test: runtime undefined check
             orderBy: [],
             take: undefined,
             skip: undefined,
@@ -654,7 +654,10 @@ describe('query-module-sql-builder', () => {
           }
 
           const criteria: QueryCriteriaInterface = {
-            filter: [validFilter, null as any], // null要素を含む配列
+            filter: [
+              validFilter,
+              null,
+            ] as unknown as QueryCriteriaInterface['filter'], // Test: null element in array
             orderBy: [],
             take: undefined,
             skip: undefined,
@@ -668,14 +671,18 @@ describe('query-module-sql-builder', () => {
 
       describe('when filter object has property with null value object', () => {
         it('should throw TypeError at line 185 (property keys)', () => {
-          const mockCriteria: QueryCriteriaInterface = {
-            filter: {
-              name: {
-                column: null as any, // Test case: intentionally null for error testing
-                filter: undefined as any, // Test case: intentionally undefined for error testing
-                value: null, // この時propertyが評価されてkeys(property)でエラー
-              },
+          // Create malformed criteria that bypasses type checking at runtime
+          const malformedFilter = {
+            name: {
+              column: null, // Runtime: intentionally null for error testing
+              filter: undefined, // Runtime: intentionally undefined for error testing
+              value: null, // この時propertyが評価されてkeys(property)でエラー
             },
+          }
+
+          const mockCriteria: QueryCriteriaInterface = {
+            filter:
+              malformedFilter as unknown as QueryCriteriaInterface['filter'],
             orderBy: [],
             take: undefined,
             skip: undefined,
@@ -690,7 +697,7 @@ describe('query-module-sql-builder', () => {
       describe('when using having filter with null', () => {
         it('should throw TypeError for having filters', () => {
           const criteria: QueryCriteriaInterface = {
-            filter: [null as any],
+            filter: [null] as unknown as QueryCriteriaInterface['filter'], // Test: null array element
             orderBy: [],
             take: undefined,
             skip: undefined,
@@ -710,7 +717,8 @@ describe('query-module-sql-builder', () => {
           if (malformedFilter) {
             // このチェックを通過してしまう可能性がある
             const criteria: QueryCriteriaInterface = {
-              filter: malformedFilter as any,
+              filter:
+                malformedFilter as unknown as QueryCriteriaInterface['filter'], // Test: runtime malformed data
               orderBy: [],
               take: undefined,
               skip: undefined,

@@ -64,6 +64,7 @@ export function buildSQL<Driver extends QueryDriverInterface>(
   options: Partial<BuildSqlOptions> = {},
 ) {
   const o = { ...defaults, ...options }
+  // Reverted: original behavior (without guard against undefined in criteria.filter)
   if (criteria.filter) {
     const whole = createConditions()
     for (const filter of Array.isArray(criteria.filter)
@@ -73,11 +74,11 @@ export function buildSQL<Driver extends QueryDriverInterface>(
       let hasCondition = false
 
       // filter -> where
-      for (const name of keys(filter)) {
+      for (const name of keys(filter as any)) {
         if (typeof name !== 'string') continue
         if (/^having:/.test(name)) continue
 
-        const property = filter[name]
+        const property = (filter as any)[name]
         if (!property) continue
 
         const { value, filter: customFilter } = property as FilterPayload
@@ -110,11 +111,11 @@ export function buildSQL<Driver extends QueryDriverInterface>(
       let hasHavingCondition = false
 
       // filter -> having
-      for (const having_name of keys(filter)) {
+      for (const having_name of keys(filter as any)) {
         if (typeof having_name !== 'string') continue
         if (!/^having:/.test(having_name)) continue
 
-        const property = filter[having_name]
+        const property = (filter as any)[having_name]
         if (!property) continue
 
         const { value, filter: customFilter } = property as FilterPayload

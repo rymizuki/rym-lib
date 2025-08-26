@@ -422,6 +422,180 @@ describe('query-module-driver-prisma', () => {
       })
     })
   })
+
+  // region Error reproduction tests for sql-builder TypeError
+  describe('Error reproduction: sql-builder TypeError', () => {
+    describe('TypeError: Cannot convert undefined or null to object', () => {
+      describe('using defineQuery - Real world scenario', () => {
+        it('should reproduce error when filter contains null through defineQuery', async () => {
+          // defineQueryを使った実際のクエリ定義
+          const { defineQuery } = await import('@rym-lib/query-module')
+          
+          const testQuery = defineQuery(driver, {
+            name: 'test-query',
+            source: (builder) => builder.from('example'),
+            rules: {
+              name: 'name',  // Simple string mapping
+              value: 'value' // Simple string mapping
+            }
+          })
+          
+          // 外部APIから来る可能性のある不正なデータ
+          const malformedFilterData = [
+            { name: { eq: 'valid' } },
+            null, // APIエラーで混入したnull
+            { value: { eq: 'test' } }
+          ]
+          
+          await expect(async () => {
+            await testQuery.many({
+              filter: malformedFilterData as any
+            })
+          }).rejects.toThrow('Cannot convert undefined or null to object')
+        })
+        
+        it('should reproduce error with single null filter', async () => {
+          const { defineQuery } = await import('@rym-lib/query-module')
+          
+          const testQuery = defineQuery(driver, {
+            name: 'test-query',
+            source: (builder) => builder.from('example'),
+            rules: {
+              name: 'name'
+            }
+          })
+          
+          await expect(async () => {
+            await testQuery.many({
+              filter: null as any // 直接null
+            })
+          }).rejects.toThrow('Cannot convert undefined or null to object')
+        })
+        
+        it('should reproduce error with undefined filter', async () => {
+          const { defineQuery } = await import('@rym-lib/query-module')
+          
+          const testQuery = defineQuery(driver, {
+            name: 'test-query',
+            source: (builder) => builder.from('example'),
+            rules: {
+              name: 'name'
+            }
+          })
+          
+          await expect(async () => {
+            await testQuery.many({
+              filter: undefined as any // 直接undefined
+            })
+          }).rejects.toThrow('Cannot convert undefined or null to object')
+        })
+      })
+
+      describe('when filter contains null element directly', () => {
+        it('should reproduce the error in QueryCriteria.remap (line 62)', async () => {
+          driver.source((builder) => builder.from('example'))
+          
+          // この構造がQueryCriteria.remapメソッドの62行目でObject.keys(f)を呼び出す
+          const malformedCriteria = {
+            filter: [null] as any, // null要素を直接含む配列
+            orderBy: [],
+            take: undefined,
+            skip: undefined,
+          }
+          
+          await expect(async () => {
+            await driver.execute(new QueryCriteria({}, malformedCriteria))
+          }).rejects.toThrow('Cannot convert undefined or null to object')
+        })
+      })
+
+      describe('when filter contains undefined element directly', () => {
+        it('should reproduce the error in QueryCriteria.remap (line 62)', async () => {
+          driver.source((builder) => builder.from('example'))
+          
+          const malformedCriteria = {
+            filter: [undefined] as any, // undefined要素を直接含む配列
+            orderBy: [],
+            take: undefined,
+            skip: undefined,
+          }
+          
+          await expect(async () => {
+            await driver.execute(new QueryCriteria({}, malformedCriteria))
+          }).rejects.toThrow('Cannot convert undefined or null to object')
+        })
+      })
+
+      describe('when filter is a single null value', () => {
+        it('should reproduce the error in QueryCriteria.remap (line 62)', async () => {
+          driver.source((builder) => builder.from('example'))
+          
+          const malformedCriteria = {
+            filter: null as any, // 単一のnull値
+            orderBy: [],
+            take: undefined,
+            skip: undefined,
+          }
+          
+          await expect(async () => {
+            await driver.execute(new QueryCriteria({}, malformedCriteria))
+          }).rejects.toThrow('Cannot convert undefined or null to object')
+        })
+      })
+
+      describe('when filter array contains mixed null and valid elements', () => {
+        it('should reproduce the error even with valid elements present', async () => {
+          driver.source((builder) => builder.from('example'))
+          
+          const malformedCriteria = {
+            filter: [
+              { value: { eq: 'valid-data' } }, // 有効なデータ
+              null, // null要素がエラーを引き起こす
+              { value: { eq: 'more-valid-data' } } // これも有効だが、nullでエラーになる
+            ] as any,
+            orderBy: [],
+            take: undefined,
+            skip: undefined,
+          }
+          
+          await expect(async () => {
+            await driver.execute(new QueryCriteria({}, malformedCriteria))
+          }).rejects.toThrow('Cannot convert undefined or null to object')
+        })
+      })
+
+      describe('Real-world scenario: external API returning malformed data', () => {
+        it('should handle case where external filter data contains null values', async () => {
+          driver.source((builder) => builder.from('example'))
+          
+          // 外部APIから不正な形式のfilterデータが来たケース
+          const externalApiResponse = {
+            filters: [
+              { field: 'name', operator: 'eq', value: 'test' },
+              null, // APIエラーでnullが混入
+              { field: 'age', operator: 'gt', value: 18 }
+            ]
+          }
+          
+          // このデータをQueryCriteriaに変換すると...
+          const transformedFilter = externalApiResponse.filters.map(f => 
+            f ? { [f.field]: { [f.operator]: f.value } } : f
+          ) // この変換でnullが残る
+          
+          const criteria = {
+            filter: transformedFilter as any,
+            orderBy: [],
+            take: undefined,
+            skip: undefined,
+          }
+          
+          await expect(async () => {
+            await driver.execute(new QueryCriteria({}, criteria))
+          }).rejects.toThrow('Cannot convert undefined or null to object')
+        })
+      })
+    })
+  })
 })
 
 async function expectQuery<
