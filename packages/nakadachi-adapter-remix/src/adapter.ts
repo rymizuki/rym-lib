@@ -39,8 +39,8 @@ export class Adapter implements NakadachiAdapterInterface<TypedResponse> {
     const body = /^HEAD|GET$/.test(method)
       ? null
       : /^DELETE$/.test(method) && !headers.get('Content-Type')
-      ? null
-      : await parseBody(request)
+        ? null
+        : await parseBody(request)
     return new Input({
       params,
       headers,

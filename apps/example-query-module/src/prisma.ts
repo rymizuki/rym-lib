@@ -38,7 +38,7 @@ type Params = QueryRunnerCriteria<
 
 const prisma = new PrismaClient().$extends({
   query: {
-    $queryRawUnsafe: async ({ args }) => {
+    $queryRawUnsafe: async ({ args }: { args: any[] }) => {
       const sql = args.shift()
       console.debug(
         '[Query]',

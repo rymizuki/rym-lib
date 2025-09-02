@@ -26,12 +26,15 @@ export function useQueryParams<T = Record<string, unknown>>() {
 
   const serialize = (params: Record<string, unknown>) => {
     const query_string = qs.stringify(params)
-    const result = query_string.split(/&/).reduce((prev, query) => {
-      const [prop, value] = query.split(/=/)
-      if (!prop) return prev
-      prev[decodeURIComponent(prop)] = decodeURIComponent(value ?? '')
-      return prev
-    }, {} as Record<string, unknown>)
+    const result = query_string.split(/&/).reduce(
+      (prev, query) => {
+        const [prop, value] = query.split(/=/)
+        if (!prop) return prev
+        prev[decodeURIComponent(prop)] = decodeURIComponent(value ?? '')
+        return prev
+      },
+      {} as Record<string, unknown>,
+    )
     return result
   }
 
