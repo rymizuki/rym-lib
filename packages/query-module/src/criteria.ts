@@ -105,9 +105,47 @@ export class QueryCriteria<Data extends QueryResultData>
         }
         return wasArray
           ? (results as QueryCriteriaFilter<Data>[])
-          : results[0] ?? ({} as QueryCriteriaFilter<Data>)
+          : (results[0] ?? ({} as QueryCriteriaFilter<Data>))
       })(input.filter),
-      orderBy: input.orderBy,
+      orderBy: ((orderBy) => {
+        if (!orderBy) return orderBy
+
+        const orders = Array.isArray(orderBy) ? orderBy : [orderBy]
+        const mappedOrders = []
+
+        for (const order of orders) {
+          if (typeof order !== 'string') {
+            mappedOrders.push(order)
+            continue
+          }
+
+          const [columnName, direction] = order.split(':')
+          if (!columnName) continue
+
+          // Safe property access with type guard to handle runtime dynamic lookups
+          const mappingValue = Object.prototype.hasOwnProperty.call(
+            this.mapping,
+            columnName,
+          )
+            ? this.mapping[columnName as keyof typeof this.mapping]
+            : undefined
+
+          // Get mapped column name
+          const mappedColumn = (() => {
+            if (typeof mappingValue === 'string') return mappingValue
+            if (mappingValue?.column && typeof mappingValue.column === 'string')
+              return mappingValue.column
+            return columnName // Use original if no mapping
+          })()
+
+          const mappedOrder = direction
+            ? `${mappedColumn}:${direction}`
+            : mappedColumn
+          mappedOrders.push(mappedOrder)
+        }
+
+        return Array.isArray(orderBy) ? mappedOrders : mappedOrders[0]
+      })(input.orderBy),
       take: input.take,
       skip: input.skip,
     }
