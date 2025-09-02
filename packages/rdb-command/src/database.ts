@@ -19,8 +19,8 @@ function escape(value: string, options: { quote?: string | null } = {}) {
     options.quote === null
       ? ''
       : options.quote !== undefined
-      ? options.quote
-      : '`'
+        ? options.quote
+        : '`'
   return `${quote}${encodeURIComponent(value)}${quote}`
 }
 

@@ -1,5 +1,11 @@
 # @rym-lib/inversify-bundler-express
 
+## 1.3.2
+
+### Major Changes
+
+- Downgrade packages from 2.0.1 to 1.3.2 for version alignment
+
 ## 2.0.1
 
 ### Patch Changes
