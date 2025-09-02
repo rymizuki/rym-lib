@@ -342,4 +342,98 @@ describe('QueryRunner - Rules Mapping with many()', () => {
       })
     })
   })
+
+  describe('OrderBy with spec.rules property mapping', () => {
+    beforeEach(() => {
+      runner = defineQuery<TestData>(driver, {
+        name: 'orderby-mapping-query',
+        source: () => testData,
+        rules: {
+          name: 'user_name',
+          id: 'user_id',
+          'metadata.priority': 'priority_score',
+        },
+      })
+    })
+
+    it('should map orderBy column using spec.rules: {name: "user_name"}', async () => {
+      await runner.many({
+        orderBy: 'name:asc',
+      })
+
+      expect(driver.called[0]?.args[0].orderBy).toBe('user_name:asc')
+    })
+
+    it('should map orderBy column without direction', async () => {
+      await runner.many({
+        orderBy: 'id',
+      })
+
+      expect(driver.called[0]?.args[0].orderBy).toBe('user_id')
+    })
+
+    it('should handle orderBy with desc direction', async () => {
+      await runner.many({
+        orderBy: 'name:desc',
+      })
+
+      expect(driver.called[0]?.args[0].orderBy).toBe('user_name:desc')
+    })
+
+    it('should handle array of orderBy with mapping', async () => {
+      await runner.many({
+        orderBy: ['id:asc', 'name:desc'],
+      })
+
+      expect(driver.called[0]?.args[0].orderBy).toEqual([
+        'user_id:asc',
+        'user_name:desc',
+      ])
+    })
+
+    it('should handle dot notation in orderBy mapping', async () => {
+      await runner.many({
+        orderBy: 'metadata.priority:desc',
+      })
+
+      expect(driver.called[0]?.args[0].orderBy).toBe('priority_score:desc')
+    })
+
+    it('should preserve unmapped orderBy columns', async () => {
+      await runner.many({
+        orderBy: 'status:asc', // statusはマッピングされていない
+      })
+
+      expect(driver.called[0]?.args[0].orderBy).toBe('status:asc')
+    })
+
+    it('should handle mixed mapped and unmapped orderBy columns', async () => {
+      await runner.many({
+        orderBy: ['name:asc', 'status:desc', 'id:asc'],
+      })
+
+      expect(driver.called[0]?.args[0].orderBy).toEqual([
+        'user_name:asc',
+        'status:desc',
+        'user_id:asc',
+      ])
+    })
+
+    it('should handle undefined orderBy', async () => {
+      await runner.many({
+        orderBy: undefined,
+      })
+
+      expect(driver.called[0]?.args[0].orderBy).toBeUndefined()
+    })
+
+    it('should handle empty string in orderBy array', async () => {
+      await runner.many({
+        orderBy: ['', 'name:asc'],
+      })
+
+      // 空文字列は無視され、有効なorderByのみマッピングされる
+      expect(driver.called[0]?.args[0].orderBy).toEqual(['user_name:asc'])
+    })
+  })
 })
