@@ -1,5 +1,11 @@
 # @rym-lib/inversify-bundler
 
+## 1.3.3
+
+### Patch Changes
+
+- fix dependencies version
+
 ## 1.3.1
 
 ### Patch Changes
