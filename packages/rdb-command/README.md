@@ -126,6 +126,42 @@ const loggingMiddleware = {
 db.use(loggingMiddleware)
 ```
 
+### Sync
+
+Synchronize a list of records with the database:
+
+```typescript
+// Sync with where condition and key-based comparison
+const result = await db.sync('users', { department: 'sales' }, [
+  { email: 'john@example.com', name: 'John Doe' },
+  { email: 'jane@example.com', name: 'Jane Smith' }
+], {
+  key: 'email',  // Compare by email field only
+  pk: {
+    column: 'id',
+    generator: () => crypto.randomUUID()
+  },
+  noDeleteUnmatched: false  // Delete records not in input list (default)
+})
+
+console.log(`Created: ${result.created.length}`)
+console.log(`Unchanged: ${result.unchanged.length}`) 
+console.log(`Deleted: ${result.deleted.length}`)
+
+// Sync with full property comparison (no key specified)
+const result2 = await db.sync('user_settings', {}, [
+  { userId: 'user-1', theme: 'dark', language: 'en' },
+  { userId: 'user-2', theme: 'light', language: 'ja' }
+])
+
+// Sync without deleting unmatched records
+const result3 = await db.sync('user_roles', { userId: 'user-1' }, [
+  { userId: 'user-1', roleId: 'admin' }
+], { 
+  key: ['userId', 'roleId'],
+  noDeleteUnmatched: true 
+})
+
 ## API Reference
 
 ### DataBase Class
@@ -167,6 +203,23 @@ Find a record or create it if not found.
 ##### `updateOrCreate(table: string, where: WhereType, update: Record<string, unknown>, create: Record<string, unknown>, options?: DataBaseCommandOptionsPartial): Promise<void>`
 
 Update a record or create it if not found.
+
+##### `sync<Row>(table: string, where: WhereType, records: Array<Record<string, unknown>>, options?: SyncOptions): Promise<SyncResult<Row>>`
+
+Synchronize a list of records with database records matching the where condition.
+
+**Parameters:**
+- `table`: Target table name
+- `where`: Condition to filter existing records (use `{}` for all records)
+- `records`: Array of records to sync
+- `options`: Sync options
+
+**Options:**
+- `key?: string | string[]`: Fields to use for record comparison (default: compare all properties)
+- `pk?: { column: string, generator?: () => string | number }`: Primary key configuration for new records
+- `noDeleteUnmatched?: boolean`: Don't delete unmatched records (default: false)
+
+**Returns:** `SyncResult<Row>` with arrays of created, unchanged, and deleted records.
 
 ##### `txn<T>(fn: (db: DataBasePort) => Promise<T>): Promise<T>`
 

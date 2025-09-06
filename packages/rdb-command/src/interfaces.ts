@@ -66,9 +66,30 @@ export interface DataBasePort {
   ): Promise<void>
   txn<T>(fn: (db: DataBasePort) => Promise<T>): Promise<T>
   use(middleware: DataBaseMiddleware): this
+  sync<Row extends Record<string, unknown>>(
+    table: string,
+    where: WhereType,
+    records: Array<Record<string, unknown>>,
+    options?: SyncOptions,
+  ): Promise<SyncResult<Row>>
 }
 
 export type TransactionCallback = (conn: DataBaseConnectorPort) => Promise<void>
+
+export interface SyncOptions extends DataBaseCommandOptionsPartial {
+  key?: string | string[]
+  pk?: {
+    column: string
+    generator?: () => string | number
+  }
+  noDeleteUnmatched?: boolean
+}
+
+export interface SyncResult<Row> {
+  created: Row[]
+  unchanged: Row[]
+  deleted: Row[]
+}
 
 export interface DataBaseConnectorPort {
   execute(sql: string, replacements: unknown[]): Promise<void>

@@ -11,6 +11,8 @@ import {
   DataBaseLogger,
   DataBaseMiddleware,
   DataBasePort,
+  SyncOptions,
+  SyncResult,
   WhereType,
 } from './interfaces'
 
@@ -175,8 +177,164 @@ export class DataBase implements DataBasePort {
     return this
   }
 
+  async sync<Row extends Record<string, unknown>>(
+    table: string,
+    where: WhereType,
+    records: Array<Record<string, unknown>>,
+    options: SyncOptions = {},
+  ): Promise<SyncResult<Row>> {
+    const { key, pk, noDeleteUnmatched = false } = options
+
+    return await this.txn(async (txDb) => {
+      // 1. where条件に一致する現在のレコードを取得
+      const existingRecords = await this.getRecords<Row>(table, where)
+
+      // 2. レコードの比較とグループ分け
+      const { toCreate, toKeep, toDelete } = this.compareRecords(
+        records,
+        existingRecords,
+        key,
+      )
+
+      // 3. 新規作成（PKの生成が必要な場合）
+      const created: Row[] = []
+      for (const record of toCreate) {
+        const recordToCreate =
+          pk?.generator && pk.column && !record[pk.column]
+            ? { ...record, [pk.column]: pk.generator() }
+            : record
+        await txDb.create(table, recordToCreate)
+        const newRecord = await txDb.find<Row>(table, recordToCreate)
+        if (newRecord) created.push(newRecord)
+      }
+
+      // 4. 削除処理（noDeleteUnmatched=falseの場合のみ）
+      const deleted: Row[] = []
+      if (!noDeleteUnmatched) {
+        for (const record of toDelete) {
+          deleted.push(record as Row)
+          // where条件の範囲内でのみ削除
+          const deleteCondition = this.mergeWhere(where, record)
+          await txDb.delete(table, deleteCondition)
+        }
+      }
+
+      return {
+        created,
+        unchanged: toKeep as Row[],
+        deleted,
+      }
+    })
+  }
+
   private parse(record: Record<string, unknown>) {
     return record
+  }
+
+  private async getRecords<Row extends Record<string, unknown>>(
+    table: string,
+    where: WhereType,
+  ): Promise<Row[]> {
+    const builder = createBuilder().from(table)
+    const cond = this.createCondition(where)
+    const [sql, replacements] = builder.where(cond).toSQL(this.toSqlOptions)
+
+    return await this.query<Row>(sql, replacements, {})
+  }
+
+  private compareRecords(
+    inputRecords: Array<Record<string, unknown>>,
+    existingRecords: Array<Record<string, unknown>>,
+    key?: string | string[],
+  ) {
+    const toCreate: Array<Record<string, unknown>> = []
+    const toKeep: Array<Record<string, unknown>> = []
+    const toDelete: Array<Record<string, unknown>> = []
+
+    // keyが指定されていない場合は全プロパティで比較
+    if (!key) {
+      for (const inputRecord of inputRecords) {
+        const found = existingRecords.find((existingRecord) =>
+          this.shallowEqual(inputRecord, existingRecord),
+        )
+        if (found) {
+          toKeep.push(found)
+        } else {
+          toCreate.push(inputRecord)
+        }
+      }
+
+      for (const existingRecord of existingRecords) {
+        const found = inputRecords.find((inputRecord) =>
+          this.shallowEqual(inputRecord, existingRecord),
+        )
+        if (!found) {
+          toDelete.push(existingRecord)
+        }
+      }
+    } else {
+      // keyが指定されている場合は指定されたフィールドのみで比較
+      const keyFields = Array.isArray(key) ? key : [key]
+
+      for (const inputRecord of inputRecords) {
+        const found = existingRecords.find((existingRecord) =>
+          this.keyEqual(inputRecord, existingRecord, keyFields),
+        )
+        if (found) {
+          toKeep.push(found)
+        } else {
+          toCreate.push(inputRecord)
+        }
+      }
+
+      for (const existingRecord of existingRecords) {
+        const found = inputRecords.find((inputRecord) =>
+          this.keyEqual(inputRecord, existingRecord, keyFields),
+        )
+        if (!found) {
+          toDelete.push(existingRecord)
+        }
+      }
+    }
+
+    return { toCreate, toKeep, toDelete }
+  }
+
+  private shallowEqual(
+    obj1: Record<string, unknown>,
+    obj2: Record<string, unknown>,
+  ): boolean {
+    // キーの集合を取得（両方のオブジェクトの全キーを含む）
+    const allKeys = new Set([...Object.keys(obj1), ...Object.keys(obj2)])
+    
+    for (const key of allKeys) {
+      // 一方にしか存在しないキー、または値が異なる場合は不一致
+      if (obj1[key] !== obj2[key]) {
+        return false
+      }
+    }
+
+    return true
+  }
+
+  private keyEqual(
+    obj1: Record<string, unknown>,
+    obj2: Record<string, unknown>,
+    keyFields: string[],
+  ): boolean {
+    for (const field of keyFields) {
+      if (obj1[field] !== obj2[field]) {
+        return false
+      }
+    }
+    return true
+  }
+
+  private mergeWhere(
+    baseWhere: WhereType,
+    record: Record<string, unknown>,
+  ): WhereType {
+    return { ...baseWhere, ...record }
   }
 
   private createCondition(where: WhereType) {
