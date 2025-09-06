@@ -41,12 +41,16 @@ export class DataBase implements DataBasePort {
     options: DataBaseOptions = {},
   ) {
     this.context = { logger }
+    
+    // SQLオプションからtransactionManagerを除外
+    const { transactionManager, ...sqlOptions } = options
     this.toSqlOptions = {
       ...{ placeholder: '$' },
-      ...options,
+      ...sqlOptions,
     }
+    
     // TransactionManagerが未指定の場合、新しいインスタンスを自動作成
-    this.transactionManager = options.transactionManager || new TransactionManager()
+    this.transactionManager = transactionManager || new TransactionManager()
   }
 
   async findOrCreate<Row>(
