@@ -31,7 +31,7 @@ export class DataBase implements DataBasePort {
   private middlewares: DataBaseMiddleware[] = []
   private context: DataBaseContext
   private toSqlOptions: SQLBuilderToSQLInputOptions
-  private transactionManager?: TransactionManager
+  private transactionManager: TransactionManager
 
   constructor(
     private conn: DataBaseConnectorPort,
@@ -44,7 +44,8 @@ export class DataBase implements DataBasePort {
       ...{ placeholder: '$' },
       ...options,
     }
-    this.transactionManager = transactionManager
+    // TransactionManagerが未指定の場合、新しいインスタンスを自動作成
+    this.transactionManager = transactionManager || new TransactionManager()
   }
 
   async findOrCreate<Row>(
@@ -167,22 +168,8 @@ export class DataBase implements DataBasePort {
     fn: (db: DataBasePort) => Promise<T>,
     options?: TransactionOptions
   ): Promise<T> {
-    // TransactionManagerが設定されている場合は使用
-    if (this.transactionManager) {
-      return await this.transactionManager.runInTransaction(this, fn, options)
-    }
-
-    // 従来の実装（後方互換性のため）
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const result: { value: any } = { value: null }
-    await this.conn.transaction(async (conn) => {
-      const db = new DataBase(conn, this.context.logger, this.toSqlOptions, this.transactionManager)
-      for (const middleware of this.middlewares) {
-        db.use(middleware)
-      }
-      result.value = await fn(db)
-    })
-    return result.value
+    // TransactionManagerは常に存在する（コンストラクターで自動作成）
+    return await this.transactionManager.runInTransaction(this, fn, options)
   }
 
   use(middleware: DataBaseMiddleware) {
@@ -205,10 +192,6 @@ export class DataBase implements DataBasePort {
     contextId?: string
     level?: number
   } {
-    if (!this.transactionManager) {
-      return { isInTransaction: false }
-    }
-
     const context = this.transactionManager.getCurrentContext(this)
     if (!context) {
       return { isInTransaction: false }

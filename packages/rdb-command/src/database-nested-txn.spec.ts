@@ -299,7 +299,7 @@ describe('DataBase Nested Transaction Integration', () => {
         })
       })
 
-      expect(connector.transactionStartCount).toBe(2) // 従来の動作：2つのトランザクション
+      expect(connector.transactionStartCount).toBe(1) // 自動注入されたTransactionManager：1つのトランザクション
     })
 
     it('should maintain backward compatibility', async () => {
