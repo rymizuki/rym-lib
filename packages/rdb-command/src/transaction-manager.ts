@@ -201,7 +201,7 @@ export class TransactionManager {
         
         // DataBase classを動的にimportして循環依存を回避
         const { DataBase } = await import('./database')
-        txDb = new DataBase(txConn, logger, toSqlOptions, this) // TransactionManagerを設定
+        txDb = new DataBase(txConn, logger, { ...toSqlOptions, transactionManager: this }) // TransactionManagerを設定
         for (const middleware of middlewares) {
           txDb.use(middleware)
         }

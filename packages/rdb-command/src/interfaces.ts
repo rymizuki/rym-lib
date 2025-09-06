@@ -29,6 +29,12 @@ export interface DataBaseMiddleware {
   ): DataBaseMiddlewarePrepareResult
 }
 
+export interface DataBaseOptions {
+  placeholder?: string
+  quote?: string | null
+  transactionManager?: import('./transaction-manager').TransactionManager
+}
+
 export interface DataBasePort {
   find<Row>(
     table: string,

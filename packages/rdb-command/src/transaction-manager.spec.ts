@@ -44,7 +44,7 @@ describe('TransactionManager', () => {
     transactionManager = new TransactionManager()
     connector = new TestConnector()
     logger = new DummyDataBaseLogger()
-    db = new DataBase(connector, logger, {}, transactionManager)
+    db = new DataBase(connector, logger, { transactionManager })
   })
 
   afterEach(() => {

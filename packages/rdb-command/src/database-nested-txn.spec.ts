@@ -71,7 +71,7 @@ describe('DataBase Nested Transaction Integration', () => {
     transactionManager = new TransactionManager()
     connector = new MockConnector()
     logger = new DummyDataBaseLogger()
-    db = new DataBase(connector, logger, {}, transactionManager)
+    db = new DataBase(connector, logger, { transactionManager })
   })
 
   afterEach(() => {
@@ -230,7 +230,7 @@ describe('DataBase Nested Transaction Integration', () => {
       for (let i = 0; i < 5; i++) {
         // 独立したコネクターとDataBaseインスタンス
         const independentConnector = new MockConnector()
-        const independentDb = new DataBase(independentConnector, logger, {}, transactionManager)
+        const independentDb = new DataBase(independentConnector, logger, { transactionManager })
         
         const promise = independentDb.txn(async (txDb) => {
           await txDb.create('concurrent_test', { 

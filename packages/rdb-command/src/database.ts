@@ -10,6 +10,7 @@ import {
   DataBaseContext,
   DataBaseLogger,
   DataBaseMiddleware,
+  DataBaseOptions,
   DataBasePort,
   SyncOptions,
   SyncResult,
@@ -36,8 +37,7 @@ export class DataBase implements DataBasePort {
   constructor(
     private conn: DataBaseConnectorPort,
     private logger: DataBaseLogger,
-    options: SQLBuilderToSQLInputOptions = {},
-    transactionManager?: TransactionManager,
+    options: DataBaseOptions = {},
   ) {
     this.context = { logger }
     this.toSqlOptions = {
@@ -45,7 +45,7 @@ export class DataBase implements DataBasePort {
       ...options,
     }
     // TransactionManagerが未指定の場合、新しいインスタンスを自動作成
-    this.transactionManager = transactionManager || new TransactionManager()
+    this.transactionManager = options.transactionManager || new TransactionManager()
   }
 
   async findOrCreate<Row>(
@@ -181,7 +181,7 @@ export class DataBase implements DataBasePort {
    * TransactionManagerを設定してネストトランザクション対応を有効化
    */
   withTransactionManager(transactionManager: TransactionManager): DataBase {
-    return new DataBase(this.conn, this.context.logger, this.toSqlOptions, transactionManager)
+    return new DataBase(this.conn, this.context.logger, { ...this.toSqlOptions, transactionManager })
   }
 
   /**
