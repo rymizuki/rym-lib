@@ -494,7 +494,6 @@ describe('db', () => {
         expect(asyncMiddleware.preprocess).toHaveBeenCalled()
       })
     })
-  }
   })
 
   describe('options.quote = null', () => {
