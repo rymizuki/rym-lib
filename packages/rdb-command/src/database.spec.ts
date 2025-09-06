@@ -155,6 +155,7 @@ describe('db', () => {
         })
       })
     })
+    
     describe('updateOrCreate', () => {
       describe('when record exists', () => {
         beforeEach(() => {
@@ -198,6 +199,163 @@ describe('db', () => {
           )
           expect(query_spy).toHaveBeenCalledTimes(1)
         })
+      })
+    })
+
+    describe('sync', () => {
+      let transaction_spy: MockInstance
+
+      beforeEach(() => {
+        transaction_spy = vi.spyOn(conn, 'transaction')
+      })
+
+      describe('with no key (full property comparison)', () => {
+        it('should create new records when they do not exist', async () => {
+          query_spy
+            .mockResolvedValueOnce([]) // no existing records
+            .mockResolvedValueOnce([{ name: 'John', email: 'john@example.com' }]) // find after first create
+            .mockResolvedValueOnce([{ name: 'Jane', email: 'jane@example.com' }]) // find after second create
+
+          const result = await db.sync('users', {}, [
+            { name: 'John', email: 'john@example.com' },
+            { name: 'Jane', email: 'jane@example.com' }
+          ])
+
+          expect(execute_spy).toHaveBeenCalledTimes(2) // 2 creates
+          expect(result.created).toHaveLength(2)
+          expect(result.unchanged).toHaveLength(0)
+          expect(result.deleted).toHaveLength(0)
+        })
+
+        it('should keep unchanged records', async () => {
+          const existingRecords = [
+            { id: 1, name: 'John', email: 'john@example.com' },
+            { id: 2, name: 'Jane', email: 'jane@example.com' }
+          ]
+          query_spy.mockResolvedValueOnce(existingRecords) // existing records query
+
+          const result = await db.sync('users', {}, [
+            { id: 1, name: 'John', email: 'john@example.com' },
+            { id: 2, name: 'Jane', email: 'jane@example.com' }
+          ])
+
+          expect(execute_spy).not.toHaveBeenCalled() // no creates or deletes
+          expect(result.created).toHaveLength(0)
+          expect(result.unchanged).toHaveLength(2)
+          expect(result.deleted).toHaveLength(0)
+        })
+
+        it('should delete unmatched records by default', async () => {
+          const existingRecords = [
+            { id: 1, name: 'John', email: 'john@example.com' },
+            { id: 2, name: 'Jane', email: 'jane@example.com' },
+            { id: 3, name: 'Bob', email: 'bob@example.com' }
+          ]
+          query_spy.mockResolvedValueOnce(existingRecords)
+
+          const result = await db.sync('users', {}, [
+            { id: 1, name: 'John', email: 'john@example.com' }
+          ])
+
+          expect(result.unchanged).toHaveLength(1)
+          expect(result.deleted).toHaveLength(2)
+        })
+
+        it('should not delete when noDeleteUnmatched is true', async () => {
+          const existingRecords = [
+            { id: 1, name: 'John', email: 'john@example.com' },
+            { id: 2, name: 'Jane', email: 'jane@example.com' }
+          ]
+          query_spy.mockResolvedValueOnce(existingRecords)
+
+          const result = await db.sync('users', {}, [
+            { id: 1, name: 'John', email: 'john@example.com' }
+          ], { noDeleteUnmatched: true })
+
+          expect(result.unchanged).toHaveLength(1)
+          expect(result.deleted).toHaveLength(0)
+        })
+      })
+
+      describe('with key field comparison', () => {
+        it('should match records by single key field', async () => {
+          const existingRecords = [
+            { id: 1, email: 'john@example.com', name: 'John Doe' }
+          ]
+          query_spy.mockResolvedValueOnce(existingRecords)
+
+          const result = await db.sync('users', {}, [
+            { email: 'john@example.com', name: 'John Smith' } // different name, same email
+          ], { key: 'email' })
+
+          expect(result.unchanged).toHaveLength(1)
+          expect(result.created).toHaveLength(0)
+          expect(result.deleted).toHaveLength(0)
+        })
+
+        it('should match records by multiple key fields', async () => {
+          const existingRecords = [
+            { id: 1, userId: 'user1', roleId: 'role1', created: '2023-01-01' }
+          ]
+          query_spy.mockResolvedValueOnce(existingRecords)
+
+          const result = await db.sync('user_roles', {}, [
+            { userId: 'user1', roleId: 'role1', created: '2023-12-01' } // different created date
+          ], { key: ['userId', 'roleId'] })
+
+          expect(result.unchanged).toHaveLength(1)
+          expect(result.created).toHaveLength(0)
+          expect(result.deleted).toHaveLength(0)
+        })
+      })
+
+      describe('with PK generation', () => {
+        it('should generate PK when not provided', async () => {
+          query_spy
+            .mockResolvedValueOnce([]) // no existing records
+            .mockResolvedValueOnce([{ id: 'generated-id', name: 'John' }]) // find after create
+
+          const pkGenerator = vi.fn().mockReturnValue('generated-id')
+
+          const result = await db.sync('users', {}, [
+            { name: 'John' } // no id provided
+          ], { 
+            pk: { 
+              column: 'id', 
+              generator: pkGenerator 
+            } 
+          })
+
+          expect(pkGenerator).toHaveBeenCalled()
+          expect(result.created).toHaveLength(1)
+        })
+
+        it('should not generate PK when already provided', async () => {
+          query_spy
+            .mockResolvedValueOnce([]) // no existing records
+            .mockResolvedValueOnce([{ id: 'existing-id', name: 'John' }]) // find after create
+
+          const pkGenerator = vi.fn().mockReturnValue('generated-id')
+
+          await db.sync('users', {}, [
+            { id: 'existing-id', name: 'John' } // id provided
+          ], { 
+            pk: { 
+              column: 'id', 
+              generator: pkGenerator 
+            } 
+          })
+
+          expect(pkGenerator).not.toHaveBeenCalled()
+        })
+      })
+
+      it('should execute within transaction', async () => {
+        query_spy.mockResolvedValue([])
+
+        await db.sync('users', {}, [])
+
+        expect(transaction_spy).toHaveBeenCalledTimes(1)
       })
     })
 
@@ -336,6 +494,7 @@ describe('db', () => {
         expect(asyncMiddleware.preprocess).toHaveBeenCalled()
       })
     })
+  }
   })
 
   describe('options.quote = null', () => {
