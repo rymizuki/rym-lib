@@ -27,10 +27,7 @@ import { PrismaConnector } from '@rym-lib/rdb-command/connectors/prisma'
 const transactionManager = new TransactionManager()
 
 // Set TransactionManager to DataBase instance
-const db = new DataBase(connector, logger, {}, transactionManager)
-
-// Or
-const db = new DataBase(connector, logger, {}).withTransactionManager(transactionManager)
+const db = new DataBase(connector, logger, { transactionManager })
 ```
 
 ### Executing Nested Transactions

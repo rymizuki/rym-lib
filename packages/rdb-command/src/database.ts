@@ -182,12 +182,6 @@ export class DataBase implements DataBasePort {
     return this
   }
 
-  /**
-   * TransactionManagerを設定してネストトランザクション対応を有効化
-   */
-  withTransactionManager(transactionManager: TransactionManager): DataBase {
-    return new DataBase(this.conn, this.context.logger, { ...this.toSqlOptions, transactionManager })
-  }
 
   /**
    * 現在のトランザクション情報を取得

@@ -27,10 +27,7 @@ import { PrismaConnector } from '@rym-lib/rdb-command/connectors/prisma'
 const transactionManager = new TransactionManager()
 
 // DataBaseインスタンスにTransactionManagerを設定
-const db = new DataBase(connector, logger, {}, transactionManager)
-
-// または
-const db = new DataBase(connector, logger, {}).withTransactionManager(transactionManager)
+const db = new DataBase(connector, logger, { transactionManager })
 ```
 
 ### ネストトランザクションの実行
