@@ -14,9 +14,10 @@ import {
   DataBasePort,
   SyncOptions,
   SyncResult,
+  TransactionOptions,
   WhereType,
 } from './interfaces'
-import { TransactionManager, TransactionOptions } from './transaction-manager'
+import { TransactionManager } from './transaction-manager'
 
 function escape(value: string, options: { quote?: string | null } = {}) {
   const quote =

@@ -35,6 +35,15 @@ export interface DataBaseOptions {
   transactionManager?: import('./transaction-manager').TransactionManager
 }
 
+export interface TransactionOptions {
+  /** 親コンテキストID（ネスト時に指定） */
+  parentContextId?: string
+  /** メタデータ（ログやデバッグ用） */
+  metadata?: Record<string, any>
+  /** 実行時間の警告閾値（ミリ秒） */
+  warningThreshold?: number
+}
+
 export interface DataBasePort {
   find<Row>(
     table: string,
@@ -70,7 +79,7 @@ export interface DataBasePort {
     create: Record<string, unknown>,
     options?: DataBaseCommandOptionsPartial,
   ): Promise<void>
-  txn<T>(fn: (db: DataBasePort) => Promise<T>, options?: any): Promise<T>
+  txn<T>(fn: (db: DataBasePort) => Promise<T>, options?: TransactionOptions): Promise<T>
   use(middleware: DataBaseMiddleware): this
   sync<Row extends Record<string, unknown>>(
     table: string,

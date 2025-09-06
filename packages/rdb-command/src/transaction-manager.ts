@@ -1,4 +1,4 @@
-import type { DataBasePort, DataBaseConnectorPort } from './interfaces'
+import type { DataBasePort, DataBaseConnectorPort, TransactionOptions } from './interfaces'
 
 /**
  * トランザクションコンテキスト
@@ -21,17 +21,6 @@ export interface TransactionContext {
   metadata: Map<string, any>
 }
 
-/**
- * トランザクションオプション
- */
-export interface TransactionOptions {
-  /** 親コンテキストID（ネスト時に指定） */
-  parentContextId?: string
-  /** メタデータ（ログやデバッグ用） */
-  metadata?: Record<string, any>
-  /** 実行時間の警告閾値（ミリ秒） */
-  warningThreshold?: number
-}
 
 /**
  * トランザクションマネージャー

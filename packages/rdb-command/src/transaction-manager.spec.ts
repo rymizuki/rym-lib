@@ -1,7 +1,7 @@
 import { describe, it, expect, beforeEach, afterEach, vi, type MockInstance } from 'vitest'
-import { TransactionManager, TransactionOptions } from './transaction-manager'
+import { TransactionManager } from './transaction-manager'
 import { DataBase } from './database'
-import { DataBaseConnectorPort, DataBaseLogger } from './interfaces'
+import { DataBaseConnectorPort, DataBaseLogger, TransactionOptions } from './interfaces'
 
 class DummyDataBaseLogger implements DataBaseLogger {
   debug() {}
