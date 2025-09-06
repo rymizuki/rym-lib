@@ -91,8 +91,251 @@ describe('db', () => {
         )
       })
     })
-    describe.skip('findOrCreate', () => {})
-    describe.skip('updateOrCreate', () => {})
+    describe('findOrCreate', () => {
+      describe('when record exists', () => {
+        beforeEach(() => {
+          query_spy.mockResolvedValue([
+            { id: 'existing_id', value: 'existing_value' },
+          ])
+        })
+
+        it('should return existing record without creating new one', async () => {
+          const result = await db.findOrCreate(
+            'example',
+            { id: 'existing_id' },
+            { id: 'existing_id', value: 'new_value' },
+          )
+
+          expect(result).toEqual({ id: 'existing_id', value: 'existing_value' })
+          expect(execute_spy).not.toHaveBeenCalled()
+          expect(query_spy).toHaveBeenCalledTimes(1)
+        })
+      })
+
+      describe('when record does not exist', () => {
+        beforeEach(() => {
+          query_spy
+            .mockResolvedValueOnce([]) // first call returns empty (not found)
+            .mockResolvedValueOnce([{ id: 'new_id', value: 'new_value' }]) // second call returns created record
+        })
+
+        it('should create and return new record', async () => {
+          const result = await db.findOrCreate(
+            'example',
+            { id: 'new_id' },
+            { id: 'new_id', value: 'new_value' },
+          )
+
+          expect(result).toEqual({ id: 'new_id', value: 'new_value' })
+          expect(execute_spy).toHaveBeenCalledWith(
+            'INSERT INTO `example` (`id`,`value`) VALUES ($1,$2)',
+            ['new_id', 'new_value'],
+          )
+          expect(query_spy).toHaveBeenCalledTimes(2)
+        })
+      })
+
+      describe('when creation fails', () => {
+        beforeEach(() => {
+          query_spy
+            .mockResolvedValueOnce([]) // first call returns empty (not found)
+            .mockResolvedValueOnce([]) // second call also returns empty (creation failed)
+        })
+
+        it('should throw error when record creation fails', async () => {
+          await expect(
+            db.findOrCreate(
+              'example',
+              { id: 'failed_id' },
+              { id: 'failed_id', value: 'failed_value' },
+            ),
+          ).rejects.toThrow(
+            'record creation failed. table: example, cond: {"id":"failed_id"}',
+          )
+        })
+      })
+    })
+    describe('updateOrCreate', () => {
+      describe('when record exists', () => {
+        beforeEach(() => {
+          query_spy.mockResolvedValue([
+            { id: 'existing_id', value: 'existing_value' },
+          ])
+        })
+
+        it('should update existing record', async () => {
+          await db.updateOrCreate(
+            'example',
+            { id: 'existing_id' },
+            { value: 'updated_value' },
+            { id: 'existing_id', value: 'created_value' },
+          )
+
+          expect(execute_spy).toHaveBeenCalledWith(
+            'UPDATE `example` SET `value` = $2 WHERE (`id` = $1)',
+            ['existing_id', 'updated_value'],
+          )
+          expect(query_spy).toHaveBeenCalledTimes(1)
+        })
+      })
+
+      describe('when record does not exist', () => {
+        beforeEach(() => {
+          query_spy.mockResolvedValue([])
+        })
+
+        it('should create new record', async () => {
+          await db.updateOrCreate(
+            'example',
+            { id: 'new_id' },
+            { value: 'updated_value' },
+            { id: 'new_id', value: 'created_value' },
+          )
+
+          expect(execute_spy).toHaveBeenCalledWith(
+            'INSERT INTO `example` (`id`,`value`) VALUES ($1,$2)',
+            ['new_id', 'created_value'],
+          )
+          expect(query_spy).toHaveBeenCalledTimes(1)
+        })
+      })
+    })
+
+    describe('txn', () => {
+      let transaction_spy: MockInstance
+
+      beforeEach(() => {
+        transaction_spy = vi.spyOn(conn, 'transaction')
+      })
+
+      it('should execute callback within transaction', async () => {
+        const result = await db.txn(async (txDb) => {
+          await txDb.create('example', { id: 'tx_id', value: 'tx_value' })
+          return 'transaction_result'
+        })
+
+        expect(result).toBe('transaction_result')
+        expect(transaction_spy).toHaveBeenCalledTimes(1)
+      })
+
+      it('should provide new database instance with same middlewares', async () => {
+        const middleware = {
+          preprocess: vi.fn().mockImplementation((payload) => payload),
+        }
+        db.use(middleware)
+
+        await db.txn(async (txDb) => {
+          await txDb.create('example', { id: 'tx_id', value: 'tx_value' })
+        })
+
+        expect(middleware.preprocess).toHaveBeenCalled()
+      })
+
+      it('should handle transaction errors', async () => {
+        const error = new Error('Transaction failed')
+        transaction_spy.mockRejectedValue(error)
+
+        await expect(
+          db.txn(async () => {
+            throw error
+          }),
+        ).rejects.toThrow('Transaction failed')
+      })
+
+      it('should rollback when callback throws error', async () => {
+        const callbackError = new Error('Callback failed')
+        let transactionCallbackCalled = false
+        let transactionCallbackError: Error | null = null
+
+        transaction_spy.mockImplementation(async (callback) => {
+          transactionCallbackCalled = true
+          try {
+            await callback(conn)
+          } catch (error) {
+            transactionCallbackError = error as Error
+            throw error // Re-throw to simulate rollback
+          }
+        })
+
+        await expect(
+          db.txn(async (txDb) => {
+            await txDb.create('example', { id: 'test_id', value: 'test_value' })
+            throw callbackError
+          }),
+        ).rejects.toThrow('Callback failed')
+
+        expect(transactionCallbackCalled).toBe(true)
+        expect(transactionCallbackError).toEqual(callbackError)
+        expect(transaction_spy).toHaveBeenCalledTimes(1)
+      })
+    })
+
+    describe('use (middleware)', () => {
+      let middleware_spy: MockInstance
+
+      beforeEach(() => {
+        middleware_spy = vi.fn().mockImplementation((payload) => payload)
+      })
+
+      it('should add middleware and call preprocess', async () => {
+        const middleware = {
+          preprocess: middleware_spy,
+        }
+
+        db.use(middleware)
+        await db.create('example', { id: 'test_id', value: 'test_value' })
+
+        expect(middleware_spy).toHaveBeenCalledWith(
+          {
+            sql: 'INSERT INTO `example` (`id`,`value`) VALUES ($1,$2)',
+            replacements: ['test_id', 'test_value'],
+          },
+          {},
+          expect.objectContaining({
+            logger: expect.any(Object),
+          }),
+        )
+      })
+
+      it('should chain multiple middlewares', async () => {
+        const middleware1 = {
+          preprocess: vi.fn().mockImplementation((payload) => ({
+            ...payload,
+            sql: payload.sql + ' /* middleware1 */',
+          })),
+        }
+        const middleware2 = {
+          preprocess: vi.fn().mockImplementation((payload) => ({
+            ...payload,
+            sql: payload.sql + ' /* middleware2 */',
+          })),
+        }
+
+        db.use(middleware1).use(middleware2)
+        await db.create('example', { id: 'test_id', value: 'test_value' })
+
+        expect(middleware1.preprocess).toHaveBeenCalled()
+        expect(middleware2.preprocess).toHaveBeenCalled()
+        expect(execute_spy).toHaveBeenCalledWith(
+          'INSERT INTO `example` (`id`,`value`) VALUES ($1,$2) /* middleware1 */ /* middleware2 */',
+          ['test_id', 'test_value'],
+        )
+      })
+
+      it('should handle async middleware', async () => {
+        const asyncMiddleware = {
+          preprocess: vi.fn().mockImplementation(async (payload) => {
+            await new Promise((resolve) => setTimeout(resolve, 1))
+            return payload
+          }),
+        }
+
+        db.use(asyncMiddleware)
+        await db.create('example', { id: 'test_id', value: 'test_value' })
+
+        expect(asyncMiddleware.preprocess).toHaveBeenCalled()
+      })
+    })
   })
 
   describe('options.quote = null', () => {
@@ -176,9 +419,18 @@ describe('db', () => {
 })
 
 class TestConnector implements DataBaseConnectorPort {
+  public transactionCalls: Array<
+    (conn: DataBaseConnectorPort) => Promise<void>
+  > = []
+
   async execute(): Promise<void> {}
   async query<T>(): Promise<T[]> {
     return []
   }
-  async transaction(): Promise<void> {}
+  async transaction(
+    exec: (conn: DataBaseConnectorPort) => Promise<void>,
+  ): Promise<void> {
+    this.transactionCalls.push(exec)
+    await exec(this)
+  }
 }
