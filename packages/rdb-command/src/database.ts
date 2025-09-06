@@ -10,11 +10,14 @@ import {
   DataBaseContext,
   DataBaseLogger,
   DataBaseMiddleware,
+  DataBaseOptions,
   DataBasePort,
   SyncOptions,
   SyncResult,
+  TransactionOptions,
   WhereType,
 } from './interfaces'
+import { TransactionManager } from './transaction-manager'
 
 function escape(value: string, options: { quote?: string | null } = {}) {
   const quote =
@@ -30,17 +33,24 @@ export class DataBase implements DataBasePort {
   private middlewares: DataBaseMiddleware[] = []
   private context: DataBaseContext
   private toSqlOptions: SQLBuilderToSQLInputOptions
+  private transactionManager: TransactionManager
 
   constructor(
     private conn: DataBaseConnectorPort,
     private logger: DataBaseLogger,
-    options: SQLBuilderToSQLInputOptions = {},
+    options: DataBaseOptions = {},
   ) {
     this.context = { logger }
+    
+    // SQLオプションからtransactionManagerを除外
+    const { transactionManager, ...sqlOptions } = options
     this.toSqlOptions = {
-      ...{ placeholder: '$' },
-      ...options,
+      placeholder: '$' as const,
+      ...sqlOptions,
     }
+    
+    // TransactionManagerが未指定の場合、新しいインスタンスを自動作成
+    this.transactionManager = transactionManager || new TransactionManager()
   }
 
   async findOrCreate<Row>(
@@ -159,22 +169,38 @@ export class DataBase implements DataBasePort {
     return rows[0] ?? null
   }
 
-  async txn<T>(fn: (db: DataBasePort) => Promise<T>): Promise<T> {
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const result: { value: any } = { value: null }
-    await this.conn.transaction(async (conn) => {
-      const db = new DataBase(conn, this.context.logger, this.toSqlOptions)
-      for (const middleware of this.middlewares) {
-        db.use(middleware)
-      }
-      result.value = await fn(db)
-    })
-    return result.value
+  async txn<T>(
+    fn: (db: DataBasePort) => Promise<T>,
+    options?: TransactionOptions
+  ): Promise<T> {
+    // TransactionManagerは常に存在する（コンストラクターで自動作成）
+    return await this.transactionManager.runInTransaction(this, fn, options)
   }
 
   use(middleware: DataBaseMiddleware) {
     this.middlewares.push(middleware)
     return this
+  }
+
+
+  /**
+   * 現在のトランザクション情報を取得
+   */
+  getCurrentTransactionInfo(): {
+    isInTransaction: boolean
+    contextId?: string
+    level?: number
+  } {
+    const context = this.transactionManager.getCurrentContext(this)
+    if (!context) {
+      return { isInTransaction: false }
+    }
+
+    return {
+      isInTransaction: true,
+      contextId: context.id,
+      level: context.level
+    }
   }
 
   async sync<Row extends Record<string, unknown>>(

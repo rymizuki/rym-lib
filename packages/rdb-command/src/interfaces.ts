@@ -1,4 +1,9 @@
+import { SQLBuilderToSQLInputOptions } from 'coral-sql'
+import type { TransactionManager } from './transaction-manager'
+
 export type WhereType = Record<string, unknown>
+
+export { TransactionManager } from './transaction-manager'
 
 export interface DataBaseLogger {
   debug(format: string, ...args: unknown[]): void
@@ -27,6 +32,19 @@ export interface DataBaseMiddleware {
     options: DataBaseCommandOptionsPartial,
     context: DataBaseContext,
   ): DataBaseMiddlewarePrepareResult
+}
+
+export interface DataBaseOptions extends SQLBuilderToSQLInputOptions {
+  transactionManager?: TransactionManager
+}
+
+export interface TransactionOptions {
+  /** 親コンテキストID（ネスト時に指定） */
+  parentContextId?: string
+  /** メタデータ（ログやデバッグ用） */
+  metadata?: Record<string, any>
+  /** 実行時間の警告閾値（ミリ秒） */
+  warningThreshold?: number
 }
 
 export interface DataBasePort {
@@ -64,7 +82,7 @@ export interface DataBasePort {
     create: Record<string, unknown>,
     options?: DataBaseCommandOptionsPartial,
   ): Promise<void>
-  txn<T>(fn: (db: DataBasePort) => Promise<T>): Promise<T>
+  txn<T>(fn: (db: DataBasePort) => Promise<T>, options?: TransactionOptions): Promise<T>
   use(middleware: DataBaseMiddleware): this
   sync<Row extends Record<string, unknown>>(
     table: string,

@@ -17,10 +17,12 @@ export class PrismaConnector implements DataBaseConnectorPort {
 
   async transaction(exec: TransactionCallback): Promise<void> {
     if ('$transaction' in this.prisma) {
+      // ルートトランザクション：新しいPrismaトランザクションを開始
       await this.prisma.$transaction(async (prisma: TxnPrismaClient) => {
         await exec(new PrismaConnector(prisma))
       })
     } else {
+      // すでにトランザクション内：既存のコンテキストを使用
       return await exec(this)
     }
   }
