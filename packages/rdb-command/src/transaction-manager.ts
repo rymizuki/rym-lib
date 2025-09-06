@@ -113,7 +113,13 @@ export class TransactionManager {
     // まず、DataBaseインスタンスから現在のコンテキストIDを取得
     const currentContextId = this.dbToCurrentContext.get(db)
     if (currentContextId) {
-      return this.contexts.get(currentContextId)
+      const context = this.contexts.get(currentContextId)
+      // コンテキストが存在しない場合はマッピングを削除
+      if (!context) {
+        this.dbToCurrentContext.delete(db)
+        return undefined
+      }
+      return context
     }
     
     // フォールバック：接続を使用して検索
@@ -230,10 +236,14 @@ export class TransactionManager {
         console.debug(`[TransactionManager] Root transaction completed: ${context.id} (${duration}ms)`)
       } finally {
         this.removeContext(context.id)
-        // DataBaseインスタンスのマッピングもクリア
+        // connToContextからも削除
+        this.connToContext.delete(context.conn)
+        // DataBaseインスタンスのマッピングをクリア
         if (txDb) {
           this.dbToCurrentContext.delete(txDb)
         }
+        // 元のDataBaseインスタンスのマッピングもクリア
+        this.dbToCurrentContext.delete(db)
       }
     })
     
