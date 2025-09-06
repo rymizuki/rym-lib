@@ -212,7 +212,7 @@ export class DataBase implements DataBasePort {
       const deleted: Row[] = []
       if (!noDeleteUnmatched) {
         for (const record of toDelete) {
-          deleted.push(record)
+          deleted.push(record as Row)
           // where条件の範囲内でのみ削除
           const deleteCondition = this.mergeWhere(where, record)
           await txDb.delete(table, deleteCondition)
@@ -221,7 +221,7 @@ export class DataBase implements DataBasePort {
 
       return {
         created,
-        unchanged: toKeep,
+        unchanged: toKeep as Row[],
         deleted,
       }
     })
