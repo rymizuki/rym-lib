@@ -212,7 +212,7 @@ export class DataBase implements DataBasePort {
       const deleted: Row[] = []
       if (!noDeleteUnmatched) {
         for (const record of toDelete) {
-          deleted.push(record as Row)
+          deleted.push(record)
           // where条件の範囲内でのみ削除
           const deleteCondition = this.mergeWhere(where, record)
           await txDb.delete(table, deleteCondition)
@@ -221,7 +221,7 @@ export class DataBase implements DataBasePort {
 
       return {
         created,
-        unchanged: toKeep as Row[],
+        unchanged: toKeep,
         deleted,
       }
     })
@@ -255,7 +255,7 @@ export class DataBase implements DataBasePort {
     if (!key) {
       for (const inputRecord of inputRecords) {
         const found = existingRecords.find((existingRecord) =>
-          this.shallowEqual(inputRecord, existingRecord),
+          this.deepEqual(inputRecord, existingRecord),
         )
         if (found) {
           toKeep.push(found)
@@ -266,7 +266,7 @@ export class DataBase implements DataBasePort {
 
       for (const existingRecord of existingRecords) {
         const found = inputRecords.find((inputRecord) =>
-          this.shallowEqual(inputRecord, existingRecord),
+          this.deepEqual(inputRecord, existingRecord),
         )
         if (!found) {
           toDelete.push(existingRecord)
@@ -300,7 +300,7 @@ export class DataBase implements DataBasePort {
     return { toCreate, toKeep, toDelete }
   }
 
-  private shallowEqual(
+  private deepEqual(
     obj1: Record<string, unknown>,
     obj2: Record<string, unknown>,
   ): boolean {

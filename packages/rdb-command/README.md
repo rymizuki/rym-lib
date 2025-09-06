@@ -161,6 +161,7 @@ const result3 = await db.sync('user_roles', { userId: 'user-1' }, [
   key: ['userId', 'roleId'],
   noDeleteUnmatched: true 
 })
+```
 
 ## API Reference
 
