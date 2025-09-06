@@ -231,10 +231,10 @@ export class DataBase implements DataBasePort {
 
     return await this.txn(async (txDb) => {
       // 1. where条件に一致する現在のレコードを取得
-      const existingRecords = await this.getRecords<Row>(table, where)
+      const existingRecords = await txDb.getRecords<Row>(table, where)
 
       // 2. レコードの比較とグループ分け
-      const { toCreate, toKeep, toDelete } = this.compareRecords(
+      const { toCreate, toKeep, toDelete } = (txDb as DataBase).compareRecords(
         records,
         existingRecords,
         key,
@@ -256,16 +256,16 @@ export class DataBase implements DataBasePort {
       const deleted: Row[] = []
       if (!noDeleteUnmatched) {
         for (const record of toDelete) {
-          deleted.push(record)
+          deleted.push(record as Row)
           // where条件の範囲内でのみ削除
-          const deleteCondition = this.mergeWhere(where, record)
+          const deleteCondition = (txDb as DataBase).mergeWhere(where, record)
           await txDb.delete(table, deleteCondition)
         }
       }
 
       return {
         created,
-        unchanged: toKeep,
+        unchanged: toKeep as Row[],
         deleted,
       }
     })
