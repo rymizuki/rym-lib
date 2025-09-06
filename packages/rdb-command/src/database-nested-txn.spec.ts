@@ -228,9 +228,9 @@ describe('DataBase Nested Transaction Integration', () => {
 
       // 各並行トランザクションに対して独立したDataBaseインスタンスを作成
       for (let i = 0; i < 5; i++) {
-        // 独立したコネクターとDataBaseインスタンス
+        // 独立したコネクターとDataBaseインスタンス（自動注入されたTransactionManagerを使用）
         const independentConnector = new MockConnector()
-        const independentDb = new DataBase(independentConnector, logger, { transactionManager })
+        const independentDb = new DataBase(independentConnector, logger)
         
         const promise = independentDb.txn(async (txDb) => {
           await txDb.create('concurrent_test', { 
