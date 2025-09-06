@@ -1,161 +1,225 @@
-# query-module
+# @rym-lib/rdb-command
+
+A lightweight database abstraction layer providing unified CRUD operations for relational databases.
 
 ## Installation
 
+```bash
+npm install @rym-lib/rdb-command coral-sql
 ```
-npm i @rym-lib/query-module
-npm i @rym-lib/query-module-driver-sequelize
+
+For Prisma connector:
+```bash
+npm install @prisma/client
 ```
 
-## Usage
+## Quick Start
 
-```ts
-import { QueryDriverSequelize } from '@rym-lib/query-module-driver-sequelize'
+```typescript
+import { DataBase } from '@rym-lib/rdb-command'
+import { PrismaConnector } from '@rym-lib/rdb-command/connector/prisma'
+import { PrismaClient } from '@prisma/client'
 
-import { driver } from '~/my-query-driver'
+// Setup
+const prisma = new PrismaClient()
+const connector = new PrismaConnector(prisma)
+const logger = {
+  debug: console.log,
+  info: console.info,
+  warning: console.warn,
+  error: console.error,
+  critical: console.error,
+}
 
-type Data = {
+const db = new DataBase(connector, logger)
+
+// Basic CRUD operations
+type User = {
   id: string
   name: string
-  displayName: string
   email: string
-  thumbnailUrl: string
 }
 
-const userQuery = defineQuery<Data, QueryDriverSequelize>(driver, {
-  source: (builder) =>
-    builder
-      .column('id')
-      .column('profile.name', 'name')
-      .column('profile.display_name', 'displayName')
-      .column('email')
-      .column('profile.thumbnail_url', 'thumbnailUrl')
-      .from('users', 'user')
-      .leftJoin('user_profiles', 'profile', 'user.id = profile.user_id'),
-  rules: {
-    id: 'user.id',
-    name: 'profile.name',
-    displayName: 'profile.display_name',
-    email: 'user.email',
-  },
+// Create a record
+await db.create('users', {
+  id: 'user-1',
+  name: 'John Doe',
+  email: 'john@example.com'
 })
 
-// filter by any column value.
-// can operate eq, ne, contains, gt, gte, lt, lte, in
-const userList = await userQuery.many({
-  filter: {
-    displayName: {
-      contains: 'abc',
-    },
-  },
-})
-console.log(userList.items)
+// Find a record
+const user = await db.find<User>('users', { id: 'user-1' })
+console.log(user) // { id: 'user-1', name: 'John Doe', email: 'john@example.com' }
 
-// lookup single row or null
-const user = await userQuery.one({
-  filter: {
-    id: {
-      eq: '12345',
-    },
-  },
-})
-console.log(user)
+// Update a record
+await db.update('users', { id: 'user-1' }, { name: 'Jane Doe' })
+
+// Delete a record
+await db.delete('users', { id: 'user-1' })
 ```
 
-## Docs
+## Advanced Usage
 
-### Methods
+### findOrCreate
 
-#### `.many(params = {})`
+Find a record or create it if it doesn't exist:
 
-filter by params, and return matching rows array or empty array.
-
-```ts
-const rows = query.many()
+```typescript
+const user = await db.findOrCreate<User>(
+  'users',
+  { email: 'john@example.com' }, // search condition
+  { 
+    id: 'user-1',
+    name: 'John Doe',
+    email: 'john@example.com'
+  } // data to create if not found
+)
 ```
 
-#### `.one(params = {})`
+### updateOrCreate
 
-finding a record by params, when missing result, return null.
+Update a record or create it if it doesn't exist:
 
-```ts
-const row = query.one({
-  filter: {
-    id: {
-      eq: 'id_1234',
-    },
-  },
+```typescript
+await db.updateOrCreate(
+  'users',
+  { id: 'user-1' }, // search condition
+  { name: 'Updated Name' }, // update data
+  { 
+    id: 'user-1',
+    name: 'John Doe',
+    email: 'john@example.com'
+  } // create data if not found
+)
+```
+
+### Transactions
+
+Execute multiple operations in a transaction:
+
+```typescript
+await db.txn(async (txDb) => {
+  await txDb.create('orders', {
+    id: 'order-1',
+    userId: 'user-1',
+    total: 100
+  })
+  
+  await txDb.update('users', { id: 'user-1' }, { 
+    lastOrderDate: new Date()
+  })
 })
+```
 
-if (row === null) {
-  throw new Error('row not found')
+### Middleware
+
+Add custom middleware to preprocess SQL queries:
+
+```typescript
+const loggingMiddleware = {
+  preprocess: async (payload, options, context) => {
+    context.logger.info(`Executing: ${payload.sql}`)
+    return payload
+  }
+}
+
+db.use(loggingMiddleware)
+```
+
+## API Reference
+
+### DataBase Class
+
+The main class providing database operations.
+
+#### Constructor
+
+```typescript
+new DataBase(connector: DataBaseConnectorPort, logger: DataBaseLogger, options?: SQLBuilderToSQLInputOptions)
+```
+
+- `connector`: Database connector implementation
+- `logger`: Logger instance for debugging
+- `options`: SQL builder options (e.g., `{ quote: null }` to disable column quoting)
+
+#### Methods
+
+##### `find<Row>(table: string, where: WhereType, options?: DataBaseCommandOptionsPartial): Promise<Row | null>`
+
+Find a single record matching the where condition.
+
+##### `create(table: string, data: Record<string, unknown>, options?: DataBaseCommandOptionsPartial): Promise<void>`
+
+Create a new record.
+
+##### `update(table: string, where: WhereType, data: Record<string, unknown>, options?: DataBaseCommandOptionsPartial): Promise<void>`
+
+Update records matching the where condition.
+
+##### `delete(table: string, where: WhereType, options?: DataBaseCommandOptionsPartial): Promise<void>`
+
+Delete records matching the where condition.
+
+##### `findOrCreate<Row>(table: string, where: WhereType, data: Record<string, unknown>, options?: DataBaseCommandOptionsPartial): Promise<Row>`
+
+Find a record or create it if not found.
+
+##### `updateOrCreate(table: string, where: WhereType, update: Record<string, unknown>, create: Record<string, unknown>, options?: DataBaseCommandOptionsPartial): Promise<void>`
+
+Update a record or create it if not found.
+
+##### `txn<T>(fn: (db: DataBasePort) => Promise<T>): Promise<T>`
+
+Execute operations within a transaction.
+
+##### `use(middleware: DataBaseMiddleware): this`
+
+Add middleware to the database instance.
+
+### Connectors
+
+#### PrismaConnector
+
+Connector for Prisma ORM integration.
+
+```typescript
+import { PrismaConnector } from '@rym-lib/rdb-command/connector/prisma'
+import { PrismaClient } from '@prisma/client'
+
+const prisma = new PrismaClient()
+const connector = new PrismaConnector(prisma)
+```
+
+### Custom Connectors
+
+Implement the `DataBaseConnectorPort` interface to create custom connectors:
+
+```typescript
+interface DataBaseConnectorPort {
+  execute(sql: string, replacements: unknown[]): Promise<void>
+  query<T>(sql: string, replacements: unknown[]): Promise<T[]>
+  transaction(exec: TransactionCallback): Promise<void>
 }
 ```
 
-### Finding parameters
+## Configuration
 
-The implementation of these parameters is left to the driver.
+### SQL Builder Options
 
-#### filter
+You can configure SQL generation behavior:
 
-Filter data by defined property names.
-
-```ts
-const result = await query.many({
-  filter: {},
+```typescript
+const db = new DataBase(connector, logger, {
+  quote: null, // Disable column quoting
+  placeholder: '?' // Use ? instead of $1, $2, etc.
 })
 ```
 
-Support operators are
+## Dependencies
 
-- eq
-- ne
-- contains
-- not_contains
-- lte
-- lt
-- gte
-- gt
-- in
+- **coral-sql**: SQL query builder library
+- **@prisma/client**: Required when using PrismaConnector (peer dependency)
 
-#### orderBy
+## License
 
-Specify sort order.
-
-```ts
-const result = await query.many({
-  orderBy: ['created_at:desc', 'name:asc'],
-})
-```
-
-#### take
-
-Specify take rows count.
-
-```ts
-const result = await query.many({
-  take: 10,
-})
-
-if (rows.length <= 10) {
-  // true
-}
-```
-
-#### skip
-
-Specify thr first item to be retrieved
-
-```ts
-const result = await query.many({
-  skip: 10,
-})
-```
-
-## Drivers
-
-- [sequelize](https://www.npmjs.com/package/@rym-lib/query-module-driver-sequelize)
-
-## Middleware
-
-- [pagination](https://www.npmjs.com/package/@rym-lib/query-module-pagination)
+MIT
