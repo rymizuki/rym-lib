@@ -255,7 +255,7 @@ export class DataBase implements DataBasePort {
     if (!key) {
       for (const inputRecord of inputRecords) {
         const found = existingRecords.find((existingRecord) =>
-          this.deepEqual(inputRecord, existingRecord),
+          this.shallowEqual(inputRecord, existingRecord),
         )
         if (found) {
           toKeep.push(found)
@@ -266,7 +266,7 @@ export class DataBase implements DataBasePort {
 
       for (const existingRecord of existingRecords) {
         const found = inputRecords.find((inputRecord) =>
-          this.deepEqual(inputRecord, existingRecord),
+          this.shallowEqual(inputRecord, existingRecord),
         )
         if (!found) {
           toDelete.push(existingRecord)
@@ -300,7 +300,7 @@ export class DataBase implements DataBasePort {
     return { toCreate, toKeep, toDelete }
   }
 
-  private deepEqual(
+  private shallowEqual(
     obj1: Record<string, unknown>,
     obj2: Record<string, unknown>,
   ): boolean {
