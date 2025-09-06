@@ -241,6 +241,33 @@ describe('db', () => {
           }),
         ).rejects.toThrow('Transaction failed')
       })
+
+      it('should rollback when callback throws error', async () => {
+        const callbackError = new Error('Callback failed')
+        let transactionCallbackCalled = false
+        let transactionCallbackError: Error | null = null
+
+        transaction_spy.mockImplementation(async (callback) => {
+          transactionCallbackCalled = true
+          try {
+            await callback(conn)
+          } catch (error) {
+            transactionCallbackError = error as Error
+            throw error // Re-throw to simulate rollback
+          }
+        })
+
+        await expect(
+          db.txn(async (txDb) => {
+            await txDb.create('example', { id: 'test_id', value: 'test_value' })
+            throw callbackError
+          }),
+        ).rejects.toThrow('Callback failed')
+
+        expect(transactionCallbackCalled).toBe(true)
+        expect(transactionCallbackError).toEqual(callbackError)
+        expect(transaction_spy).toHaveBeenCalledTimes(1)
+      })
     })
 
     describe('use (middleware)', () => {
