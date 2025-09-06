@@ -15,6 +15,7 @@ import {
   SyncResult,
   WhereType,
 } from './interfaces'
+import { TransactionManager, TransactionOptions } from './transaction-manager'
 
 function escape(value: string, options: { quote?: string | null } = {}) {
   const quote =
@@ -30,17 +31,20 @@ export class DataBase implements DataBasePort {
   private middlewares: DataBaseMiddleware[] = []
   private context: DataBaseContext
   private toSqlOptions: SQLBuilderToSQLInputOptions
+  private transactionManager?: TransactionManager
 
   constructor(
     private conn: DataBaseConnectorPort,
     private logger: DataBaseLogger,
     options: SQLBuilderToSQLInputOptions = {},
+    transactionManager?: TransactionManager,
   ) {
     this.context = { logger }
     this.toSqlOptions = {
       ...{ placeholder: '$' },
       ...options,
     }
+    this.transactionManager = transactionManager
   }
 
   async findOrCreate<Row>(
@@ -159,11 +163,20 @@ export class DataBase implements DataBasePort {
     return rows[0] ?? null
   }
 
-  async txn<T>(fn: (db: DataBasePort) => Promise<T>): Promise<T> {
+  async txn<T>(
+    fn: (db: DataBasePort) => Promise<T>,
+    options?: TransactionOptions
+  ): Promise<T> {
+    // TransactionManagerが設定されている場合は使用
+    if (this.transactionManager) {
+      return await this.transactionManager.runInTransaction(this, fn, options)
+    }
+
+    // 従来の実装（後方互換性のため）
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const result: { value: any } = { value: null }
     await this.conn.transaction(async (conn) => {
-      const db = new DataBase(conn, this.context.logger, this.toSqlOptions)
+      const db = new DataBase(conn, this.context.logger, this.toSqlOptions, this.transactionManager)
       for (const middleware of this.middlewares) {
         db.use(middleware)
       }
@@ -175,6 +188,37 @@ export class DataBase implements DataBasePort {
   use(middleware: DataBaseMiddleware) {
     this.middlewares.push(middleware)
     return this
+  }
+
+  /**
+   * TransactionManagerを設定してネストトランザクション対応を有効化
+   */
+  withTransactionManager(transactionManager: TransactionManager): DataBase {
+    return new DataBase(this.conn, this.context.logger, this.toSqlOptions, transactionManager)
+  }
+
+  /**
+   * 現在のトランザクション情報を取得
+   */
+  getCurrentTransactionInfo(): {
+    isInTransaction: boolean
+    contextId?: string
+    level?: number
+  } {
+    if (!this.transactionManager) {
+      return { isInTransaction: false }
+    }
+
+    const context = this.transactionManager.getCurrentContext(this)
+    if (!context) {
+      return { isInTransaction: false }
+    }
+
+    return {
+      isInTransaction: true,
+      contextId: context.id,
+      level: context.level
+    }
   }
 
   async sync<Row extends Record<string, unknown>>(
