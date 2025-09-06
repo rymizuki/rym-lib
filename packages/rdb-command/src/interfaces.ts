@@ -1,5 +1,7 @@
 export type WhereType = Record<string, unknown>
 
+export { TransactionManager } from './transaction-manager'
+
 export interface DataBaseLogger {
   debug(format: string, ...args: unknown[]): void
   info(format: string, ...args: unknown[]): void
@@ -32,7 +34,7 @@ export interface DataBaseMiddleware {
 export interface DataBaseOptions {
   placeholder?: string
   quote?: string | null
-  transactionManager?: import('./transaction-manager').TransactionManager
+  transactionManager?: TransactionManager
 }
 
 export interface TransactionOptions {
