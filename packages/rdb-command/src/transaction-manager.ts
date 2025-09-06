@@ -47,21 +47,11 @@ export class TransactionManager {
   /** DataBaseインスタンスと現在のコンテキストIDのマッピング */
   private readonly dbToCurrentContext = new WeakMap<DataBasePort, string>()
   
-  /** クリーンアップインターバル */
-  private cleanupInterval?: NodeJS.Timeout
-  
   /** デフォルトオプション */
   private readonly defaultOptions: Required<TransactionOptions> = {
     parentContextId: '',
     metadata: {},
     warningThreshold: 10000 // 10秒
-  }
-
-  constructor() {
-    // 定期的な孤立コンテキストクリーンアップ（60秒間隔）
-    this.cleanupInterval = setInterval(() => {
-      this.cleanupOrphanedContexts()
-    }, 60000)
   }
 
   /**
@@ -173,10 +163,6 @@ export class TransactionManager {
    * リソースのクリーンアップ
    */
   destroy(): void {
-    if (this.cleanupInterval) {
-      clearInterval(this.cleanupInterval)
-      this.cleanupInterval = undefined
-    }
     this.contexts.clear()
   }
 
@@ -354,32 +340,5 @@ export class TransactionManager {
     }
 
     this.contexts.delete(id)
-  }
-
-  /**
-   * 孤立したコンテキストをクリーンアップ
-   */
-  private cleanupOrphanedContexts(): void {
-    const now = Date.now()
-    const maxAge = 300000 // 5分
-
-    const orphaned: string[] = []
-    
-    for (const [id, context] of this.contexts) {
-      const age = now - context.startedAt.getTime()
-      if (age > maxAge) {
-        orphaned.push(id)
-      }
-    }
-
-    if (orphaned.length > 0) {
-      console.warn(`Cleaning up ${orphaned.length} orphaned transaction contexts`, {
-        contextIds: orphaned
-      })
-      
-      orphaned.forEach(id => {
-        this.removeContext(id)
-      })
-    }
   }
 }

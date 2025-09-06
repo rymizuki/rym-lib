@@ -303,21 +303,4 @@ describe('TransactionManager', () => {
     })
   })
 
-  describe('メモリ管理', () => {
-    it('should clean up orphaned contexts', async () => {
-      // 内部メソッドのテスト用にprivateメソッドにアクセス
-      const cleanupSpy = vi.spyOn(transactionManager as any, 'cleanupOrphanedContexts')
-      
-      // 正常なトランザクション実行
-      await transactionManager.runInTransaction(db, async () => {
-        return 'success'
-      })
-
-      // クリーンアップは定期実行されるため、直接呼び出してテスト
-      ;(transactionManager as any).cleanupOrphanedContexts()
-      
-      expect(cleanupSpy).toHaveBeenCalled()
-      cleanupSpy.mockRestore()
-    })
-  })
 })

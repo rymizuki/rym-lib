@@ -11,7 +11,7 @@ By using the `TransactionManager` class in rdb-command, nested `txn` calls can n
 - **Nest Level Tracking**: Accurately manages transaction hierarchy
 - **Context Management**: Maintains state and relationships of each transaction
 - **Error Handling**: Properly propagates errors from nested contexts
-- **Memory Management**: Automatic cleanup to prevent resource leaks
+- **Memory Management**: Uses WeakMap for automatic garbage collection
 - **Debug Support**: Detailed logging and metrics collection
 - **Backward Compatibility**: Extends existing APIs without breaking changes
 
@@ -107,7 +107,6 @@ console.log('Context Details:', stats.contexts)
 
 - TransactionManager is lightweight with minimal overhead
 - Uses WeakMap to prevent memory leaks
-- Periodic cleanup of orphaned contexts
 - Warnings for long-running transactions
 
 ## Compatibility with Legacy APIs
