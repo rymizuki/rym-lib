@@ -45,7 +45,7 @@ export class DataBase implements DataBasePort {
     // SQLオプションからtransactionManagerを除外
     const { transactionManager, ...sqlOptions } = options
     this.toSqlOptions = {
-      ...{ placeholder: '$' },
+      placeholder: '$' as const,
       ...sqlOptions,
     }
     
@@ -219,10 +219,10 @@ export class DataBase implements DataBasePort {
 
     return await this.txn(async (txDb) => {
       // 1. where条件に一致する現在のレコードを取得
-      const existingRecords = await txDb.getRecords<Row>(table, where)
+      const existingRecords = await this.getRecords<Row>(table, where)
 
       // 2. レコードの比較とグループ分け
-      const { toCreate, toKeep, toDelete } = (txDb as DataBase).compareRecords(
+      const { toCreate, toKeep, toDelete } = this.compareRecords(
         records,
         existingRecords,
         key,
@@ -246,7 +246,7 @@ export class DataBase implements DataBasePort {
         for (const record of toDelete) {
           deleted.push(record as Row)
           // where条件の範囲内でのみ削除
-          const deleteCondition = (txDb as DataBase).mergeWhere(where, record)
+          const deleteCondition = this.mergeWhere(where, record)
           await txDb.delete(table, deleteCondition)
         }
       }

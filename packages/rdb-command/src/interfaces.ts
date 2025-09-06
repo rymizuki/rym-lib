@@ -1,3 +1,6 @@
+import { SQLBuilderToSQLInputOptions } from 'coral-sql'
+import type { TransactionManager } from './transaction-manager'
+
 export type WhereType = Record<string, unknown>
 
 export { TransactionManager } from './transaction-manager'
@@ -31,9 +34,7 @@ export interface DataBaseMiddleware {
   ): DataBaseMiddlewarePrepareResult
 }
 
-export interface DataBaseOptions {
-  placeholder?: string
-  quote?: string | null
+export interface DataBaseOptions extends SQLBuilderToSQLInputOptions {
   transactionManager?: TransactionManager
 }
 
