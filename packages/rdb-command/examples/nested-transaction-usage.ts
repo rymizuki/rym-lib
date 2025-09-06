@@ -1,13 +1,13 @@
 /**
  * rdb-commandのネストトランザクション使用例
- * 
+ *
  * このファイルは、TransactionManagerを使用したネストトランザクション機能の
  * 使用方法を示すサンプルです。
  */
+import { PrismaClient } from '@prisma/client'
 
 import { DataBase, TransactionManager } from '../src'
 import { PrismaConnector } from '../src/connectors/prisma'
-import { PrismaClient } from '@prisma/client'
 
 // ログ実装例
 class ConsoleLogger {
@@ -33,7 +33,7 @@ async function main() {
   const connector = new PrismaConnector(prisma)
   const logger = new ConsoleLogger()
   const transactionManager = new TransactionManager()
-  
+
   // TransactionManagerを使用したDataBaseインスタンス
   const db = new DataBase(connector, logger, {}, transactionManager)
 
@@ -44,20 +44,20 @@ async function main() {
     console.log('例1: 基本的なネストトランザクション')
     await db.txn(async (outerDb) => {
       console.log('外側のトランザクション開始')
-      
+
       await outerDb.create('users', {
         id: '1',
         name: 'John Doe',
-        email: 'john@example.com'
+        email: 'john@example.com',
       })
 
       // ネストされたトランザクション
       await outerDb.txn(async (innerDb) => {
         console.log('内側のトランザクション開始')
-        
+
         await innerDb.create('profiles', {
           userId: '1',
-          bio: 'Software Developer'
+          bio: 'Software Developer',
         })
 
         console.log('内側のトランザクション完了')
@@ -73,13 +73,13 @@ async function main() {
         await outerDb.create('users', {
           id: '2',
           name: 'Jane Doe',
-          email: 'jane@example.com'
+          email: 'jane@example.com',
         })
 
         await outerDb.txn(async (innerDb) => {
           await innerDb.create('profiles', {
             userId: '2',
-            bio: 'Designer'
+            bio: 'Designer',
           })
 
           // エラーを発生させる
@@ -95,27 +95,27 @@ async function main() {
     console.log('\n例3: 深いネスト（3レベル）')
     await db.txn(async (level1Db) => {
       console.log('レベル1開始')
-      
+
       await level1Db.txn(async (level2Db) => {
         console.log('レベル2開始')
-        
+
         await level2Db.txn(async (level3Db) => {
           console.log('レベル3開始')
-          
+
           // 現在のトランザクション情報を取得
           const info = (level3Db as DataBase).getCurrentTransactionInfo()
           console.log('トランザクション情報:', {
             isInTransaction: info.isInTransaction,
             level: info.level,
-            contextId: info.contextId?.slice(0, 8) + '...'
+            contextId: info.contextId?.slice(0, 8) + '...',
           })
-          
+
           console.log('レベル3完了')
         })
-        
+
         console.log('レベル2完了')
       })
-      
+
       console.log('レベル1完了')
     })
 
@@ -126,14 +126,14 @@ async function main() {
       // 既存のトランザクションコンテキストを利用する
       await outerDb.sync('products', {}, [
         { id: '1', name: 'Product A', price: 100 },
-        { id: '2', name: 'Product B', price: 200 }
+        { id: '2', name: 'Product B', price: 200 },
       ])
 
       // 追加の操作をネストしたトランザクションで実行
       await outerDb.txn(async (innerDb) => {
         await innerDb.create('categories', {
           id: '1',
-          name: 'Electronics'
+          name: 'Electronics',
         })
       })
     })
@@ -144,16 +144,21 @@ async function main() {
       await db1.txn(async (db2) => {
         await db2.txn(async () => {
           const stats = transactionManager.getStats()
-          console.log('アクティブなトランザクション数:', stats.activeTransactions)
-          console.log('コンテキスト詳細:', stats.contexts.map(ctx => ({
-            id: ctx.id.slice(0, 8) + '...',
-            level: ctx.level,
-            duration: `${ctx.duration}ms`
-          })))
+          console.log(
+            'アクティブなトランザクション数:',
+            stats.activeTransactions,
+          )
+          console.log(
+            'コンテキスト詳細:',
+            stats.contexts.map((ctx) => ({
+              id: ctx.id.slice(0, 8) + '...',
+              level: ctx.level,
+              duration: `${ctx.duration}ms`,
+            })),
+          )
         })
       })
     })
-
   } catch (error) {
     console.error('予期しないエラー:', error)
   } finally {
@@ -168,7 +173,7 @@ async function legacyExample() {
   const prisma = new PrismaClient()
   const connector = new PrismaConnector(prisma)
   const logger = new ConsoleLogger()
-  
+
   // TransactionManager無しのDataBase（従来通り）
   const db = new DataBase(connector, logger)
 
@@ -177,12 +182,14 @@ async function legacyExample() {
   try {
     await db.txn(async (outerDb) => {
       console.log('従来の外側トランザクション')
-      
+
       await outerDb.txn(async (innerDb) => {
-        console.log('従来の内側トランザクション（別のPrismaトランザクションが開始される）')
+        console.log(
+          '従来の内側トランザクション（別のPrismaトランザクションが開始される）',
+        )
       })
     })
-    
+
     console.log('従来のAPI動作確認完了')
   } catch (error) {
     console.error('従来のAPIエラー:', error)

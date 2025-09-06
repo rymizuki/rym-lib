@@ -1,13 +1,13 @@
 /**
  * rdb-command Nested Transaction Usage Examples
- * 
+ *
  * This file demonstrates how to use the nested transaction functionality
  * with TransactionManager in rdb-command.
  */
+import { PrismaClient } from '@prisma/client'
 
 import { DataBase, TransactionManager } from '../src'
 import { PrismaConnector } from '../src/connectors/prisma'
-import { PrismaClient } from '@prisma/client'
 
 // Logger implementation example
 class ConsoleLogger {
@@ -33,7 +33,7 @@ async function main() {
   const connector = new PrismaConnector(prisma)
   const logger = new ConsoleLogger()
   const transactionManager = new TransactionManager()
-  
+
   // DataBase instance with TransactionManager
   const db = new DataBase(connector, logger, {}, transactionManager)
 
@@ -44,20 +44,20 @@ async function main() {
     console.log('Example 1: Basic nested transaction')
     await db.txn(async (outerDb) => {
       console.log('Outer transaction started')
-      
+
       await outerDb.create('users', {
         id: '1',
         name: 'John Doe',
-        email: 'john@example.com'
+        email: 'john@example.com',
       })
 
       // Nested transaction
       await outerDb.txn(async (innerDb) => {
         console.log('Inner transaction started')
-        
+
         await innerDb.create('profiles', {
           userId: '1',
-          bio: 'Software Developer'
+          bio: 'Software Developer',
         })
 
         console.log('Inner transaction completed')
@@ -73,13 +73,13 @@ async function main() {
         await outerDb.create('users', {
           id: '2',
           name: 'Jane Doe',
-          email: 'jane@example.com'
+          email: 'jane@example.com',
         })
 
         await outerDb.txn(async (innerDb) => {
           await innerDb.create('profiles', {
             userId: '2',
-            bio: 'Designer'
+            bio: 'Designer',
           })
 
           // Trigger an error
@@ -95,27 +95,27 @@ async function main() {
     console.log('\nExample 3: Deep nesting (3 levels)')
     await db.txn(async (level1Db) => {
       console.log('Level 1 started')
-      
+
       await level1Db.txn(async (level2Db) => {
         console.log('Level 2 started')
-        
+
         await level2Db.txn(async (level3Db) => {
           console.log('Level 3 started')
-          
+
           // Get current transaction information
           const info = (level3Db as DataBase).getCurrentTransactionInfo()
           console.log('Transaction info:', {
             isInTransaction: info.isInTransaction,
             level: info.level,
-            contextId: info.contextId?.slice(0, 8) + '...'
+            contextId: info.contextId?.slice(0, 8) + '...',
           })
-          
+
           console.log('Level 3 completed')
         })
-        
+
         console.log('Level 2 completed')
       })
-      
+
       console.log('Level 1 completed')
     })
 
@@ -126,14 +126,14 @@ async function main() {
       // but will utilize existing transaction context
       await outerDb.sync('products', {}, [
         { id: '1', name: 'Product A', price: 100 },
-        { id: '2', name: 'Product B', price: 200 }
+        { id: '2', name: 'Product B', price: 200 },
       ])
 
       // Additional operations in nested transaction
       await outerDb.txn(async (innerDb) => {
         await innerDb.create('categories', {
           id: '1',
-          name: 'Electronics'
+          name: 'Electronics',
         })
       })
     })
@@ -145,15 +145,17 @@ async function main() {
         await db2.txn(async () => {
           const stats = transactionManager.getStats()
           console.log('Active transactions:', stats.activeTransactions)
-          console.log('Context details:', stats.contexts.map(ctx => ({
-            id: ctx.id.slice(0, 8) + '...',
-            level: ctx.level,
-            duration: `${ctx.duration}ms`
-          })))
+          console.log(
+            'Context details:',
+            stats.contexts.map((ctx) => ({
+              id: ctx.id.slice(0, 8) + '...',
+              level: ctx.level,
+              duration: `${ctx.duration}ms`,
+            })),
+          )
         })
       })
     })
-
   } catch (error) {
     console.error('Unexpected error:', error)
   } finally {
@@ -168,7 +170,7 @@ async function legacyExample() {
   const prisma = new PrismaClient()
   const connector = new PrismaConnector(prisma)
   const logger = new ConsoleLogger()
-  
+
   // DataBase without TransactionManager (legacy behavior)
   const db = new DataBase(connector, logger)
 
@@ -177,12 +179,14 @@ async function legacyExample() {
   try {
     await db.txn(async (outerDb) => {
       console.log('Legacy outer transaction')
-      
+
       await outerDb.txn(async (innerDb) => {
-        console.log('Legacy inner transaction (separate Prisma transaction will be started)')
+        console.log(
+          'Legacy inner transaction (separate Prisma transaction will be started)',
+        )
       })
     })
-    
+
     console.log('Legacy API operation completed')
   } catch (error) {
     console.error('Legacy API error:', error)

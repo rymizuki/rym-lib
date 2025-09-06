@@ -1,7 +1,20 @@
-import { describe, it, expect, beforeEach, afterEach, vi, type MockInstance } from 'vitest'
-import { TransactionManager } from './transaction-manager'
+import {
+  describe,
+  it,
+  expect,
+  beforeEach,
+  afterEach,
+  vi,
+  type MockInstance,
+} from 'vitest'
+
 import { DataBase } from './database'
-import { DataBaseConnectorPort, DataBaseLogger, TransactionOptions } from './interfaces'
+import {
+  DataBaseConnectorPort,
+  DataBaseLogger,
+  TransactionOptions,
+} from './interfaces'
+import { TransactionManager } from './transaction-manager'
 
 class DummyDataBaseLogger implements DataBaseLogger {
   debug() {}
@@ -20,11 +33,11 @@ class TestConnector implements DataBaseConnectorPort {
   async execute(sql: string, replacements: unknown[]): Promise<void> {
     this.executeCalls.push({ sql, replacements })
   }
-  
+
   async query<T>(sql: string, replacements: unknown[]): Promise<T[]> {
     return []
   }
-  
+
   async transaction(
     exec: (conn: DataBaseConnectorPort) => Promise<void>,
   ): Promise<void> {
@@ -54,7 +67,7 @@ describe('TransactionManager', () => {
   describe('基本的なトランザクション機能', () => {
     it('should execute single transaction', async () => {
       let executed = false
-      
+
       await transactionManager.runInTransaction(db, async (txDb) => {
         executed = true
         expect(txDb).toBeDefined()
@@ -75,7 +88,7 @@ describe('TransactionManager', () => {
 
     it('should propagate errors from transaction', async () => {
       const error = new Error('Transaction failed')
-      
+
       await expect(async () => {
         await transactionManager.runInTransaction(db, async () => {
           throw error
@@ -88,10 +101,10 @@ describe('TransactionManager', () => {
     it('should handle nested transactions without creating additional Prisma transactions', async () => {
       let outerExecuted = false
       let innerExecuted = false
-      
+
       await transactionManager.runInTransaction(db, async (outerDb) => {
         outerExecuted = true
-        
+
         await transactionManager.runInTransaction(outerDb, async (innerDb) => {
           innerExecuted = true
           expect(innerDb).toBe(outerDb) // 同じインスタンスを使用
@@ -105,14 +118,16 @@ describe('TransactionManager', () => {
     })
 
     it('should handle deep nesting', async () => {
-      let level1 = false, level2 = false, level3 = false
-      
+      let level1 = false,
+        level2 = false,
+        level3 = false
+
       await transactionManager.runInTransaction(db, async (db1) => {
         level1 = true
-        
+
         await transactionManager.runInTransaction(db1, async (db2) => {
           level2 = true
-          
+
           await transactionManager.runInTransaction(db2, async (db3) => {
             level3 = true
           })
@@ -139,13 +154,13 @@ describe('TransactionManager', () => {
   describe('コンテキスト管理', () => {
     it('should track transaction contexts', async () => {
       let contextInfo: any = null
-      
+
       await transactionManager.runInTransaction(db, async (txDb) => {
         const context = transactionManager.getCurrentContext(txDb)
         contextInfo = {
           hasContext: !!context,
           id: context?.id,
-          level: context?.level
+          level: context?.level,
         }
       })
 
@@ -156,15 +171,15 @@ describe('TransactionManager', () => {
 
     it('should track nested levels correctly', async () => {
       const levels: number[] = []
-      
+
       await transactionManager.runInTransaction(db, async (db1) => {
         const ctx1 = transactionManager.getCurrentContext(db1)
         levels.push(ctx1!.level)
-        
+
         await transactionManager.runInTransaction(db1, async (db2) => {
           const ctx2 = transactionManager.getCurrentContext(db2)
           levels.push(ctx2!.level)
-          
+
           await transactionManager.runInTransaction(db2, async (db3) => {
             const ctx3 = transactionManager.getCurrentContext(db3)
             levels.push(ctx3!.level)
@@ -191,13 +206,13 @@ describe('TransactionManager', () => {
     it('should accept transaction options', async () => {
       const options: TransactionOptions = {
         metadata: { operation: 'test' },
-        warningThreshold: 5000
+        warningThreshold: 5000,
       }
-      
+
       const result = await transactionManager.runInTransaction(
-        db, 
+        db,
         async () => 'success',
-        options
+        options,
       )
 
       expect(result).toBe('success')
@@ -220,7 +235,7 @@ describe('TransactionManager', () => {
           await transactionManager.runInTransaction(db2, async () => {
             const stats = transactionManager.getStats()
             expect(stats.activeTransactions).toBe(3) // 親+子2つ
-            const levels = stats.contexts.map(ctx => ctx.level).sort()
+            const levels = stats.contexts.map((ctx) => ctx.level).sort()
             expect(levels).toEqual([1, 2, 3])
           })
         })
@@ -231,7 +246,7 @@ describe('TransactionManager', () => {
   describe('DataBaseとの統合', () => {
     it('should work with DataBase.txn method', async () => {
       let executed = false
-      
+
       const result = await db.txn(async (txDb) => {
         executed = true
         return 'db-txn-result'
@@ -244,10 +259,10 @@ describe('TransactionManager', () => {
     it('should handle nested db.txn calls', async () => {
       let outerExecuted = false
       let innerExecuted = false
-      
+
       await db.txn(async (outerDb) => {
         outerExecuted = true
-        
+
         await outerDb.txn(async (innerDb) => {
           innerExecuted = true
           expect(innerDb).toBe(outerDb)
@@ -272,15 +287,15 @@ describe('TransactionManager', () => {
   describe('エラーハンドリング', () => {
     it('should handle transaction timeout warnings', async () => {
       const consoleSpy = vi.spyOn(console, 'warn').mockImplementation(() => {})
-      
+
       await transactionManager.runInTransaction(
         db,
         async () => {
           // 短時間で完了するが、閾値を低く設定
-          await new Promise(resolve => setTimeout(resolve, 10))
+          await new Promise((resolve) => setTimeout(resolve, 10))
           return 'success'
         },
-        { warningThreshold: 5 }
+        { warningThreshold: 5 },
       )
 
       expect(consoleSpy).toHaveBeenCalled()
@@ -289,7 +304,7 @@ describe('TransactionManager', () => {
 
     it('should handle errors in nested transactions properly', async () => {
       const consoleSpy = vi.spyOn(console, 'error').mockImplementation(() => {})
-      
+
       await expect(async () => {
         await transactionManager.runInTransaction(db, async (db1) => {
           await transactionManager.runInTransaction(db1, async () => {
@@ -302,5 +317,4 @@ describe('TransactionManager', () => {
       consoleSpy.mockRestore()
     })
   })
-
 })

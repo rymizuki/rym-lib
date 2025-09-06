@@ -41,14 +41,14 @@ export class DataBase implements DataBasePort {
     options: DataBaseOptions = {},
   ) {
     this.context = { logger }
-    
+
     // SQLオプションからtransactionManagerを除外
     const { transactionManager, ...sqlOptions } = options
     this.toSqlOptions = {
       placeholder: '$' as const,
       ...sqlOptions,
     }
-    
+
     // TransactionManagerが未指定の場合、新しいインスタンスを自動作成
     this.transactionManager = transactionManager || new TransactionManager()
   }
@@ -171,7 +171,7 @@ export class DataBase implements DataBasePort {
 
   async txn<T>(
     fn: (db: DataBasePort) => Promise<T>,
-    options?: TransactionOptions
+    options?: TransactionOptions,
   ): Promise<T> {
     // TransactionManagerは常に存在する（コンストラクターで自動作成）
     return await this.transactionManager.runInTransaction(this, fn, options)
@@ -181,7 +181,6 @@ export class DataBase implements DataBasePort {
     this.middlewares.push(middleware)
     return this
   }
-
 
   /**
    * 現在のトランザクション情報を取得
@@ -199,7 +198,7 @@ export class DataBase implements DataBasePort {
     return {
       isInTransaction: true,
       contextId: context.id,
-      level: context.level
+      level: context.level,
     }
   }
 
@@ -332,7 +331,7 @@ export class DataBase implements DataBasePort {
   ): boolean {
     // キーの集合を取得（両方のオブジェクトの全キーを含む）
     const allKeys = new Set([...Object.keys(obj1), ...Object.keys(obj2)])
-    
+
     for (const key of allKeys) {
       // 一方にしか存在しないキー、または値が異なる場合は不一致
       if (obj1[key] !== obj2[key]) {

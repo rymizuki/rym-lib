@@ -1,5 +1,16 @@
 # @rym-lib/query-module
 
+## 1.4.0
+
+### Minor Changes
+
+- add sync method with rdb-command
+
+### Patch Changes
+
+- Updated dependencies
+  - @rym-lib/exception@1.4.0
+
 ## 1.3.3
 
 ### Patch Changes
