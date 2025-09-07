@@ -1,21 +1,21 @@
 # @rym-lib/express-cli
 
-ExpressアプリケーションをCLIインターフェースとして直接実行できるライブラリです。
+A library that allows you to execute Express applications directly as CLI interfaces without starting a server.
 
-## 特徴
+## Features
 
-- 🚀 **既存Expressアプリの再利用**: サーバー起動不要でExpressルートを実行
-- 🔄 **バッチ処理対応**: 複数のリクエストを並列・直列で実行
-- 🛠️ **ミドルウェア活用**: 既存のExpressミドルウェアをそのまま利用
-- 📁 **ファイル読み込み**: JSONファイルから直接リクエストボディを読み込み
+- 🚀 **Reuse Existing Express Apps**: Execute Express routes directly without server startup
+- 🔄 **Batch Processing**: Execute multiple requests in parallel or series
+- 🛠️ **Middleware Utilization**: Use existing Express middleware as-is
+- 📁 **File Loading**: Load request bodies directly from JSON files
 
-## インストール
+## Installation
 
 ```bash
 npm install @rym-lib/express-cli
 ```
 
-## 基本的な使用方法
+## Basic Usage
 
 ```javascript
 import express from 'express';
@@ -27,42 +27,42 @@ app.get('/api/users', (req, res) => {
   res.json({ users: ['user1', 'user2'] });
 });
 
-// CLIとして実行
+// Execute as CLI
 expressCli(app).parse(process.argv);
 ```
 
-## CLI使用例
+## CLI Usage Examples
 
-### 単一リクエスト
+### Single Request
 
 ```bash
-# GET リクエスト
+# GET request
 node cli.js /api/users
 
-# POST リクエスト
+# POST request
 node cli.js /api/users --method=POST --body='{"name":"test"}'
 
-# ヘッダー付きリクエスト
+# Request with headers
 node cli.js /api/users --headers='{"authorization":"Bearer token"}'
 
-# ファイルからボディを読み込み
+# Load body from file
 node cli.js /api/users --method=POST --body=@user.json
 ```
 
-### バッチ処理
+### Batch Processing
 
 ```bash
-# 並列実行（デフォルト）
+# Parallel execution (default)
 node cli.js batch \
   "/api/users --method=GET" \
   "/api/posts --method=GET"
 
-# 直列実行
+# Series execution
 node cli.js batch --series \
   "/api/users --method=POST --body='{\"name\":\"user1\"}'" \
   "/api/users --method=POST --body='{\"name\":\"user2\"}'"
 
-# エラー時も継続
+# Continue on error
 node cli.js batch --continue-on-error \
   "/api/users --method=GET" \
   "/invalid/path --method=GET"
@@ -72,23 +72,36 @@ node cli.js batch --continue-on-error \
 
 ### expressCli(app, options?)
 
-Express アプリケーションをCLIに変換します。
+Converts an Express application to CLI.
 
 #### Parameters
 
-- `app`: Express アプリケーション
-- `options`: 設定オプション（省略可能）
-  - `verbose`: 詳細出力
-  - `batchOptions`: バッチ処理設定
+- `app`: Express application instance
+- `options`: Configuration options (optional)
+  - `verbose`: Enable verbose output
+  - `batchOptions`: Batch processing configuration
 
 #### Returns
 
-Commander.js の Command インスタンス
+Commander.js Command instance
 
-## 開発状況
+## Development Status
 
-現在開発中（v0.0.0）。基本機能の実装が完了しています。
+Currently in development (v0.0.0). Basic functionality implementation is complete.
 
-## ライセンス
+## Use Cases
+
+- **API Testing**: Test your Express endpoints without starting a server
+- **Data Migration**: Run batch operations on your API endpoints
+- **CI/CD Integration**: Execute API operations in serverless environments
+- **Development Tools**: Create CLI tools from existing Express applications
+
+## Benefits
+
+- **No Duplicate Code**: Reuse your existing Express routes and middleware
+- **Server-less Execution**: Perfect for CI/CD pipelines and serverless environments
+- **Development Efficiency**: No need to maintain separate CLI tools
+
+## License
 
 MIT
