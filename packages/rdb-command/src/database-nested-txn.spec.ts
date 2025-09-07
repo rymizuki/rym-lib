@@ -8,6 +8,7 @@ class DummyDataBaseLogger implements DataBaseLogger {
   debug = vi.fn()
   info = vi.fn()
   warning = vi.fn()
+  warn = vi.fn()
   error = vi.fn()
   critical = vi.fn()
 }
@@ -73,9 +74,10 @@ describe('DataBase Nested Transaction Integration', () => {
   let db: DataBase
 
   beforeEach(() => {
-    transactionManager = new TransactionManager()
     connector = new MockConnector()
     logger = new DummyDataBaseLogger()
+    const context = { logger }
+    transactionManager = new TransactionManager(context)
     db = new DataBase(connector, logger, { transactionManager })
   })
 

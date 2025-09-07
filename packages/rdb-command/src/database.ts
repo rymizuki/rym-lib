@@ -50,7 +50,7 @@ export class DataBase implements DataBasePort {
     }
 
     // TransactionManagerが未指定の場合、新しいインスタンスを自動作成
-    this.transactionManager = transactionManager || new TransactionManager()
+    this.transactionManager = transactionManager || new TransactionManager(this.context)
   }
 
   async findOrCreate<Row>(
