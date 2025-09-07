@@ -20,6 +20,7 @@ class DummyDataBaseLogger implements DataBaseLogger {
   debug() {}
   info() {}
   warning() {}
+  warn = this.warning
   error() {}
   critical() {}
 }
@@ -54,9 +55,10 @@ describe('TransactionManager', () => {
   let logger: DataBaseLogger
 
   beforeEach(() => {
-    transactionManager = new TransactionManager()
     connector = new TestConnector()
     logger = new DummyDataBaseLogger()
+    const context = { logger }
+    transactionManager = new TransactionManager(context)
     db = new DataBase(connector, logger, { transactionManager })
   })
 
@@ -286,7 +288,7 @@ describe('TransactionManager', () => {
 
   describe('エラーハンドリング', () => {
     it('should handle transaction timeout warnings', async () => {
-      const consoleSpy = vi.spyOn(console, 'warn').mockImplementation(() => {})
+      const loggerSpy = vi.spyOn(logger, 'warn').mockImplementation(() => {})
 
       await transactionManager.runInTransaction(
         db,
@@ -298,12 +300,12 @@ describe('TransactionManager', () => {
         { warningThreshold: 5 },
       )
 
-      expect(consoleSpy).toHaveBeenCalled()
-      consoleSpy.mockRestore()
+      expect(loggerSpy).toHaveBeenCalled()
+      loggerSpy.mockRestore()
     })
 
     it('should handle errors in nested transactions properly', async () => {
-      const consoleSpy = vi.spyOn(console, 'error').mockImplementation(() => {})
+      const loggerSpy = vi.spyOn(logger, 'error').mockImplementation(() => {})
 
       await expect(async () => {
         await transactionManager.runInTransaction(db, async (db1) => {
@@ -313,8 +315,8 @@ describe('TransactionManager', () => {
         })
       }).rejects.toThrow('Inner failure')
 
-      expect(consoleSpy).toHaveBeenCalled()
-      consoleSpy.mockRestore()
+      expect(loggerSpy).toHaveBeenCalled()
+      loggerSpy.mockRestore()
     })
   })
 })
