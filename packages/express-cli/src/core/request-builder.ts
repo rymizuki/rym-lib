@@ -4,9 +4,12 @@ import type { CliRequest, RequestBuilderOptions } from '../types/index.js'
 export class RequestBuilder {
   static fromCliArgs(
     path: string,
-    options: RequestBuilderOptions
+    options: RequestBuilderOptions & Record<string, any>
   ): CliRequest {
     const method = (options.method || 'GET').toUpperCase()
+    
+    // Normalize path: replace spaces with slashes
+    const normalizedPath = path.replace(/ /g, '/')
     
     let headers: Record<string, string> = {}
     if (options.headers) {
@@ -15,6 +18,20 @@ export class RequestBuilder {
       } catch (error) {
         throw new Error(`Invalid headers JSON: ${options.headers}`)
       }
+    }
+    
+    // Parse --header 'key: value' format
+    if (options.header) {
+      const headerArray = Array.isArray(options.header) ? options.header : [options.header]
+      headerArray.forEach((headerStr: string) => {
+        const colonIndex = headerStr.indexOf(':')
+        if (colonIndex === -1) {
+          throw new Error(`Invalid header format: ${headerStr}. Expected 'key: value'`)
+        }
+        const key = headerStr.slice(0, colonIndex).trim().toLowerCase()
+        const value = headerStr.slice(colonIndex + 1).trim()
+        headers[key] = value
+      })
     }
 
     let body: string | object | undefined
@@ -45,10 +62,18 @@ export class RequestBuilder {
         throw new Error(`Invalid query JSON: ${options.query}`)
       }
     }
+    
+    // Extract query parameters from --key=value options
+    const reservedKeys = ['method', 'headers', 'header', 'body', 'query', 'verbose']
+    Object.keys(options).forEach(key => {
+      if (!reservedKeys.includes(key) && key !== '_' && !key.startsWith('$')) {
+        query[key] = String(options[key])
+      }
+    })
 
     return {
       method,
-      path,
+      path: normalizedPath,
       headers,
       body,
       query
@@ -56,10 +81,17 @@ export class RequestBuilder {
   }
 
   static toExpressRequest(cliRequest: CliRequest): Partial<Request> {
+    // Build URL with query parameters
+    const queryString = Object.keys(cliRequest.query || {})
+      .map(key => `${encodeURIComponent(key)}=${encodeURIComponent(cliRequest.query![key])}`)
+      .join('&')
+    
+    const url = queryString ? `${cliRequest.path}?${queryString}` : cliRequest.path
+    
     return {
       method: cliRequest.method,
       path: cliRequest.path,
-      url: cliRequest.path,
+      url,
       headers: cliRequest.headers || {},
       body: cliRequest.body,
       query: cliRequest.query || {}

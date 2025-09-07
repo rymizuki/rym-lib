@@ -19,12 +19,14 @@ export function expressCli(
     .version('0.0.0')
 
   program
-    .argument('<path>', 'Express route path')
+    .argument('<path>', 'Express route path (spaces will be converted to /)')
     .option('--method <method>', 'HTTP method', 'GET')
     .option('--headers <headers>', 'Request headers as JSON')
+    .option('--header <header>', 'Request header in "key: value" format (repeatable)', [])
     .option('--body <body>', 'Request body as JSON or @file.json')
     .option('--query <query>', 'Query parameters as JSON')
     .option('--verbose', 'Verbose output')
+    .allowUnknownOption(true)
     .action(async (path, options) => {
       try {
         const cliRequest = RequestBuilder.fromCliArgs(path, options)

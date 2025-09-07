@@ -36,6 +36,7 @@ export interface ExpressCliCommand extends Command {
 export interface RequestBuilderOptions {
   method?: string
   headers?: string
+  header?: string | string[]
   body?: string
   query?: string
 }
