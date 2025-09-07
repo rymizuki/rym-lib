@@ -20,7 +20,7 @@ class DummyDataBaseLogger implements DataBaseLogger {
   debug() {}
   info() {}
   warning() {}
-  warn = this.warning
+  warn() {}
   error() {}
   critical() {}
 }
