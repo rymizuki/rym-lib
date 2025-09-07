@@ -83,7 +83,10 @@ export class RequestBuilder {
   static toExpressRequest(cliRequest: CliRequest): Partial<Request> {
     // Build URL with query parameters
     const queryString = Object.keys(cliRequest.query || {})
-      .map(key => `${encodeURIComponent(key)}=${encodeURIComponent(cliRequest.query![key])}`)
+      .map(key => {
+        const value = cliRequest.query![key]
+        return `${encodeURIComponent(key)}=${encodeURIComponent(value ?? '')}`
+      })
       .join('&')
     
     const url = queryString ? `${cliRequest.path}?${queryString}` : cliRequest.path

@@ -70,7 +70,9 @@ export function expressCli(
         const responses = await adapter.executeBatch(cliRequests)
         
         responses.forEach((response, index) => {
-          console.log(`--- Request ${index + 1} (${cliRequests[index].method} ${cliRequests[index].path}) ---`)
+          const request = cliRequests[index]
+          if (!request) return
+          console.log(`--- Request ${index + 1} (${request.method} ${request.path}) ---`)
           const output = ResponseHandler.formatOutput(response, options.verbose)
           console.log(output)
           console.log('')

@@ -51,7 +51,7 @@ export class CliAdapter {
           }
         }, 100)
 
-        this.app.handle(req, res, (err?: Error) => {
+        ;(this.app as any).handle(req, res, (err?: Error) => {
           clearTimeout(timeout)
           if (err) {
             if (!res.finished) {
