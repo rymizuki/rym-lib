@@ -59,6 +59,7 @@ export class TransactionManager {
   ): Promise<T> {
     const opts = { ...this.defaultOptions, ...options }
     const startTime = Date.now()
+    const logger = (db as any).context.logger
 
     try {
       const existingContext = opts.parentContextId
@@ -80,10 +81,9 @@ export class TransactionManager {
       }
     } catch (error) {
       const duration = Date.now() - startTime
-      console.error('Transaction failed', {
+      logger.error('Transaction failed: %s', error instanceof Error ? error.message : error, {
         duration,
         metadata: opts.metadata,
-        error: error instanceof Error ? error.message : error,
       })
       throw error
     }
@@ -171,6 +171,7 @@ export class TransactionManager {
     startTime: number,
   ): Promise<T> {
     const result: { value: T | null } = { value: null }
+    const logger = (db as any).context.logger
 
     // DataBaseの基礎となるconnectorを直接使用してトランザクションを開始
     const conn = (db as any).conn as DataBaseConnectorPort
@@ -183,12 +184,11 @@ export class TransactionManager {
       let txDb: any = null
 
       try {
-        console.debug(
+        logger.debug(
           `[TransactionManager] Root transaction started: ${context.id}`,
         )
 
         // 新しいDataBaseインスタンスを作成（TransactionManager無しで無限再帰を防ぐ）
-        const logger = (db as any).context.logger
         const toSqlOptions = (db as any).toSqlOptions
         const middlewares = (db as any).middlewares || []
 
@@ -209,13 +209,13 @@ export class TransactionManager {
 
         const duration = Date.now() - startTime
         if (duration > options.warningThreshold) {
-          console.warn(`Long transaction detected: ${duration}ms`, {
+          logger.warn(`Long transaction detected: ${duration}ms`, {
             contextId: context.id,
             metadata: options.metadata,
           })
         }
 
-        console.debug(
+        logger.debug(
           `[TransactionManager] Root transaction completed: ${context.id} (${duration}ms)`,
         )
       } finally {
@@ -244,6 +244,7 @@ export class TransactionManager {
     options: Required<TransactionOptions>,
     startTime: number,
   ): Promise<T> {
+    const logger = (db as any).context.logger
     const childContext = this.createContext(
       parentContext.conn,
       parentContext.id,
@@ -251,7 +252,7 @@ export class TransactionManager {
     )
 
     try {
-      console.debug(
+      logger.debug(
         `[TransactionManager] Nested transaction started: ${childContext.id} (level: ${childContext.level})`,
       )
 
@@ -264,7 +265,7 @@ export class TransactionManager {
 
         const duration = Date.now() - startTime
         if (duration > options.warningThreshold) {
-          console.warn(`Long nested transaction detected: ${duration}ms`, {
+          logger.warn(`Long nested transaction detected: ${duration}ms`, {
             contextId: childContext.id,
             parentId: parentContext.id,
             level: childContext.level,
@@ -272,7 +273,7 @@ export class TransactionManager {
           })
         }
 
-        console.debug(
+        logger.debug(
           `[TransactionManager] Nested transaction completed: ${childContext.id} (${duration}ms)`,
         )
 
@@ -282,7 +283,7 @@ export class TransactionManager {
         this.dbToCurrentContext.set(db, parentContext.id)
       }
     } catch (error) {
-      console.error(
+      logger.error(
         `[TransactionManager] Nested transaction failed: ${childContext.id}`,
         {
           parentId: parentContext.id,
