@@ -22,8 +22,10 @@ export class ResponseHandler {
     let body: string = ''
 
     const response: Partial<Response> = {
+      statusCode: 200,
       status: (code: number) => {
         statusCode = code
+        response.statusCode = code
         return response as Response
       },
       set: (field: string | Record<string, string>, value?: string) => {
@@ -36,6 +38,11 @@ export class ResponseHandler {
         }
         return response as Response
       },
+      setHeader: (name: string, value: string | string[] | number) => {
+        headers[name.toLowerCase()] = String(value)
+        return response as Response
+      },
+      getHeaders: () => headers,
       json: (obj: any) => {
         headers['content-type'] = 'application/json'
         body = JSON.stringify(obj)

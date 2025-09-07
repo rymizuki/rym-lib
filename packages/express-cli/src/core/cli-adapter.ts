@@ -16,29 +16,60 @@ export class CliAdapter {
     return new Promise((resolve, reject) => {
       const req = {
         ...expressRequest,
-        app: this.app
+        app: this.app,
+        params: {},
+        route: undefined
       } as Request
 
       const res = {
         ...response,
-        locals: {}
+        locals: {},
+        finished: false
       } as Response
 
-      res.end = () => {
-        resolve(getResult())
+      // Override end to resolve the promise
+      const originalEnd = res.end
+      res.end = (data?: any) => {
+        if (!res.finished) {
+          res.finished = true
+          if (data !== undefined) {
+            if (typeof data === 'string') {
+              (res as any).body = data
+            }
+          }
+          resolve(getResult())
+        }
         return res
       }
 
       try {
-        this.app.handle(req, res, (err?: Error) => {
-          if (err) {
-            reject(err)
-          } else {
+        // Use setTimeout to avoid infinite waiting
+        const timeout = setTimeout(() => {
+          if (!res.finished) {
+            res.finished = true
             resolve(getResult())
+          }
+        }, 100)
+
+        this.app.handle(req, res, (err?: Error) => {
+          clearTimeout(timeout)
+          if (err) {
+            if (!res.finished) {
+              res.finished = true
+              reject(err)
+            }
+          } else {
+            if (!res.finished) {
+              res.finished = true
+              resolve(getResult())
+            }
           }
         })
       } catch (error) {
-        reject(error)
+        if (!res.finished) {
+          res.finished = true
+          reject(error)
+        }
       }
     })
   }

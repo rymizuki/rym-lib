@@ -8,8 +8,8 @@ export class RequestBuilder {
   ): CliRequest {
     const method = (options.method || 'GET').toUpperCase()
     
-    // Normalize path: replace spaces with slashes
-    const normalizedPath = path.replace(/ /g, '/')
+    // Normalize path: replace spaces with slashes and ensure leading slash
+    const normalizedPath = '/' + path.replace(/ /g, '/').replace(/^\/+/, '')
     
     let headers: Record<string, string> = {}
     if (options.headers) {
