@@ -35,8 +35,7 @@ export interface InteractionPort<Data> {
 export function builder<
   Data,
   Output,
-  Adapter extends
-    NakadachiAdapterInterface<Output> = NakadachiAdapterInterface<Output>,
+  Adapter extends NakadachiAdapterInterface<Output> = NakadachiAdapterInterface<Output>,
 >(
   createAdapter: (...args: any[]) => Adapter,
   options: Partial<NakadachiOption> = {},

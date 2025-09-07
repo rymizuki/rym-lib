@@ -24,8 +24,8 @@ function escape(value: string, options: { quote?: string | null } = {}) {
     options.quote === null
       ? ''
       : options.quote !== undefined
-        ? options.quote
-        : '`'
+      ? options.quote
+      : '`'
   return `${quote}${encodeURIComponent(value)}${quote}`
 }
 
@@ -50,7 +50,8 @@ export class DataBase implements DataBasePort {
     }
 
     // TransactionManagerが未指定の場合、新しいインスタンスを自動作成
-    this.transactionManager = transactionManager || new TransactionManager(this.context)
+    this.transactionManager =
+      transactionManager || new TransactionManager(this.context)
   }
 
   async findOrCreate<Row>(

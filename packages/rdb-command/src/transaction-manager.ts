@@ -48,7 +48,9 @@ export class TransactionManager {
     metadata: {},
     warningThreshold: 10000, // 10秒
   }
-  constructor(private readonly context: import('./interfaces').DataBaseContext) {}
+  constructor(
+    private readonly context: import('./interfaces').DataBaseContext,
+  ) {}
 
   /**
    * トランザクション内で関数を実行
@@ -81,10 +83,14 @@ export class TransactionManager {
       }
     } catch (error) {
       const duration = Date.now() - startTime
-      this.context.logger.error('Transaction failed: %s', error instanceof Error ? error.message : error, {
-        duration,
-        metadata: opts.metadata,
-      })
+      this.context.logger.error(
+        'Transaction failed: %s',
+        error instanceof Error ? error.message : error,
+        {
+          duration,
+          metadata: opts.metadata,
+        },
+      )
       throw error
     }
   }
@@ -263,12 +269,15 @@ export class TransactionManager {
 
         const duration = Date.now() - startTime
         if (duration > options.warningThreshold) {
-          this.context.logger.warn(`Long nested transaction detected: ${duration}ms`, {
-            contextId: childContext.id,
-            parentId: parentContext.id,
-            level: childContext.level,
-            metadata: options.metadata,
-          })
+          this.context.logger.warn(
+            `Long nested transaction detected: ${duration}ms`,
+            {
+              contextId: childContext.id,
+              parentId: parentContext.id,
+              level: childContext.level,
+              metadata: options.metadata,
+            },
+          )
         }
 
         this.context.logger.debug(
