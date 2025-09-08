@@ -4,7 +4,7 @@ import { RequestBuilder } from '../core/request-builder.js'
 export class BatchProcessor {
   static parseCommands(commands: string[]): BatchRequest[] {
     return commands.map(command => {
-      const parts = command.trim().split(/\s+/)
+      const parts = BatchProcessor.splitCommandLine(command.trim())
       const path = parts[0]
       if (!path) {
         throw new Error(`Invalid command: ${command}`)
@@ -29,6 +29,40 @@ export class BatchProcessor {
 
       return { command: path, options }
     })
+  }
+
+  private static splitCommandLine(command: string): string[] {
+    const parts: string[] = []
+    let current = ''
+    let inQuotes = false
+    let quoteChar = ''
+
+    for (let i = 0; i < command.length; i++) {
+      const char = command[i]
+      
+      if ((char === '"' || char === "'") && !inQuotes) {
+        inQuotes = true
+        quoteChar = char
+        current += char
+      } else if (char === quoteChar && inQuotes) {
+        inQuotes = false
+        current += char
+        quoteChar = ''
+      } else if (char === ' ' && !inQuotes) {
+        if (current.trim()) {
+          parts.push(current.trim())
+          current = ''
+        }
+      } else {
+        current += char
+      }
+    }
+
+    if (current.trim()) {
+      parts.push(current.trim())
+    }
+
+    return parts
   }
 
   static batchRequestsToCliRequests(batchRequests: BatchRequest[]): CliRequest[] {

@@ -76,14 +76,28 @@ export class ResponseHandler {
 
   static formatOutput(cliResponse: CliResponse, verbose: boolean = false): string {
     if (verbose) {
+      let parsedBody = cliResponse.body
+      if (cliResponse.body) {
+        try {
+          parsedBody = JSON.parse(cliResponse.body)
+        } catch {
+          // Keep as string if not valid JSON
+          parsedBody = cliResponse.body
+        }
+      }
       return JSON.stringify({
         statusCode: cliResponse.statusCode,
         headers: cliResponse.headers,
-        body: cliResponse.body ? JSON.parse(cliResponse.body) : cliResponse.body
+        body: parsedBody
       }, null, 2)
     }
 
-    if (cliResponse.headers['content-type']?.includes('application/json')) {
+    // Check content-type in a case-insensitive way
+    const contentType = Object.keys(cliResponse.headers).find(key => 
+      key.toLowerCase() === 'content-type'
+    )
+    
+    if (contentType && cliResponse.headers[contentType]?.toLowerCase().includes('application/json')) {
       try {
         return JSON.stringify(JSON.parse(cliResponse.body), null, 2)
       } catch {

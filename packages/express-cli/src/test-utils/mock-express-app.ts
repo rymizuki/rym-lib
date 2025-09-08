@@ -102,5 +102,10 @@ export function createMockExpressApp(): Express {
     res.status(500).json({ error: 'Internal server error' })
   })
   
+  // 404 handler for unmatched routes
+  app.use((req, res) => {
+    res.status(404).json({ error: 'Not found' })
+  })
+  
   return app
 }
