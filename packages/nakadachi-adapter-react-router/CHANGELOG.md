@@ -1,5 +1,13 @@
 # @rym-lib/nakadachi-adapter-react-router
 
+## 1.4.2
+
+### Patch Changes
+
+- fixes for ci
+- Updated dependencies
+  - @rym-lib/nakadachi@1.4.2
+
 ## 1.4.1
 
 ### Patch Changes

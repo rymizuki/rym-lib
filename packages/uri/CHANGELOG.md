@@ -1,5 +1,11 @@
 # @rym-lib/uri
 
+## 1.4.2
+
+### Patch Changes
+
+- fixes for ci
+
 ## 1.4.1
 
 ### Patch Changes

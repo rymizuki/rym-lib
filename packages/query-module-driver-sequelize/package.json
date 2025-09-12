@@ -1,6 +1,6 @@
 {
   "name": "@rym-lib/query-module-driver-sequelize",
-  "version": "1.4.1",
+  "version": "1.4.2",
   "private": false,
   "main": "build/index.js",
   "types": "build/index.d.ts",
@@ -26,11 +26,11 @@
     "ncu": "npm-check-updates"
   },
   "dependencies": {
-    "@rym-lib/query-module-sql-builder": "1.4.1"
+    "@rym-lib/query-module-sql-builder": "1.4.2"
   },
   "devDependencies": {
     "@rym-lib/dev-config": "*",
-    "@rym-lib/query-module": "1.4.1",
+    "@rym-lib/query-module": "1.4.2",
     "@types/node": "^22.4.1",
     "@vitest/coverage-v8": "^3.2.4",
     "npm-check-updates": "^17.0.6",
