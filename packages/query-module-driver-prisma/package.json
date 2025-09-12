@@ -29,7 +29,6 @@
     }
   },
   "scripts": {
-    "postinstall": "prisma generate",
     "build": "tsup",
     "test": "vitest run --coverage",
     "lint": "eslint --max-warnings 0 . && tsc --noEmit && prettier --check \"src/**/*.{ts,js,json}\"",
