@@ -1,5 +1,13 @@
 # @rym-lib/remix-helper
 
+## 1.4.3
+
+### Patch Changes
+
+- fix install
+- Updated dependencies
+  - @rym-lib/utilities@1.4.3
+
 ## 1.4.2
 
 ### Patch Changes
