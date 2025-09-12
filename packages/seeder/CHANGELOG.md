@@ -1,5 +1,11 @@
 # @rym-lib/nakadachi-interactor-mixin-validator
 
+## 1.4.1
+
+### Patch Changes
+
+- minimum changes
+
 ## 1.4.0
 
 ### Minor Changes

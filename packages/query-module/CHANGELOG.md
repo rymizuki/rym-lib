@@ -1,5 +1,13 @@
 # @rym-lib/query-module
 
+## 1.4.1
+
+### Patch Changes
+
+- minimum changes
+- Updated dependencies
+  - @rym-lib/exception@1.4.1
+
 ## 1.4.0
 
 ### Minor Changes
