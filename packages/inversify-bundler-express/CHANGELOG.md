@@ -1,5 +1,13 @@
 # @rym-lib/inversify-bundler-express
 
+## 1.4.5
+
+### Patch Changes
+
+- fix rdb-command interface
+- Updated dependencies
+  - @rym-lib/inversify-bundler@1.4.5
+
 ## 1.4.4
 
 ### Patch Changes

@@ -214,10 +214,13 @@ export class TransactionManager {
 
         const duration = Date.now() - startTime
         if (duration > options.warningThreshold) {
-          this.context.logger.warning(`Long transaction detected: ${duration}ms`, {
-            contextId: context.id,
-            metadata: options.metadata,
-          })
+          this.context.logger.warning(
+            `Long transaction detected: ${duration}ms`,
+            {
+              contextId: context.id,
+              metadata: options.metadata,
+            },
+          )
         }
 
         this.context.logger.debug(

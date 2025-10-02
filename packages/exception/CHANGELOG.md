@@ -1,5 +1,11 @@
 # @rym-lib/exception
 
+## 1.4.5
+
+### Patch Changes
+
+- fix rdb-command interface
+
 ## 1.4.4
 
 ### Patch Changes
