@@ -20,7 +20,6 @@ class DummyDataBaseLogger implements DataBaseLogger {
   debug() {}
   info() {}
   warning() {}
-  warn() {}
   error() {}
   critical() {}
 }
@@ -288,7 +287,7 @@ describe('TransactionManager', () => {
 
   describe('エラーハンドリング', () => {
     it('should handle transaction timeout warnings', async () => {
-      const loggerSpy = vi.spyOn(logger, 'warn').mockImplementation(() => {})
+      const loggerSpy = vi.spyOn(logger, 'warning').mockImplementation(() => {})
 
       await transactionManager.runInTransaction(
         db,
