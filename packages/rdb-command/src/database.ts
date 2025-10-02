@@ -122,7 +122,7 @@ export class DataBase implements DataBasePort {
       .map(
         (prop, index) =>
           `${escape(prop, this.toSqlOptions)} = ${this.getPlaceholder(
-            bindings.length + index
+            bindings.length + index,
           )}`,
       )
       .join(', ')

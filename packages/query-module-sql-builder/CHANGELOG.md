@@ -1,5 +1,11 @@
 # @rym-lib/query-module-sql-builder
 
+## 1.4.4
+
+### Patch Changes
+
+- fix bugs
+
 ## 1.4.3
 
 ### Patch Changes

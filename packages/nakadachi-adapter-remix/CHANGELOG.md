@@ -1,5 +1,13 @@
 # @rym-lib/nakadachi-adapter-remix
 
+## 1.4.4
+
+### Patch Changes
+
+- fix bugs
+- Updated dependencies
+  - @rym-lib/nakadachi@1.4.4
+
 ## 1.4.3
 
 ### Patch Changes
