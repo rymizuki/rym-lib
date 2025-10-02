@@ -103,7 +103,7 @@ export class DataBase implements DataBasePort {
       table,
       this.toSqlOptions,
     )} (${columns}) VALUES (${replacements
-      .map((_, index) => `$${index + 1}`)
+      .map((_, index) => this.getPlaceholder(index))
       .join(',')})`
     this.context.logger.debug(`[DataBase] create: ${sql} `, { replacements })
 
@@ -121,9 +121,9 @@ export class DataBase implements DataBasePort {
     const setters = Object.keys(data)
       .map(
         (prop, index) =>
-          `${escape(prop, this.toSqlOptions)} = $${
-            bindings.length + index + 1
-          }`,
+          `${escape(prop, this.toSqlOptions)} = ${this.getPlaceholder(
+            bindings.length + index
+          )}`,
       )
       .join(', ')
     const values = Object.values(this.parse(data))
@@ -255,6 +255,14 @@ export class DataBase implements DataBasePort {
 
   private parse(record: Record<string, unknown>) {
     return record
+  }
+
+  private getPlaceholder(index: number): string {
+    const placeholder = this.toSqlOptions.placeholder || '$'
+    if (placeholder === '?') {
+      return '?'
+    }
+    return `${placeholder}${index + 1}`
   }
 
   private async getRecords<Row extends Record<string, unknown>>(
