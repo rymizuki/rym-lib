@@ -45,6 +45,8 @@ export class DataBase implements DataBasePort {
     // SQLオプションからtransactionManagerを除外
     const { transactionManager, ...sqlOptions } = options
     this.toSqlOptions = {
+      // placeholderが指定されていない場合はデフォルトで'$'を使用
+      // MySQLの場合は明示的に placeholder: '?' を指定する必要がある
       placeholder: '$' as const,
       ...sqlOptions,
     }
