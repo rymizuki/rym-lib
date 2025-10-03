@@ -9,6 +9,7 @@ export class Seeder {
       created_at?: boolean
       updated_at?: boolean
       quote?: '`' | '"' | ''
+      placeholder?: '$' | '?'
     },
   ) {}
 
@@ -30,7 +31,7 @@ export class Seeder {
       const queryResult = (await this.client.$queryRawUnsafe(
         `SELECT * FROM ${this.escape(table_name)} WHERE ${this.escape(
           pk,
-        )} = $1 LIMIT 1`,
+        )} = ${this.getPlaceholder(0)} LIMIT 1`,
         pk_value,
       )) as Record<string, any>[]
       const row = queryResult[0] as Record<string, any> | undefined
@@ -46,17 +47,17 @@ export class Seeder {
         let index = 0
         const setters = columns
           .filter((prop) => prop !== pk)
-          .map((prop) => `${this.escape(prop)} = $${++index}`)
+          .map((prop) => `${this.escape(prop)} = ${this.getPlaceholder(index++)}`)
         const values = columns
           .map((_, index) => (index === pk_index ? null : record[index]))
           .filter((value) => value !== null)
         if (this.options.updated_at) {
-          setters.push(`${this.escape('updated_at')} = $${++index}`)
+          setters.push(`${this.escape('updated_at')} = ${this.getPlaceholder(index++)}`)
           values.push(new Date())
         }
         const sql = `UPDATE ${this.escape(table_name)} SET ${setters.join(
           ', ',
-        )} WHERE ${this.escape(pk)} = $${++index}`
+        )} WHERE ${this.escape(pk)} = ${this.getPlaceholder(index++)}`
         try {
           await this.client.$executeRawUnsafe(sql, ...values, pk_value)
         } catch (error) {
@@ -76,7 +77,7 @@ export class Seeder {
         }
         const sql = `INSERT INTO ${this.escape(table_name)} (${cols.join(
           ', ',
-        )}) VALUES (${cols.map((_, index) => `$${index + 1}`).join(', ')})`
+        )}) VALUES (${cols.map((_, index) => this.getPlaceholder(index)).join(', ')})`
         try {
           await this.client.$executeRawUnsafe(sql, ...values)
         } catch (error) {
@@ -91,5 +92,13 @@ export class Seeder {
   private escape(value: string) {
     const quote = this.options.quote ?? '`'
     return `${quote}${value}${quote}`
+  }
+
+  private getPlaceholder(index: number): string {
+    const placeholder = this.options.placeholder || '$'
+    if (placeholder === '?') {
+      return '?'
+    }
+    return `${placeholder}${index + 1}`
   }
 }
