@@ -47,12 +47,16 @@ export class Seeder {
         let index = 0
         const setters = columns
           .filter((prop) => prop !== pk)
-          .map((prop) => `${this.escape(prop)} = ${this.getPlaceholder(index++)}`)
+          .map(
+            (prop) => `${this.escape(prop)} = ${this.getPlaceholder(index++)}`,
+          )
         const values = columns
           .map((_, index) => (index === pk_index ? null : record[index]))
           .filter((value) => value !== null)
         if (this.options.updated_at) {
-          setters.push(`${this.escape('updated_at')} = ${this.getPlaceholder(index++)}`)
+          setters.push(
+            `${this.escape('updated_at')} = ${this.getPlaceholder(index++)}`,
+          )
           values.push(new Date())
         }
         const sql = `UPDATE ${this.escape(table_name)} SET ${setters.join(
