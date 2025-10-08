@@ -601,6 +601,137 @@ describe('db', () => {
     describe.skip('findOrCreate', () => {})
     describe.skip('updateOrCreate', () => {})
   })
+
+  describe('MySQL and PostgreSQL placeholder patterns', () => {
+    let conn: DataBaseConnectorPort
+    let execute_spy: MockInstance
+
+    beforeEach(() => {
+      conn = new TestConnector()
+      execute_spy = vi.spyOn(conn, 'execute')
+    })
+
+    describe('MySQL placeholder pattern (?)', () => {
+      let db: DataBasePort
+
+      beforeEach(() => {
+        db = new DataBase(conn, new DummyDataBaseLogger(), {
+          placeholder: '?',
+        })
+      })
+
+      it('should generate correct SQL and replacements for update', async () => {
+        await db.update(
+          'users',
+          { id: 1 },
+          { name: 'John', age: 30 },
+        )
+
+        // MySQLの場合、プレースホルダーは全て ? で、
+        // replacements は SET句の値が先、WHERE句の値が後
+        expect(execute_spy).toHaveBeenCalledWith(
+          'UPDATE `users` SET `name` = ?, `age` = ? WHERE (`id` = ?)',
+          ['John', 30, 1],
+        )
+      })
+
+      it('should handle multiple WHERE conditions correctly', async () => {
+        await db.update(
+          'posts',
+          { userId: 1, status: 'active' },
+          { title: 'Updated Title', content: 'New Content' },
+        )
+
+        expect(execute_spy).toHaveBeenCalledWith(
+          'UPDATE `posts` SET `title` = ?, `content` = ? WHERE (`userId` = ?)\n  AND (`status` = ?)',
+          ['Updated Title', 'New Content', 1, 'active'],
+        )
+      })
+
+      it('should generate correct SQL and replacements for create', async () => {
+        await db.create('users', {
+          id: 1,
+          name: 'John',
+          email: 'john@example.com',
+        })
+
+        expect(execute_spy).toHaveBeenCalledWith(
+          'INSERT INTO `users` (`id`,`name`,`email`) VALUES (?,?,?)',
+          [1, 'John', 'john@example.com'],
+        )
+      })
+
+      it('should generate correct SQL and replacements for delete', async () => {
+        await db.delete('users', { id: 1 })
+
+        expect(execute_spy).toHaveBeenCalledWith(
+          'DELETE FROM `users` WHERE (`id` = ?)',
+          [1],
+        )
+      })
+    })
+
+    describe('PostgreSQL placeholder pattern ($)', () => {
+      let db: DataBasePort
+
+      beforeEach(() => {
+        db = new DataBase(conn, new DummyDataBaseLogger(), {
+          placeholder: '$',
+        })
+      })
+
+      it('should generate correct SQL and replacements for update', async () => {
+        await db.update(
+          'users',
+          { id: 1 },
+          { name: 'John', age: 30 },
+        )
+
+        // PostgreSQLの場合、番号付きプレースホルダー ($1, $2, ...)
+        // replacements は WHERE句の値が先、SET句の値が後（従来の動作を維持）
+        expect(execute_spy).toHaveBeenCalledWith(
+          'UPDATE `users` SET `name` = $2, `age` = $3 WHERE (`id` = $1)',
+          [1, 'John', 30],
+        )
+      })
+
+      it('should handle multiple WHERE conditions correctly', async () => {
+        await db.update(
+          'posts',
+          { userId: 1, status: 'active' },
+          { title: 'Updated Title', content: 'New Content' },
+        )
+
+        expect(execute_spy).toHaveBeenCalledWith(
+          'UPDATE `posts` SET `title` = $3, `content` = $4 WHERE (`userId` = $1)\n  AND (`status` = $2)',
+          [1, 'active', 'Updated Title', 'New Content'],
+        )
+      })
+
+      it('should generate correct SQL and replacements for create', async () => {
+        await db.create('users', {
+          id: 1,
+          name: 'John',
+          email: 'john@example.com',
+        })
+
+        expect(execute_spy).toHaveBeenCalledWith(
+          'INSERT INTO `users` (`id`,`name`,`email`) VALUES ($1,$2,$3)',
+          [1, 'John', 'john@example.com'],
+        )
+      })
+
+      it('should generate correct SQL and replacements for delete', async () => {
+        await db.delete('users', { id: 1 })
+
+        expect(execute_spy).toHaveBeenCalledWith(
+          'DELETE FROM `users` WHERE (`id` = $1)',
+          [1],
+        )
+      })
+    })
+
+  })
 })
 
 class TestConnector implements DataBaseConnectorPort {

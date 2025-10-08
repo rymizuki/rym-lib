@@ -120,21 +120,33 @@ export class DataBase implements DataBasePort {
   ) {
     const cond = this.createCondition(where)
     const [cond_sql, bindings] = cond.toSQL(this.toSqlOptions)
+    const values = Object.values(this.parse(data))
+
+    // MySQLの場合、placeholderは全て'?'になるため、
+    // SQLの出現順序とreplacementsの順序を合わせる必要がある
+    const placeholder = this.toSqlOptions.placeholder || '$'
+    const isMySQL = placeholder === '?'
+
     const setters = Object.keys(data)
       .map(
         (prop, index) =>
           `${escape(prop, this.toSqlOptions)} = ${this.getPlaceholder(
-            bindings.length + index,
+            isMySQL ? index : bindings.length + index,
           )}`,
       )
       .join(', ')
-    const values = Object.values(this.parse(data))
 
     const sql = `UPDATE ${escape(
       table,
       this.toSqlOptions,
     )} SET ${setters} WHERE ${cond_sql}`
-    const replacements = [...bindings, ...values]
+
+    // MySQLの場合は SET句の値が先、その後WHERE句の値
+    // PostgreSQLの場合は元の順序を維持
+    const replacements = isMySQL
+      ? [...values, ...bindings]
+      : [...bindings, ...values]
+
     this.context.logger.debug(`[DataBase] update: ${sql} `, {
       replacements,
     })
