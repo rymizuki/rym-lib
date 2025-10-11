@@ -1,5 +1,11 @@
 # @rym-lib/nakadachi-interactor-mixin-validator
 
+## 1.4.7
+
+### Patch Changes
+
+- fix rdb-command
+
 ## 1.4.6
 
 ### Patch Changes

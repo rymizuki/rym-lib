@@ -621,11 +621,7 @@ describe('db', () => {
       })
 
       it('should generate correct SQL and replacements for update', async () => {
-        await db.update(
-          'users',
-          { id: 1 },
-          { name: 'John', age: 30 },
-        )
+        await db.update('users', { id: 1 }, { name: 'John', age: 30 })
 
         // MySQLの場合、プレースホルダーは全て ? で、
         // replacements は SET句の値が先、WHERE句の値が後
@@ -681,11 +677,7 @@ describe('db', () => {
       })
 
       it('should generate correct SQL and replacements for update', async () => {
-        await db.update(
-          'users',
-          { id: 1 },
-          { name: 'John', age: 30 },
-        )
+        await db.update('users', { id: 1 }, { name: 'John', age: 30 })
 
         // PostgreSQLの場合、番号付きプレースホルダー ($1, $2, ...)
         // replacements は WHERE句の値が先、SET句の値が後（従来の動作を維持）
@@ -730,7 +722,6 @@ describe('db', () => {
         )
       })
     })
-
   })
 })
 

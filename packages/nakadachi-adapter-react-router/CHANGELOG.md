@@ -1,5 +1,13 @@
 # @rym-lib/nakadachi-adapter-react-router
 
+## 1.4.7
+
+### Patch Changes
+
+- fix rdb-command
+- Updated dependencies
+  - @rym-lib/nakadachi@1.4.7
+
 ## 1.4.6
 
 ### Patch Changes
