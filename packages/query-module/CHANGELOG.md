@@ -1,5 +1,16 @@
 # @rym-lib/query-module
 
+## 1.5.0
+
+### Minor Changes
+
+- update inversify to v7
+
+### Patch Changes
+
+- Updated dependencies
+  - @rym-lib/exception@1.5.0
+
 ## 1.4.7
 
 ### Patch Changes

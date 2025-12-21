@@ -1,5 +1,11 @@
 # @rym-lib/nakadachi-interactor-mixin-validator
 
+## 1.5.0
+
+### Minor Changes
+
+- update inversify to v7
+
 ## 1.4.7
 
 ### Patch Changes

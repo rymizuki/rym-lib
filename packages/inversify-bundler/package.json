@@ -1,6 +1,6 @@
 {
   "name": "@rym-lib/inversify-bundler",
-  "version": "1.4.7",
+  "version": "1.5.0",
   "private": false,
   "main": "build/index.js",
   "types": "build/index.d.ts",
