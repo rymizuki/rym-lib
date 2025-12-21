@@ -1,7 +1,7 @@
-import { ContainerModule, ContainerModuleInterface } from './container-module'
+import { ContainerModule } from './container-module'
 
 interface BundlerPort {
-  resolve(): ContainerModuleInterface[]
+  resolve(): ContainerModule[]
 }
 
 type ModuleInput = ContainerModule | BundlerPort
@@ -13,7 +13,7 @@ class Bundler implements BundlerPort {
     this.inputs = inputs
   }
 
-  resolve(): ContainerModuleInterface[] {
+  resolve(): ContainerModule[] {
     const exists = new Map<string, boolean>()
     const modules = this.inputs
       .map((module) => {

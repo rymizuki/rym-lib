@@ -24,7 +24,7 @@ export const container = (
     )
 
     const container = new Container()
-    container.load(...bundler.resolve())
+    container.loadSync(...bundler.resolve())
 
     req.container = container
 

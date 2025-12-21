@@ -1,5 +1,6 @@
 import {
   Bundler,
+  Container,
   ContainerInterface,
   ContainerModule,
   ModuleInput,
@@ -89,7 +90,7 @@ export class App<
       const router = dispatch(new Router())
       const bundler = new Bundler(
         ...router.modules,
-        new ContainerModule((bind) => {
+        new ContainerModule(({ bind }) => {
           for (const Interactor of router.interactor) {
             bind(Interactor).toSelf()
           }
@@ -170,7 +171,7 @@ export class App<
     const identifier = Symbol.for(name)
     const bundler = new Bundler(
       ...modules,
-      new ContainerModule((bind) => {
+      new ContainerModule(({ bind }) => {
         bind<InteractionPort<Data>>(identifier).to(Interactor)
       }),
     )
@@ -181,8 +182,8 @@ export class App<
   }
 
   private createContainer(parent: ContainerInterface, bundler: Bundler) {
-    const container = parent.createChild()
-    container.load(...bundler.resolve())
+    const container = new Container({ parent })
+    container.loadSync(...bundler.resolve())
     return container
   }
 }

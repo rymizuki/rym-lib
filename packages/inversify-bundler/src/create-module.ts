@@ -1,19 +1,19 @@
-import { interfaces } from 'inversify'
+import { Newable, ResolutionContext } from 'inversify'
 
 import { Bundler, ModuleInput } from './bundler'
 import { ContainerModule } from './container-module'
 
 class ModuleBuilder<T> {
-  constructor(public build: (context: interfaces.Context) => T) {}
+  constructor(public build: (context: ResolutionContext) => T) {}
 }
 
-export function builder<T>(fn: (context: interfaces.Context) => T) {
+export function builder<T>(fn: (context: ResolutionContext) => T) {
   return new ModuleBuilder<T>(fn)
 }
 
 export function createModule<Port, Context = {}>(
   name: string,
-  Module: interfaces.Newable<Port> | ModuleBuilder<Port>,
+  Module: Newable<Port> | ModuleBuilder<Port>,
   modules: ModuleInput[] = [],
   options: { singleton?: boolean } = {},
 ) {
@@ -21,7 +21,7 @@ export function createModule<Port, Context = {}>(
   const bundler = new Bundler(
     ...modules,
     new ContainerModule(
-      (bind) => {
+      ({ bind }) => {
         const bindingTo = bind<Port>(identifier)
         const binding =
           Module instanceof ModuleBuilder
