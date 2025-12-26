@@ -1,0 +1,36 @@
+{
+  "name": "express-cli-basic-example",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Basic example of @rym-lib/express-cli usage",
+  "main": "app.js",
+  "bin": {
+    "example-cli": "./cli.js"
+  },
+  "scripts": {
+    "start": "node app.js",
+    "cli": "node cli.js",
+    "demo:single": "npm run cli -- /health",
+    "demo:users": "npm run cli -- /api/users",
+    "demo:users-query": "npm run cli -- /api/users --limit=10 --offset=0",
+    "demo:users-space": "npm run cli -- api users",
+    "demo:create-user": "npm run cli -- /api/users --method=POST --body=@data/new-user.json",
+    "demo:login": "npm run cli -- /api/login --method=POST --body=@data/login-credentials.json",
+    "demo:protected": "npm run cli -- /api/admin/stats --header 'authorization: Bearer fake-jwt-token'",
+    "demo:batch": "npm run cli -- batch \"/health\" \"/api/users\" \"/api/posts\"",
+    "demo:batch-create": "npm run cli -- batch --series \"/api/users --method=POST --body=@data/new-user.json\" \"/api/posts --method=POST --body=@data/new-post.json\"",
+    "demo:all": "npm run demo:single && npm run demo:users && npm run demo:create-user && npm run demo:batch"
+  },
+  "dependencies": {
+    "express": "^4.21.1"
+  },
+  "devDependencies": {
+    "@rym-lib/express-cli": "file:../.."
+  },
+  "keywords": [
+    "express",
+    "cli",
+    "example",
+    "demo"
+  ]
+}

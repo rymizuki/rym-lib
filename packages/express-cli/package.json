@@ -1,0 +1,63 @@
+{
+  "name": "@rym-lib/express-cli",
+  "version": "0.0.0",
+  "private": false,
+  "main": "build/index.js",
+  "types": "build/index.d.ts",
+  "exports": {
+    ".": {
+      "import": {
+        "types": "./build/index.d.mts",
+        "default": "./build/index.mjs"
+      },
+      "require": {
+        "types": "./build/index.d.ts",
+        "default": "./build/index.js"
+      }
+    }
+  },
+  "author": {
+    "name": "mizuki_r",
+    "email": "ry.mizuki@gmail.com"
+  },
+  "license": "MIT",
+  "description": "CLI interface for Express applications - Execute Express routes directly from command line",
+  "keywords": [
+    "express",
+    "cli",
+    "batch",
+    "command-line",
+    "node.js",
+    "middleware"
+  ],
+  "publishConfig": {
+    "access": "public"
+  },
+  "files": [
+    "build/*"
+  ],
+  "scripts": {
+    "build": "tsup",
+    "test": "vitest run",
+    "test:watch": "vitest watch",
+    "test:coverage": "vitest run --coverage",
+    "lint": "eslint --max-warnings 0 .",
+    "format": "prettier -w './**/*.{ts,tsx,js,json,css}' --check",
+    "ncu": "npm-check-updates"
+  },
+  "devDependencies": {
+    "@rym-lib/dev-config": "*",
+    "@types/express": "^5.0.0",
+    "@types/node": "^22.9.0",
+    "express": "^4.21.1",
+    "npm-check-updates": "^17.1.11",
+    "tsup": "^8.3.5",
+    "vitest": "^2.1.5"
+  },
+  "peerDependencies": {
+    "express": ">=4.0.0"
+  },
+  "dependencies": {
+    "commander": "^12.1.0"
+  }
+}
