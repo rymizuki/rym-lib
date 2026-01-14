@@ -1,5 +1,16 @@
 # @rym-lib/query-module-driver-sequelize
 
+## 1.6.0
+
+### Minor Changes
+
+- update seeder
+
+### Patch Changes
+
+- Updated dependencies
+  - @rym-lib/query-module-sql-builder@1.6.0
+
 ## 1.5.0
 
 ### Minor Changes

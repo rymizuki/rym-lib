@@ -4,6 +4,19 @@
 
 ### Minor Changes
 
+- update seeder
+
+### Patch Changes
+
+- Updated dependencies
+  - @rym-lib/exception@1.6.0
+  - @rym-lib/inversify-bundler@1.6.0
+  - @rym-lib/nakadachi@1.6.0
+
+## 2.0.0
+
+### Minor Changes
+
 - update inversify to v7
 
 ### Patch Changes

@@ -1,5 +1,11 @@
 # @rym-lib/ui
 
+## 1.6.0
+
+### Minor Changes
+
+- update seeder
+
 ## 1.5.0
 
 ### Minor Changes
