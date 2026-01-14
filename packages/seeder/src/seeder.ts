@@ -2,15 +2,18 @@ import { PrismaClient } from '@prisma/client'
 
 type Value = string | number | Date | boolean
 
+export type SeederOptions = {
+  created_at?: boolean
+  updated_at?: boolean
+  quote?: '`' | '"' | ''
+  placeholder?: '$' | '?'
+  no_update?: boolean
+}
+
 export class Seeder {
   constructor(
     private client: PrismaClient,
-    private options: {
-      created_at?: boolean
-      updated_at?: boolean
-      quote?: '`' | '"' | ''
-      placeholder?: '$' | '?'
-    },
+    private options: SeederOptions,
   ) {}
 
   async load(
@@ -18,7 +21,9 @@ export class Seeder {
     pk: string,
     columns: string[],
     records: Value[][],
+    options?: Partial<SeederOptions>,
   ): Promise<void> {
+    const merged_options = { ...this.options, ...options }
     for (const record of records) {
       const pk_index = columns.findIndex((prop) => prop === pk)
       if (pk_index < 0)
@@ -37,6 +42,10 @@ export class Seeder {
       const row = queryResult[0] as Record<string, any> | undefined
 
       if (row) {
+        if (merged_options.no_update) {
+          // no_updateオプションが指定されている場合はスキップ
+          continue
+        }
         if (
           !columns.filter((prop, index) => row[prop] !== record[index]).length
         ) {
@@ -53,7 +62,7 @@ export class Seeder {
         const values = columns
           .map((_, index) => (index === pk_index ? null : record[index]))
           .filter((value) => value !== null)
-        if (this.options.updated_at) {
+        if (merged_options.updated_at) {
           setters.push(
             `${this.escape('updated_at')} = ${this.getPlaceholder(index++)}`,
           )
@@ -71,11 +80,11 @@ export class Seeder {
       } else {
         const cols = [...columns].map((col) => `${this.escape(col)}`)
         const values = columns.map((_, index) => record[index])
-        if (this.options.created_at) {
+        if (merged_options.created_at) {
           cols.push(this.escape('created_at'))
           values.push(new Date())
         }
-        if (this.options.updated_at) {
+        if (merged_options.updated_at) {
           cols.push(this.escape('updated_at'))
           values.push(new Date())
         }
