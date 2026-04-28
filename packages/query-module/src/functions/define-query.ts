@@ -61,7 +61,7 @@ export function defineQueryWithCount<
       driver: Driver,
       spec: QuerySpecification<Data, Driver, List, Params>,
       context: QueryRunnerContext,
-    ) => QueryRunnerInterface<Data, List, Params>
+    ) => QueryRunnerWithCount<Data, List, Params>
   },
 ): QueryRunnerWithCount<Data, List, Params> {
   const ctx: QueryRunnerContext = {
@@ -69,13 +69,12 @@ export function defineQueryWithCount<
     logger: context.logger ? context.logger : createLogger(),
   }
 
-  const runner = options?.builder
-    ? options.builder(driver, { ...spec, count: true }, ctx)
-    : new QueryRunner<Data, Driver, List, Params>(
-        driver,
-        { ...spec, count: true },
-        ctx,
-      )
-
-  return runner as QueryRunnerWithCount<Data, List, Params>
+  if (options?.builder) {
+    return options.builder(driver, { ...spec, count: true }, ctx)
+  }
+  return new QueryRunner<Data, Driver, List, Params>(
+    driver,
+    { ...spec, count: true },
+    ctx,
+  )
 }
