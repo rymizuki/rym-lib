@@ -175,7 +175,7 @@ export function buildSQL<Driver extends QueryDriverInterface>(
   return builder.toSQL()
 }
 
-export function buildCountSQL<Driver extends QueryDriverInterface>(
+export function buildCountSQL(
   builder: SQLBuilderPort,
   criteria: QueryCriteriaInterface,
   options: Partial<BuildSqlOptions> = {},
