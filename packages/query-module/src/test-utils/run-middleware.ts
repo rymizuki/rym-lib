@@ -20,6 +20,10 @@ class DummyDriver implements QueryDriverInterface {
   ): Promise<Record<string, any>[]> {
     return []
   }
+
+  async executeCount<D>(criteria: QueryCriteriaInterface<D>): Promise<number> {
+    return 0
+  }
 }
 
 export async function runMiddleware<Data>(

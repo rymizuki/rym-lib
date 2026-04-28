@@ -4,6 +4,7 @@ import {
   QueryLoggerInterface,
 } from '@rym-lib/query-module'
 import {
+  buildCountSQL,
   buildSQL,
   createBuilder,
   CustomFilterFunction,
@@ -56,6 +57,31 @@ export class QueryDriverPrisma implements QueryDriverInterface {
 
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     return rows as Record<string, any>[]
+  }
+
+  async executeCount<D>(criteria: QueryCriteriaInterface<D>): Promise<number> {
+    if (!this.setup) {
+      throw new Error('QueryDriver must be required source.')
+    }
+
+    const [sql, replacements] = buildCountSQL(
+      this.setup(this.builderSetup()),
+      criteria,
+      {
+        builder: this.builderSetup(),
+        customFilter: this.customFilter,
+      },
+    )
+    this.context.logger.verbose(`[QueryDriverPrisma] ${sql}`, { replacements })
+
+    const rows = (await this.db.$queryRawUnsafe(
+      sql,
+      ...replacements,
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    )) as Record<string, any>[]
+    const first = rows[0] ?? {}
+    const value = first.count ?? Object.values(first)[0]
+    return Number(value ?? 0)
   }
 
   customFilter: CustomFilterFunction = (content, context, fn) => {

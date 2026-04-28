@@ -10,7 +10,7 @@ import {
   QueryResultList,
   QueryRunnerContext,
   QueryRunnerCriteria,
-  QueryRunnerInterface,
+  QueryRunnerWithCount,
   QuerySpecification,
 } from './interfaces'
 
@@ -19,20 +19,20 @@ export class QueryRunner<
   Driver extends QueryDriverInterface,
   List extends QueryResultList<Data> = QueryResultList<Data>,
   Params extends QueryRunnerCriteria<Data> = QueryRunnerCriteria<Data>,
-> implements QueryRunnerInterface<Data, List>
+> implements QueryRunnerWithCount<Data, List, Params>
 {
   constructor(
     private driver: Driver,
     private spec: QuerySpecification<Data, Driver, List, Params>,
     private context: QueryRunnerContext,
   ) {
-    // Minimal validation to ensure required collaborators are present.
-    if (
-      !driver ||
-      typeof driver.source !== 'function' ||
-      typeof driver.execute !== 'function'
-    ) {
-      throw new TypeError('QueryRunner requires a valid QueryDriverInterface')
+    if (!driver) {
+      throw new TypeError('QueryRunner requires a driver')
+    }
+    for (const method of ['source', 'execute', 'executeCount'] as const) {
+      if (typeof driver[method] !== 'function') {
+        throw new TypeError(`QueryDriverInterface.${method} is required`)
+      }
     }
 
     if (!spec || typeof spec.source !== 'function') {
@@ -60,19 +60,7 @@ export class QueryRunner<
   }
 
   async many(params: Partial<Params> = {}): Promise<List> {
-    const pid = crypto.randomUUID()
-    for (const { preprocess } of this.spec.middlewares ?? []) {
-      if (!preprocess) continue
-      await preprocess(params, { ...this.context, pid, runner: this })
-    }
-
-    // Execute source function first to get the builder instance
-    const source = this.driver.source(this.spec.source)
-
-    const criteria = new QueryCriteria<Data>(
-      this.spec.rules,
-      this.spec.criteria ? this.spec.criteria(params) : params,
-    )
+    const { pid, source, criteria } = await this.prepare(params)
 
     const items = await source.execute(criteria)
     const result = {
@@ -98,5 +86,26 @@ export class QueryRunner<
     }
 
     return record
+  }
+
+  async count(params: Partial<Params> = {}): Promise<number> {
+    const { source, criteria } = await this.prepare(params)
+    return source.executeCount(criteria)
+  }
+
+  private async prepare(params: Partial<Params>) {
+    const pid = crypto.randomUUID()
+    for (const { preprocess } of this.spec.middlewares ?? []) {
+      if (!preprocess) continue
+      await preprocess(params, { ...this.context, pid, runner: this })
+    }
+
+    const source = this.driver.source(this.spec.source)
+    const criteria = new QueryCriteria<Data>(
+      this.spec.rules,
+      this.spec.criteria ? this.spec.criteria(params) : params,
+    )
+
+    return { pid, source, criteria }
   }
 }

@@ -13,9 +13,11 @@ export type {
   QueryLoggerInterface,
   QueryResultData,
   QueryResultList,
+  QueryRunnerBase,
   QueryRunnerContext,
   QueryRunnerCriteria,
   QueryRunnerInterface,
   QueryRunnerMiddleware,
+  QueryRunnerWithCount,
   QuerySpecification,
 } from './interfaces'

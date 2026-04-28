@@ -2,9 +2,11 @@ import {
   QueryDriverInterface,
   QueryResultData,
   QueryResultList,
+  QueryRunnerBase,
   QueryRunnerContext,
   QueryRunnerCriteria,
   QueryRunnerInterface,
+  QueryRunnerWithCount,
   QuerySpecification,
 } from '../interfaces'
 import { createLogger } from '../logger'
@@ -15,9 +17,15 @@ export function defineQuery<
   Driver extends QueryDriverInterface = QueryDriverInterface,
   List extends QueryResultList<Data> = QueryResultList<Data>,
   Params extends QueryRunnerCriteria<Data> = QueryRunnerCriteria<Data>,
+  const Spec extends QuerySpecification<
+    Data,
+    Driver,
+    List,
+    Params
+  > = QuerySpecification<Data, Driver, List, Params>,
 >(
   driver: Driver,
-  spec: QuerySpecification<Data, Driver, List, Params>,
+  spec: Spec,
   context: Partial<QueryRunnerContext> = {},
   options?: {
     builder: (
@@ -26,13 +34,19 @@ export function defineQuery<
       context: QueryRunnerContext,
     ) => QueryRunnerInterface<Data, List, Params>
   },
-): QueryRunnerInterface<Data, List, Params> {
+): Spec['count'] extends true
+  ? QueryRunnerWithCount<Data, List, Params>
+  : QueryRunnerBase<Data, List, Params> {
   const ctx: QueryRunnerContext = {
     ...context,
     logger: context.logger ? context.logger : createLogger(),
   }
 
-  return options?.builder
+  const runner = options?.builder
     ? options.builder(driver, spec, ctx)
     : new QueryRunner<Data, Driver, List, Params>(driver, spec, ctx)
+
+  return runner as Spec['count'] extends true
+    ? QueryRunnerWithCount<Data, List, Params>
+    : QueryRunnerBase<Data, List, Params>
 }

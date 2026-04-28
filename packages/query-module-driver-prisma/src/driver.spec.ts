@@ -572,3 +572,80 @@ async function expectQuery<
     expected,
   )
 }
+
+describe('query-module-driver-prisma .executeCount', () => {
+  let driver: QueryDriverInterface
+  beforeEach(() => {
+    driver = new QueryDriverPrisma(prisma, {
+      logger: createLogger(),
+    })
+    driver.source((builder) => builder.from('example'))
+  })
+
+  it('should throw when source is not configured', async () => {
+    const fresh = new QueryDriverPrisma(prisma, { logger: createLogger() })
+    await expect(
+      fresh.executeCount(new QueryCriteria({}, {})),
+    ).rejects.toThrowError(/QueryDriver must be required source\./)
+  })
+
+  it('should issue SELECT COUNT(*) SQL', async () => {
+    prismaMock.$queryRawUnsafe.mockResolvedValueOnce([{ count: 5 }] as any)
+
+    await driver.executeCount(new QueryCriteria({}, {}))
+
+    expect(prismaMock.$queryRawUnsafe.mock.lastCall![0]).toBe(
+      'SELECT COUNT(*) AS `count`\nFROM\n  `example`',
+    )
+  })
+
+  it('should return numeric count from row.count', async () => {
+    prismaMock.$queryRawUnsafe.mockResolvedValueOnce([{ count: 7 }] as any)
+
+    const count = await driver.executeCount(new QueryCriteria({}, {}))
+
+    expect(count).toBe(7)
+  })
+
+  it('should convert BigInt count to number', async () => {
+    prismaMock.$queryRawUnsafe.mockResolvedValueOnce([
+      { count: 42n },
+    ] as any)
+
+    const count = await driver.executeCount(new QueryCriteria({}, {}))
+
+    expect(count).toBe(42)
+    expect(typeof count).toBe('number')
+  })
+
+  it('should fall back to first column when count column missing', async () => {
+    prismaMock.$queryRawUnsafe.mockResolvedValueOnce([
+      { 'COUNT(*)': 3 },
+    ] as any)
+
+    const count = await driver.executeCount(new QueryCriteria({}, {}))
+
+    expect(count).toBe(3)
+  })
+
+  it('should return 0 when no rows', async () => {
+    prismaMock.$queryRawUnsafe.mockResolvedValueOnce([] as any)
+
+    const count = await driver.executeCount(new QueryCriteria({}, {}))
+
+    expect(count).toBe(0)
+  })
+
+  it('should include WHERE filter in COUNT SQL', async () => {
+    prismaMock.$queryRawUnsafe.mockResolvedValueOnce([{ count: 1 }] as any)
+
+    await driver.executeCount(
+      new QueryCriteria({}, { filter: { value: { eq: 'foo' } } }),
+    )
+
+    const lastCall = prismaMock.$queryRawUnsafe.mock.lastCall!
+    expect(lastCall[0]).toContain('SELECT COUNT(*) AS `count`')
+    expect(lastCall[0]).toContain('WHERE')
+    expect(lastCall.slice(1)).toStrictEqual(['foo'])
+  })
+})

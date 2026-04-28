@@ -81,7 +81,7 @@ export interface QueryCriteriaInterface<Data extends QueryResultData = any> {
   readonly skip: QueryCriteriaSkip
 }
 
-export interface QueryRunnerInterface<
+export interface QueryRunnerBase<
   Data extends QueryResultData,
   List extends QueryResultList<Data> = QueryResultList<Data>,
   Params extends QueryRunnerCriteria<Data> = QueryRunnerCriteria<Data>,
@@ -90,6 +90,23 @@ export interface QueryRunnerInterface<
   many(params?: Params): Promise<List>
   find(params: Params): Promise<Data>
 }
+
+export interface QueryRunnerWithCount<
+  Data extends QueryResultData,
+  List extends QueryResultList<Data> = QueryResultList<Data>,
+  Params extends QueryRunnerCriteria<Data> = QueryRunnerCriteria<Data>,
+> extends QueryRunnerBase<Data, List, Params> {
+  count(params?: Params): Promise<number>
+}
+
+export type QueryRunnerInterface<
+  Data extends QueryResultData,
+  List extends QueryResultList<Data> = QueryResultList<Data>,
+  Params extends QueryRunnerCriteria<Data> = QueryRunnerCriteria<Data>,
+  Spec extends { count?: boolean } = { count?: boolean },
+> = Spec['count'] extends true
+  ? QueryRunnerWithCount<Data, List, Params>
+  : QueryRunnerBase<Data, List, Params>
 
 export interface QueryRunnerContext {
   logger: QueryLoggerInterface
@@ -114,6 +131,7 @@ export interface QueryDriverInterface {
   execute<D>(
     criteria: QueryCriteriaInterface<D>,
   ): Promise<Record<string, any>[]>
+  executeCount<D>(criteria: QueryCriteriaInterface<D>): Promise<number>
   customFilter?: QueryDriverCustomFilterFunction
 }
 
@@ -185,6 +203,7 @@ export interface QuerySpecification<
   >
   criteria?: (params: Partial<Params>) => Partial<Params>
   middlewares?: QueryRunnerMiddleware<Data, List, Params>[]
+  count?: boolean
 }
 
 export interface QueryLoggerInterface {

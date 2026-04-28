@@ -7,7 +7,7 @@ class TestDriver<Data extends Record<string, any> = Record<string, any>>
   private data: null | Data[] = null
   private sourceFunction: (() => Data[]) | null = null
   public readonly called: {
-    method: 'execute'
+    method: 'execute' | 'executeCount'
     args: any[]
   }[] = []
 
@@ -38,6 +38,23 @@ class TestDriver<Data extends Record<string, any> = Record<string, any>>
 
     // For existing tests, return initial data
     return this.initial
+  }
+
+  async executeCount<D>(criteria: QueryCriteriaInterface<D>): Promise<number> {
+    this.called.push({
+      method: 'executeCount',
+      args: [criteria],
+    })
+
+    if (this.data && this.data !== this.initial) {
+      return this.data.length
+    }
+
+    if (this.shouldApplySmartFiltering(criteria)) {
+      return this.applySmartFiltering(criteria).length
+    }
+
+    return this.initial.length
   }
 
   private shouldApplySmartFiltering(
