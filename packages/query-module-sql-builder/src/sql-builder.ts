@@ -58,96 +58,102 @@ const defaults: BuildSqlOptions = {
   containsSplitSpaces: true,
 }
 
+function applyFilters(
+  builder: SQLBuilderPort,
+  criteria: QueryCriteriaInterface,
+  o: BuildSqlOptions,
+  flags: { skipHaving?: boolean } = {},
+) {
+  if (!criteria.filter) return
+
+  const whole = createConditions()
+  for (const filter of Array.isArray(criteria.filter)
+    ? criteria.filter
+    : [criteria.filter]) {
+    if (!filter) continue
+
+    const cond = createConditions()
+    let hasCondition = false
+
+    for (const name of keys(filter)) {
+      if (typeof name !== 'string') continue
+      if (/^having:/.test(name)) continue
+
+      const property = filter[name]
+      if (!property) continue
+
+      const { value, filter: customFilter } = property as FilterPayload
+      hasCondition = true
+
+      const columnName = (() => {
+        if (!property) return name
+        if (typeof property !== 'object') return name
+        if (!('column' in property)) return name
+        if (!property.column) return name
+        if (typeof property.column === 'string') return property.column
+        return property.column() as SQLBuilderPort
+      })()
+
+      createCond(cond, columnName, { value, filter: customFilter }, o)
+    }
+
+    if (hasCondition) {
+      whole.or(cond)
+    }
+  }
+  builder.where(whole)
+
+  // NOTE: count クエリでは GROUP BY が無いので HAVING を出すと SQL エラーになる。
+  // 呼び出し側で skipHaving: true を渡すことで HAVING の組み立てを抑制する。
+  if (flags.skipHaving) return
+
+  const whole_having = createConditions()
+  for (const filter of Array.isArray(criteria.filter)
+    ? criteria.filter
+    : [criteria.filter]) {
+    if (!filter) continue
+
+    const cond = createConditions()
+    let hasHavingCondition = false
+
+    for (const having_name of keys(filter)) {
+      if (typeof having_name !== 'string') continue
+      if (!/^having:/.test(having_name)) continue
+
+      const property = filter[having_name]
+      if (!property) continue
+
+      const { value, filter: customFilter } = property as FilterPayload
+      const name = having_name.replace(/^having:/, '')
+      hasHavingCondition = true
+
+      const columnName = (() => {
+        if (!property) return name
+        if (typeof property !== 'object') return name
+        if (!('column' in property)) return name
+        if (!property.column) return name
+        if (typeof property.column === 'string') return property.column
+        return property.column() as SQLBuilderPort
+      })()
+
+      createCond(cond, columnName, { value, filter: customFilter }, o)
+    }
+
+    if (hasHavingCondition) {
+      whole_having.or(cond)
+    }
+  }
+  builder.having(whole_having)
+}
+
 export function buildSQL<Driver extends QueryDriverInterface>(
   builder: SQLBuilderPort,
   criteria: QueryCriteriaInterface,
   options: Partial<BuildSqlOptions> = {},
 ) {
   const o = { ...defaults, ...options }
-  // Reverted: original behavior (without guard against undefined in criteria.filter)
-  if (criteria.filter) {
-    const whole = createConditions()
-    for (const filter of Array.isArray(criteria.filter)
-      ? criteria.filter
-      : [criteria.filter]) {
-      // null/undefined要素をスキップ
-      if (!filter) continue
+  applyFilters(builder, criteria, o)
 
-      const cond = createConditions()
-      let hasCondition = false
-
-      // filter -> where
-      for (const name of keys(filter)) {
-        if (typeof name !== 'string') continue
-        if (/^having:/.test(name)) continue
-
-        const property = filter[name]
-        if (!property) continue
-
-        const { value, filter: customFilter } = property as FilterPayload
-        hasCondition = true
-
-        const columnName = (() => {
-          if (!property) return name
-          if (typeof property !== 'object') return name
-          if (!('column' in property)) return name
-          if (!property.column) return name
-          if (typeof property.column === 'string') return property.column
-          return property.column() as SQLBuilderPort
-        })()
-
-        createCond(cond, columnName, { value, filter: customFilter }, o)
-      }
-
-      if (hasCondition) {
-        whole.or(cond)
-      }
-    }
-    builder.where(whole)
-
-    // having support
-    const whole_having = createConditions()
-    for (const filter of Array.isArray(criteria.filter)
-      ? criteria.filter
-      : [criteria.filter]) {
-      // null/undefined要素をスキップ
-      if (!filter) continue
-
-      const cond = createConditions()
-      let hasHavingCondition = false
-
-      // filter -> having
-      for (const having_name of keys(filter)) {
-        if (typeof having_name !== 'string') continue
-        if (!/^having:/.test(having_name)) continue
-
-        const property = filter[having_name]
-        if (!property) continue
-
-        const { value, filter: customFilter } = property as FilterPayload
-        const name = having_name.replace(/^having:/, '')
-        hasHavingCondition = true
-
-        const columnName = (() => {
-          if (!property) return name
-          if (typeof property !== 'object') return name
-          if (!('column' in property)) return name
-          if (!property.column) return name
-          if (typeof property.column === 'string') return property.column
-          return property.column() as SQLBuilderPort
-        })()
-
-        createCond(cond, columnName, { value, filter: customFilter }, o)
-      }
-
-      if (hasHavingCondition) {
-        whole_having.or(cond)
-      }
-    }
-    builder.having(whole_having)
-  }
-
-  // orderBy
   if (criteria.orderBy) {
     const { orderBy } = criteria
     const orders = Array.isArray(orderBy) ? orderBy : [orderBy]
@@ -158,16 +164,29 @@ export function buildSQL<Driver extends QueryDriverInterface>(
     }
   }
 
-  // take -> limit
   if (criteria.take) {
     builder.limit(criteria.take)
   }
 
-  // skip -> offset
   if (criteria.skip) {
     builder.offset(criteria.skip)
   }
 
+  return builder.toSQL()
+}
+
+export function buildCountSQL(
+  builder: SQLBuilderPort,
+  criteria: QueryCriteriaInterface,
+  options: Partial<BuildSqlOptions> = {},
+) {
+  const o = { ...defaults, ...options }
+  // NOTE: coral-sql の select() に "SELECT " で始まる文字列を渡すと
+  // SELECT 句全体を上書きする挙動になる。これを利用して、source 関数で
+  // 組み立てられた column(...) 群を捨てて COUNT(*) クエリに差し替える。
+  // 結果セットのエイリアスは `count` 固定で、ドライバ側は row.count として参照する。
+  builder.select('SELECT COUNT(*) AS `count`')
+  applyFilters(builder, criteria, o, { skipHaving: true })
   return builder.toSQL()
 }
 

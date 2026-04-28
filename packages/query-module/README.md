@@ -92,6 +92,36 @@ if (row === null) {
 }
 ```
 
+#### `.count(params = {})`
+
+Count rows matching params and return a number. The method is only exposed
+when the query is created via `defineQueryWithCount`. Runners returned from
+the regular `defineQuery` do not have `count()` on their type.
+
+```ts
+import { defineQueryWithCount } from '@rym-lib/query-module'
+
+const userQuery = defineQueryWithCount<Data, QueryDriverPrisma>(driver, {
+  source: (builder) => builder.from('users'),
+  rules: { status: 'status' },
+})
+
+const total = await userQuery.count()
+const activeCount = await userQuery.count({
+  filter: { status: { eq: 'active' } },
+})
+```
+
+`count()` accepts the same shape as `many()` for API consistency, but only
+`filter` is honored — `orderBy`, `take`, and `skip` are ignored because they
+do not affect the resulting row count. Middleware `preprocess` runs (so
+default filters set there are applied) but `postprocess` does not, since the
+return value is a `number` rather than a `QueryResultList`.
+
+`defineQueryWithCount` constrains its driver argument to
+`QueryDriverWithCountInterface`, so a driver that doesn't implement
+`executeCount` is rejected at compile time.
+
 ### Finding parameters
 
 The implementation of these parameters is left to the driver.

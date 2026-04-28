@@ -165,4 +165,78 @@ describe('query-module-driver-sequelize', () => {
       })
     })
   })
+
+  describe('.executeCount', () => {
+    it('should throw when source is not configured', async () => {
+      const fresh = new QueryDriverSequelize(sequelize, {
+        logger: createLogger(),
+      })
+      await expect(
+        fresh.executeCount(new QueryCriteria({}, {})),
+      ).rejects.toThrowError(/QueryDriver must be required source\./)
+    })
+
+    it('should issue SELECT COUNT(*) SQL', async () => {
+      driver.source((builder) => builder.from('example'))
+      mockQuery.mockResolvedValue([{ count: 5 }])
+
+      await driver.executeCount(new QueryCriteria({}, {}))
+
+      const lastCall = mockQuery.mock.lastCall
+      expect(lastCall?.[0]).toBe(
+        'SELECT COUNT(*) AS `count`\nFROM\n  `example`',
+      )
+    })
+
+    it('should return numeric count from row.count', async () => {
+      driver.source((builder) => builder.from('example'))
+      mockQuery.mockResolvedValue([{ count: 7 }])
+
+      const count = await driver.executeCount(new QueryCriteria({}, {}))
+
+      expect(count).toBe(7)
+    })
+
+    it('should convert string count to number', async () => {
+      driver.source((builder) => builder.from('example'))
+      mockQuery.mockResolvedValue([{ count: '42' }])
+
+      const count = await driver.executeCount(new QueryCriteria({}, {}))
+
+      expect(count).toBe(42)
+      expect(typeof count).toBe('number')
+    })
+
+    it('should fall back to first column when count column missing', async () => {
+      driver.source((builder) => builder.from('example'))
+      mockQuery.mockResolvedValue([{ 'COUNT(*)': 3 }])
+
+      const count = await driver.executeCount(new QueryCriteria({}, {}))
+
+      expect(count).toBe(3)
+    })
+
+    it('should return 0 when no rows', async () => {
+      driver.source((builder) => builder.from('example'))
+      mockQuery.mockResolvedValue([])
+
+      const count = await driver.executeCount(new QueryCriteria({}, {}))
+
+      expect(count).toBe(0)
+    })
+
+    it('should include WHERE filter in COUNT SQL', async () => {
+      driver.source((builder) => builder.from('example'))
+      mockQuery.mockResolvedValue([{ count: 1 }])
+
+      await driver.executeCount(
+        new QueryCriteria({}, { filter: { value: { eq: 'foo' } } }),
+      )
+
+      const lastCall = mockQuery.mock.lastCall
+      expect(lastCall?.[0]).toContain('SELECT COUNT(*) AS `count`')
+      expect(lastCall?.[0]).toContain('WHERE')
+      expect(lastCall?.[1].replacements).toStrictEqual(['foo'])
+    })
+  })
 })

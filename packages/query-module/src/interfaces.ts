@@ -91,6 +91,20 @@ export interface QueryRunnerInterface<
   find(params: Params): Promise<Data>
 }
 
+export type QueryRunnerBase<
+  Data extends QueryResultData,
+  List extends QueryResultList<Data> = QueryResultList<Data>,
+  Params extends QueryRunnerCriteria<Data> = QueryRunnerCriteria<Data>,
+> = QueryRunnerInterface<Data, List, Params>
+
+export interface QueryRunnerWithCount<
+  Data extends QueryResultData,
+  List extends QueryResultList<Data> = QueryResultList<Data>,
+  Params extends QueryRunnerCriteria<Data> = QueryRunnerCriteria<Data>,
+> extends QueryRunnerInterface<Data, List, Params> {
+  count(params?: Params): Promise<number>
+}
+
 export interface QueryRunnerContext {
   logger: QueryLoggerInterface
 }
@@ -114,7 +128,12 @@ export interface QueryDriverInterface {
   execute<D>(
     criteria: QueryCriteriaInterface<D>,
   ): Promise<Record<string, any>[]>
+  executeCount?<D>(criteria: QueryCriteriaInterface<D>): Promise<number>
   customFilter?: QueryDriverCustomFilterFunction
+}
+
+export interface QueryDriverWithCountInterface extends QueryDriverInterface {
+  executeCount<D>(criteria: QueryCriteriaInterface<D>): Promise<number>
 }
 
 interface QuerySourceInterface<
@@ -185,6 +204,7 @@ export interface QuerySpecification<
   >
   criteria?: (params: Partial<Params>) => Partial<Params>
   middlewares?: QueryRunnerMiddleware<Data, List, Params>[]
+  count?: boolean
 }
 
 export interface QueryLoggerInterface {

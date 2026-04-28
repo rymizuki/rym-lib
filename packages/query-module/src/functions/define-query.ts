@@ -1,10 +1,13 @@
 import {
   QueryDriverInterface,
+  QueryDriverWithCountInterface,
   QueryResultData,
   QueryResultList,
+  QueryRunnerBase,
   QueryRunnerContext,
   QueryRunnerCriteria,
   QueryRunnerInterface,
+  QueryRunnerWithCount,
   QuerySpecification,
 } from '../interfaces'
 import { createLogger } from '../logger'
@@ -26,7 +29,7 @@ export function defineQuery<
       context: QueryRunnerContext,
     ) => QueryRunnerInterface<Data, List, Params>
   },
-): QueryRunnerInterface<Data, List, Params> {
+): QueryRunnerBase<Data, List, Params> {
   const ctx: QueryRunnerContext = {
     ...context,
     logger: context.logger ? context.logger : createLogger(),
@@ -35,4 +38,43 @@ export function defineQuery<
   return options?.builder
     ? options.builder(driver, spec, ctx)
     : new QueryRunner<Data, Driver, List, Params>(driver, spec, ctx)
+}
+
+/**
+ * Variant of {@link defineQuery} that exposes `count()` on the runner.
+ *
+ * Use this when the query spec opts into count support. The driver is
+ * constrained to {@link QueryDriverWithCountInterface}, so a driver that
+ * doesn't implement `executeCount` is rejected at compile time.
+ */
+export function defineQueryWithCount<
+  Data extends QueryResultData,
+  Driver extends QueryDriverWithCountInterface = QueryDriverWithCountInterface,
+  List extends QueryResultList<Data> = QueryResultList<Data>,
+  Params extends QueryRunnerCriteria<Data> = QueryRunnerCriteria<Data>,
+>(
+  driver: Driver,
+  spec: QuerySpecification<Data, Driver, List, Params>,
+  context: Partial<QueryRunnerContext> = {},
+  options?: {
+    builder: (
+      driver: Driver,
+      spec: QuerySpecification<Data, Driver, List, Params>,
+      context: QueryRunnerContext,
+    ) => QueryRunnerWithCount<Data, List, Params>
+  },
+): QueryRunnerWithCount<Data, List, Params> {
+  const ctx: QueryRunnerContext = {
+    ...context,
+    logger: context.logger ? context.logger : createLogger(),
+  }
+
+  if (options?.builder) {
+    return options.builder(driver, { ...spec, count: true }, ctx)
+  }
+  return new QueryRunner<Data, Driver, List, Params>(
+    driver,
+    { ...spec, count: true },
+    ctx,
+  )
 }

@@ -1,4 +1,4 @@
-import { buildSQL } from './'
+import { buildCountSQL, buildSQL } from './'
 
 import { createBuilder, SQLBuilderPort } from 'coral-sql'
 import { beforeEach, describe, expect, it } from 'vitest'
@@ -733,6 +733,58 @@ describe('query-module-sql-builder', () => {
           }
         })
       })
+    })
+  })
+
+  describe('buildCountSQL', () => {
+    function executeCount(
+      builder: SQLBuilderPort,
+      criteria: Partial<TestCriteria>,
+    ) {
+      const [sql, bindings] = buildCountSQL(builder, createCriteria(criteria))
+      return { sql: xbr(sql), bindings }
+    }
+
+    it('should produce SELECT COUNT(*) without filter', () => {
+      const { sql, bindings } = executeCount(builder, {})
+      expect(sql).toBe('SELECT COUNT(*) AS `count` FROM `example`')
+      expect(bindings).toStrictEqual([])
+    })
+
+    it('should include WHERE filter conditions', () => {
+      const { sql, bindings } = executeCount(builder, {
+        filter: { name: { eq: 'alice' } },
+      })
+      expect(sql).toBe(
+        'SELECT COUNT(*) AS `count` FROM `example` WHERE (((`name` = ?)))',
+      )
+      expect(bindings).toStrictEqual(['alice'])
+    })
+
+    it('should ignore orderBy', () => {
+      const { sql } = executeCount(builder, {
+        orderBy: 'name:desc',
+      })
+      expect(sql).not.toContain('ORDER BY')
+      expect(sql).toBe('SELECT COUNT(*) AS `count` FROM `example`')
+    })
+
+    it('should ignore take/skip', () => {
+      const { sql } = executeCount(builder, {
+        take: 10,
+        skip: 5,
+      })
+      expect(sql).not.toContain('LIMIT')
+      expect(sql).not.toContain('OFFSET')
+      expect(sql).toBe('SELECT COUNT(*) AS `count` FROM `example`')
+    })
+
+    it('should ignore having: prefixed filters to avoid HAVING clause without GROUP BY', () => {
+      const { sql } = executeCount(builder, {
+        filter: { 'having:amount': { gt: 100 } },
+      })
+      expect(sql).not.toContain('HAVING')
+      expect(sql).toBe('SELECT COUNT(*) AS `count` FROM `example`')
     })
   })
 })
