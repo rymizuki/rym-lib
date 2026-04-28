@@ -29,10 +29,15 @@ export class QueryRunner<
     if (!driver) {
       throw new TypeError('QueryRunner requires a driver')
     }
-    for (const method of ['source', 'execute', 'executeCount'] as const) {
+    for (const method of ['source', 'execute'] as const) {
       if (typeof driver[method] !== 'function') {
         throw new TypeError(`QueryDriverInterface.${method} is required`)
       }
+    }
+    if (spec?.count && typeof driver.executeCount !== 'function') {
+      throw new TypeError(
+        'QueryDriverInterface.executeCount is required when spec.count is true',
+      )
     }
 
     if (!spec || typeof spec.source !== 'function') {
@@ -90,6 +95,11 @@ export class QueryRunner<
 
   async count(params: Partial<Params> = {}): Promise<number> {
     const { source, criteria } = await this.prepare(params)
+    if (typeof source.executeCount !== 'function') {
+      throw new TypeError(
+        'QueryDriverInterface.executeCount is required when spec.count is true',
+      )
+    }
     return source.executeCount(criteria)
   }
 

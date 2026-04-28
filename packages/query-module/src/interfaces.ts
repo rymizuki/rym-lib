@@ -131,8 +131,12 @@ export interface QueryDriverInterface {
   execute<D>(
     criteria: QueryCriteriaInterface<D>,
   ): Promise<Record<string, any>[]>
-  executeCount<D>(criteria: QueryCriteriaInterface<D>): Promise<number>
+  executeCount?<D>(criteria: QueryCriteriaInterface<D>): Promise<number>
   customFilter?: QueryDriverCustomFilterFunction
+}
+
+export interface QueryDriverWithCountInterface extends QueryDriverInterface {
+  executeCount<D>(criteria: QueryCriteriaInterface<D>): Promise<number>
 }
 
 interface QuerySourceInterface<

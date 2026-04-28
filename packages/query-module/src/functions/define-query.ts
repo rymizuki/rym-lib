@@ -1,5 +1,6 @@
 import {
   QueryDriverInterface,
+  QueryDriverWithCountInterface,
   QueryResultData,
   QueryResultList,
   QueryRunnerBase,
@@ -14,18 +15,48 @@ import { QueryRunner } from '../runner'
 
 export function defineQuery<
   Data extends QueryResultData,
+  Driver extends QueryDriverWithCountInterface = QueryDriverWithCountInterface,
+  List extends QueryResultList<Data> = QueryResultList<Data>,
+  Params extends QueryRunnerCriteria<Data> = QueryRunnerCriteria<Data>,
+>(
+  driver: Driver,
+  spec: QuerySpecification<Data, Driver, List, Params> & { count: true },
+  context?: Partial<QueryRunnerContext>,
+  options?: {
+    builder: (
+      driver: Driver,
+      spec: QuerySpecification<Data, Driver, List, Params>,
+      context: QueryRunnerContext,
+    ) => QueryRunnerInterface<Data, List, Params>
+  },
+): QueryRunnerWithCount<Data, List, Params>
+export function defineQuery<
+  Data extends QueryResultData,
   Driver extends QueryDriverInterface = QueryDriverInterface,
   List extends QueryResultList<Data> = QueryResultList<Data>,
   Params extends QueryRunnerCriteria<Data> = QueryRunnerCriteria<Data>,
-  const Spec extends QuerySpecification<
-    Data,
-    Driver,
-    List,
-    Params
-  > = QuerySpecification<Data, Driver, List, Params>,
 >(
   driver: Driver,
-  spec: Spec,
+  spec: QuerySpecification<Data, Driver, List, Params> & {
+    count?: false | undefined
+  },
+  context?: Partial<QueryRunnerContext>,
+  options?: {
+    builder: (
+      driver: Driver,
+      spec: QuerySpecification<Data, Driver, List, Params>,
+      context: QueryRunnerContext,
+    ) => QueryRunnerInterface<Data, List, Params>
+  },
+): QueryRunnerBase<Data, List, Params>
+export function defineQuery<
+  Data extends QueryResultData,
+  Driver extends QueryDriverInterface = QueryDriverInterface,
+  List extends QueryResultList<Data> = QueryResultList<Data>,
+  Params extends QueryRunnerCriteria<Data> = QueryRunnerCriteria<Data>,
+>(
+  driver: Driver,
+  spec: QuerySpecification<Data, Driver, List, Params>,
   context: Partial<QueryRunnerContext> = {},
   options?: {
     builder: (
@@ -34,19 +65,13 @@ export function defineQuery<
       context: QueryRunnerContext,
     ) => QueryRunnerInterface<Data, List, Params>
   },
-): Spec['count'] extends true
-  ? QueryRunnerWithCount<Data, List, Params>
-  : QueryRunnerBase<Data, List, Params> {
+): QueryRunnerInterface<Data, List, Params> {
   const ctx: QueryRunnerContext = {
     ...context,
     logger: context.logger ? context.logger : createLogger(),
   }
 
-  const runner = options?.builder
+  return options?.builder
     ? options.builder(driver, spec, ctx)
     : new QueryRunner<Data, Driver, List, Params>(driver, spec, ctx)
-
-  return runner as Spec['count'] extends true
-    ? QueryRunnerWithCount<Data, List, Params>
-    : QueryRunnerBase<Data, List, Params>
 }

@@ -176,4 +176,32 @@ describe('QueryRunner - Method: count(params?)', () => {
       runner.count
     })
   })
+
+  describe('Type-level driver requirement', () => {
+    it('should reject drivers without executeCount when spec.count is true', () => {
+      const driverWithoutCount: import('./interfaces').QueryDriverInterface = {
+        source() {
+          return this
+        },
+        async execute() {
+          return []
+        },
+      }
+
+      // Type-only assertion: this call is wrapped in a never-executed branch
+      // so we only verify the @ts-expect-error directive triggers correctly.
+      const _typeCheck = () =>
+        defineQuery<TestData>(
+          // @ts-expect-error - driver missing executeCount cannot be used with count: true
+          driverWithoutCount,
+          {
+            name: 'no-execute-count-driver',
+            source: () => testData,
+            rules: {},
+            count: true,
+          },
+        )
+      expect(typeof _typeCheck).toBe('function')
+    })
+  })
 })

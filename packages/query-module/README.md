@@ -117,6 +117,9 @@ default filters set there are applied) but `postprocess` does not, since the
 return value is a `number` rather than a `QueryResultList`.
 
 If `count` is omitted or `false`, `runner.count(...)` is a TypeScript error.
+When `count: true` is set, the driver must implement `executeCount` —
+`defineQuery` enforces this via overload, so a driver without `executeCount`
+fails to type-check at the call site.
 
 ### Finding parameters
 

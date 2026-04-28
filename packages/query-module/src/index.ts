@@ -8,6 +8,7 @@ export type {
   QueryCriteriaInterface,
   QueryDriverCustomFilterFunction,
   QueryDriverInterface,
+  QueryDriverWithCountInterface,
   QueryFilter,
   QueryFilterOperator,
   QueryLoggerInterface,
