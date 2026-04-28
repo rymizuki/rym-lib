@@ -1,6 +1,6 @@
 export { QueryCriteria } from './criteria'
 export { QueryRunnerResourceNotFoundException } from './exceptions'
-export { defineQuery } from './functions/define-query'
+export { defineQuery, defineQueryWithCount } from './functions/define-query'
 export { QueryRunner } from './runner'
 
 export type {

@@ -1,6 +1,6 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 
-import { defineQuery } from './functions/define-query'
+import { defineQuery, defineQueryWithCount } from './functions/define-query'
 import { QueryRunnerMiddleware, QueryRunnerWithCount } from './interfaces'
 import { createDriver, TestDriver } from './test-utils/test-driver'
 
@@ -23,15 +23,14 @@ describe('QueryRunner - Method: count(params?)', () => {
     driver = createDriver()
   })
 
-  describe('When spec.count is true', () => {
+  describe('defineQueryWithCount exposes count()', () => {
     let runner: QueryRunnerWithCount<TestData>
 
     beforeEach(() => {
-      runner = defineQuery<TestData>(driver, {
+      runner = defineQueryWithCount<TestData>(driver, {
         name: 'test-count',
         source: () => testData,
         rules: { status: 'status' },
-        count: true,
       })
     })
 
@@ -80,12 +79,11 @@ describe('QueryRunner - Method: count(params?)', () => {
     it('should run preprocess middleware', async () => {
       const preprocess = vi.fn()
       const middleware: QueryRunnerMiddleware<TestData> = { preprocess }
-      const r = defineQuery<TestData>(driver, {
+      const r = defineQueryWithCount<TestData>(driver, {
         name: 'mw-count',
         source: () => testData,
         rules: {},
         middlewares: [middleware],
-        count: true,
       })
 
       await r.count()
@@ -96,12 +94,11 @@ describe('QueryRunner - Method: count(params?)', () => {
     it('should not run postprocess middleware', async () => {
       const postprocess = vi.fn()
       const middleware: QueryRunnerMiddleware<TestData> = { postprocess }
-      const r = defineQuery<TestData>(driver, {
+      const r = defineQueryWithCount<TestData>(driver, {
         name: 'mw-count',
         source: () => testData,
         rules: {},
         middlewares: [middleware],
-        count: true,
       })
 
       await r.count()
@@ -111,7 +108,7 @@ describe('QueryRunner - Method: count(params?)', () => {
 
     it('should run multiple preprocess middlewares in registration order', async () => {
       const order: string[] = []
-      const r = defineQuery<TestData>(driver, {
+      const r = defineQueryWithCount<TestData>(driver, {
         name: 'mw-order',
         source: () => testData,
         rules: {},
@@ -119,7 +116,6 @@ describe('QueryRunner - Method: count(params?)', () => {
           { preprocess: () => void order.push('first') },
           { preprocess: () => void order.push('second') },
         ],
-        count: true,
       })
 
       await r.count()
@@ -128,12 +124,11 @@ describe('QueryRunner - Method: count(params?)', () => {
     })
 
     it('should pass spec.criteria-transformed params to driver.executeCount', async () => {
-      const r = defineQuery<TestData>(driver, {
+      const r = defineQueryWithCount<TestData>(driver, {
         name: 'criteria-count',
         source: () => testData,
         rules: { status: 'status' },
         criteria: () => ({ filter: { status: { eq: 'active' } } }),
-        count: true,
       })
 
       await r.count()
@@ -150,7 +145,7 @@ describe('QueryRunner - Method: count(params?)', () => {
     })
   })
 
-  describe('When spec.count is not set', () => {
+  describe('defineQuery does not expose count()', () => {
     it('should not expose count() in the returned type', () => {
       const runner = defineQuery<TestData>(driver, {
         name: 'no-count',
@@ -158,27 +153,13 @@ describe('QueryRunner - Method: count(params?)', () => {
         rules: {},
       })
 
-      // @ts-expect-error - count is not available when spec.count is not true
-      runner.count
-    })
-  })
-
-  describe('When spec.count is false', () => {
-    it('should not expose count() in the returned type', () => {
-      const runner = defineQuery<TestData>(driver, {
-        name: 'no-count',
-        source: () => testData,
-        rules: {},
-        count: false,
-      })
-
-      // @ts-expect-error - count is not available when spec.count is false
+      // @ts-expect-error - count is not available on runners from defineQuery
       runner.count
     })
   })
 
   describe('Type-level driver requirement', () => {
-    it('should reject drivers without executeCount when spec.count is true', () => {
+    it('should reject drivers without executeCount in defineQueryWithCount', () => {
       const driverWithoutCount: import('./interfaces').QueryDriverInterface = {
         source() {
           return this
@@ -188,17 +169,17 @@ describe('QueryRunner - Method: count(params?)', () => {
         },
       }
 
-      // Type-only assertion: this call is wrapped in a never-executed branch
-      // so we only verify the @ts-expect-error directive triggers correctly.
+      // Type-only check: defineQueryWithCount constrains the driver to
+      // QueryDriverWithCountInterface, so a driver missing executeCount is
+      // a compile-time error. We don't execute the call.
       const _typeCheck = () =>
-        defineQuery<TestData>(
-          // @ts-expect-error - driver missing executeCount cannot be used with count: true
+        defineQueryWithCount<TestData>(
+          // @ts-expect-error - driver missing executeCount cannot be used with defineQueryWithCount
           driverWithoutCount,
           {
             name: 'no-execute-count-driver',
             source: () => testData,
             rules: {},
-            count: true,
           },
         )
       expect(typeof _typeCheck).toBe('function')

@@ -94,14 +94,16 @@ if (row === null) {
 
 #### `.count(params = {})`
 
-Count rows matching params and return a number. The method is only available
-on the runner type when `count: true` is set on the query specification.
+Count rows matching params and return a number. The method is only exposed
+when the query is created via `defineQueryWithCount`. Runners returned from
+the regular `defineQuery` do not have `count()` on their type.
 
 ```ts
-const userQuery = defineQuery<Data, QueryDriverPrisma>(driver, {
+import { defineQueryWithCount } from '@rym-lib/query-module'
+
+const userQuery = defineQueryWithCount<Data, QueryDriverPrisma>(driver, {
   source: (builder) => builder.from('users'),
   rules: { status: 'status' },
-  count: true, // <- enable count() on the runner
 })
 
 const total = await userQuery.count()
@@ -116,10 +118,9 @@ do not affect the resulting row count. Middleware `preprocess` runs (so
 default filters set there are applied) but `postprocess` does not, since the
 return value is a `number` rather than a `QueryResultList`.
 
-If `count` is omitted or `false`, `runner.count(...)` is a TypeScript error.
-When `count: true` is set, the driver must implement `executeCount` —
-`defineQuery` enforces this via overload, so a driver without `executeCount`
-fails to type-check at the call site.
+`defineQueryWithCount` constrains its driver argument to
+`QueryDriverWithCountInterface`, so a driver that doesn't implement
+`executeCount` is rejected at compile time.
 
 ### Finding parameters
 

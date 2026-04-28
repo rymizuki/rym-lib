@@ -81,7 +81,7 @@ export interface QueryCriteriaInterface<Data extends QueryResultData = any> {
   readonly skip: QueryCriteriaSkip
 }
 
-export interface QueryRunnerBase<
+export interface QueryRunnerInterface<
   Data extends QueryResultData,
   List extends QueryResultList<Data> = QueryResultList<Data>,
   Params extends QueryRunnerCriteria<Data> = QueryRunnerCriteria<Data>,
@@ -91,22 +91,19 @@ export interface QueryRunnerBase<
   find(params: Params): Promise<Data>
 }
 
+export type QueryRunnerBase<
+  Data extends QueryResultData,
+  List extends QueryResultList<Data> = QueryResultList<Data>,
+  Params extends QueryRunnerCriteria<Data> = QueryRunnerCriteria<Data>,
+> = QueryRunnerInterface<Data, List, Params>
+
 export interface QueryRunnerWithCount<
   Data extends QueryResultData,
   List extends QueryResultList<Data> = QueryResultList<Data>,
   Params extends QueryRunnerCriteria<Data> = QueryRunnerCriteria<Data>,
-> extends QueryRunnerBase<Data, List, Params> {
+> extends QueryRunnerInterface<Data, List, Params> {
   count(params?: Params): Promise<number>
 }
-
-export type QueryRunnerInterface<
-  Data extends QueryResultData,
-  List extends QueryResultList<Data> = QueryResultList<Data>,
-  Params extends QueryRunnerCriteria<Data> = QueryRunnerCriteria<Data>,
-  Spec extends { count?: boolean } = { count?: boolean },
-> = Spec['count'] extends true
-  ? QueryRunnerWithCount<Data, List, Params>
-  : QueryRunnerBase<Data, List, Params>
 
 export interface QueryRunnerContext {
   logger: QueryLoggerInterface
