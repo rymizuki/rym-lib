@@ -574,7 +574,7 @@ async function expectQuery<
 }
 
 describe('query-module-driver-prisma .executeCount', () => {
-  let driver: QueryDriverInterface
+  let driver: QueryDriverPrisma
   beforeEach(() => {
     driver = new QueryDriverPrisma(prisma, {
       logger: createLogger(),
@@ -608,9 +608,7 @@ describe('query-module-driver-prisma .executeCount', () => {
   })
 
   it('should convert BigInt count to number', async () => {
-    prismaMock.$queryRawUnsafe.mockResolvedValueOnce([
-      { count: 42n },
-    ] as any)
+    prismaMock.$queryRawUnsafe.mockResolvedValueOnce([{ count: 42n }] as any)
 
     const count = await driver.executeCount(new QueryCriteria({}, {}))
 
@@ -619,9 +617,7 @@ describe('query-module-driver-prisma .executeCount', () => {
   })
 
   it('should fall back to first column when count column missing', async () => {
-    prismaMock.$queryRawUnsafe.mockResolvedValueOnce([
-      { 'COUNT(*)': 3 },
-    ] as any)
+    prismaMock.$queryRawUnsafe.mockResolvedValueOnce([{ 'COUNT(*)': 3 }] as any)
 
     const count = await driver.executeCount(new QueryCriteria({}, {}))
 

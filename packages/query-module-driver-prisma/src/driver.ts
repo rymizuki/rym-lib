@@ -77,8 +77,7 @@ export class QueryDriverPrisma implements QueryDriverInterface {
     const rows = (await this.db.$queryRawUnsafe(
       sql,
       ...replacements,
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    )) as Record<string, any>[]
+    )) as Record<string, unknown>[]
     const first = rows[0] ?? {}
     const value = first.count ?? Object.values(first)[0]
     return Number(value ?? 0)

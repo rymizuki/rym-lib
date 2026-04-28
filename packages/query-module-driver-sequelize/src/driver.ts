@@ -81,7 +81,7 @@ export class QueryDriverSequelize implements QueryDriverInterface {
     const rows = (await this.db.query(sql, {
       replacements,
       type: QueryTypes.SELECT,
-    })) as Record<string, any>[]
+    })) as Record<string, unknown>[]
     const first = rows[0] ?? {}
     const value = first.count ?? Object.values(first)[0]
     return Number(value ?? 0)

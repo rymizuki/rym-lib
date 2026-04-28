@@ -183,7 +183,9 @@ describe('query-module-driver-sequelize', () => {
       await driver.executeCount(new QueryCriteria({}, {}))
 
       const lastCall = mockQuery.mock.lastCall
-      expect(lastCall?.[0]).toBe('SELECT COUNT(*) AS `count`\nFROM\n  `example`')
+      expect(lastCall?.[0]).toBe(
+        'SELECT COUNT(*) AS `count`\nFROM\n  `example`',
+      )
     })
 
     it('should return numeric count from row.count', async () => {
