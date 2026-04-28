@@ -54,7 +54,9 @@ describe('QueryRunner - Method: count(params?)', () => {
 
       expect(driver.called[0]!.method).toBe('executeCount')
       const criteria = driver.called[0]!.args[0]
-      expect(criteria.filter).toBeDefined()
+      expect(criteria.filter).toMatchObject({
+        status: { value: { eq: 'active' } },
+      })
     })
 
     it('should return number reflecting driver result', async () => {
