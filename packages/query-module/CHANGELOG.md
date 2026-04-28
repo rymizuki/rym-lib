@@ -1,5 +1,16 @@
 # @rym-lib/query-module
 
+## 1.7.0
+
+### Minor Changes
+
+- feat(query-module): add count method
+
+### Patch Changes
+
+- Updated dependencies
+  - @rym-lib/exception@1.7.0
+
 ## 1.6.0
 
 ### Minor Changes

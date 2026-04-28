@@ -1,6 +1,19 @@
 # @rym-lib/nakadachi-interactor-mixin-validator
 
-## 2.0.0
+## 1.7.0
+
+### Minor Changes
+
+- feat(query-module): add count method
+
+### Patch Changes
+
+- Updated dependencies
+  - @rym-lib/exception@1.7.0
+  - @rym-lib/inversify-bundler@1.7.0
+  - @rym-lib/nakadachi@1.7.0
+
+## 1.6.0
 
 ### Minor Changes
 
@@ -13,7 +26,7 @@
   - @rym-lib/inversify-bundler@1.6.0
   - @rym-lib/nakadachi@1.6.0
 
-## 2.0.0
+## 1.5.0
 
 ### Minor Changes
 
@@ -118,35 +131,6 @@
   - @rym-lib/exception@1.3.3
   - @rym-lib/inversify-bundler@1.3.3
   - @rym-lib/nakadachi@1.3.3
-
-## 1.3.2
-
-### Major Changes
-
-- Downgrade packages from 2.0.1 to 1.3.2 for version alignment
-
-## 2.0.1
-
-### Patch Changes
-
-- update dependencies and fix type problemns
-- Updated dependencies
-  - @rym-lib/exception@1.3.1
-  - @rym-lib/inversify-bundler@1.3.1
-  - @rym-lib/nakadachi@1.3.1
-
-## 2.0.0
-
-### Minor Changes
-
-- update query-module implementaions and breaking changes
-
-### Patch Changes
-
-- Updated dependencies
-  - @rym-lib/exception@1.3.0
-  - @rym-lib/inversify-bundler@1.3.0
-  - @rym-lib/nakadachi@1.3.0
 
 ## 1.2.10
 

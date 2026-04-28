@@ -1,6 +1,17 @@
 # @rym-lib/nakadachi-adapter-remix
 
-## 2.0.0
+## 1.7.0
+
+### Minor Changes
+
+- feat(query-module): add count method
+
+### Patch Changes
+
+- Updated dependencies
+  - @rym-lib/nakadachi@1.7.0
+
+## 1.6.0
 
 ### Minor Changes
 
@@ -11,7 +22,7 @@
 - Updated dependencies
   - @rym-lib/nakadachi@1.6.0
 
-## 2.0.0
+## 1.5.0
 
 ### Minor Changes
 
@@ -96,31 +107,6 @@
 - fix dependencies version
 - Updated dependencies
   - @rym-lib/nakadachi@1.3.3
-
-## 1.3.2
-
-### Major Changes
-
-- Downgrade packages from 2.0.1 to 1.3.2 for version alignment
-
-## 2.0.1
-
-### Patch Changes
-
-- update dependencies and fix type problemns
-- Updated dependencies
-  - @rym-lib/nakadachi@1.3.1
-
-## 2.0.0
-
-### Minor Changes
-
-- update query-module implementaions and breaking changes
-
-### Patch Changes
-
-- Updated dependencies
-  - @rym-lib/nakadachi@1.3.0
 
 ## 1.2.10
 

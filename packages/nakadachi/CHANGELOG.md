@@ -1,5 +1,11 @@
 # @rym-lib/nakadachi
 
+## 1.7.0
+
+### Minor Changes
+
+- feat(query-module): add count method
+
 ## 1.6.0
 
 ### Minor Changes
