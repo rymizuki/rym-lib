@@ -778,5 +778,13 @@ describe('query-module-sql-builder', () => {
       expect(sql).not.toContain('OFFSET')
       expect(sql).toBe('SELECT COUNT(*) AS `count` FROM `example`')
     })
+
+    it('should ignore having: prefixed filters to avoid HAVING clause without GROUP BY', () => {
+      const { sql } = executeCount(builder, {
+        filter: { 'having:amount': { gt: 100 } },
+      })
+      expect(sql).not.toContain('HAVING')
+      expect(sql).toBe('SELECT COUNT(*) AS `count` FROM `example`')
+    })
   })
 })

@@ -62,6 +62,7 @@ function applyFilters(
   builder: SQLBuilderPort,
   criteria: QueryCriteriaInterface,
   o: BuildSqlOptions,
+  flags: { skipHaving?: boolean } = {},
 ) {
   if (!criteria.filter) return
 
@@ -101,6 +102,10 @@ function applyFilters(
     }
   }
   builder.where(whole)
+
+  // NOTE: count クエリでは GROUP BY が無いので HAVING を出すと SQL エラーになる。
+  // 呼び出し側で skipHaving: true を渡すことで HAVING の組み立てを抑制する。
+  if (flags.skipHaving) return
 
   const whole_having = createConditions()
   for (const filter of Array.isArray(criteria.filter)
@@ -181,7 +186,7 @@ export function buildCountSQL<Driver extends QueryDriverInterface>(
   // 組み立てられた column(...) 群を捨てて COUNT(*) クエリに差し替える。
   // 結果セットのエイリアスは `count` 固定で、ドライバ側は row.count として参照する。
   builder.select('SELECT COUNT(*) AS `count`')
-  applyFilters(builder, criteria, o)
+  applyFilters(builder, criteria, o, { skipHaving: true })
   return builder.toSQL()
 }
 
