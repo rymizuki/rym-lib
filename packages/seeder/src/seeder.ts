@@ -124,6 +124,9 @@ export class Seeder {
   /**
    * BigIntへ変換可能な値かどうかを判定する型ガード。
    * 数値・bigintに加え、整数のみからなる文字列を対象とする。
+   *
+   * NOTE: number型は`Number.MAX_SAFE_INTEGER`（2^53 - 1）以下でのみ正確に比較できる。
+   * それを超える値（Snowflake ID等）はnumberでは精度が失われるため、bigintまたは文字列で渡すこと。
    */
   private isNumericConvertible(
     value: unknown,
