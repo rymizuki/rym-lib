@@ -1,5 +1,13 @@
 # @rym-lib/inversify-bundler-express
 
+## 1.7.1
+
+### Patch Changes
+
+- fix(seeder): bigint型の主キー・カラムに対応
+- Updated dependencies
+  - @rym-lib/inversify-bundler@1.7.1
+
 ## 1.7.0
 
 ### Minor Changes

@@ -25,12 +25,7 @@ describe('Seeder', () => {
         })
 
         it('結果: bigintの主キー値でINSERT文を実行する', async () => {
-          await seeder.load(
-            'users',
-            'id',
-            ['id', 'name'],
-            [[10n, 'test']],
-          )
+          await seeder.load('users', 'id', ['id', 'name'], [[10n, 'test']])
 
           expect(mockPrismaClient.$executeRawUnsafe).toHaveBeenCalledWith(
             'INSERT INTO `users` (`id`, `name`) VALUES ($1, $2)',
@@ -48,12 +43,7 @@ describe('Seeder', () => {
         })
 
         it('結果: bigintの主キー値でUPDATE文を実行する', async () => {
-          await seeder.load(
-            'users',
-            'id',
-            ['id', 'name'],
-            [[10n, 'new_name']],
-          )
+          await seeder.load('users', 'id', ['id', 'name'], [[10n, 'new_name']])
 
           expect(mockPrismaClient.$executeRawUnsafe).toHaveBeenCalledWith(
             'UPDATE `users` SET `name` = $1 WHERE `id` = $2',
@@ -71,12 +61,7 @@ describe('Seeder', () => {
         })
 
         it('結果: UPDATE・INSERTともに実行しない', async () => {
-          await seeder.load(
-            'users',
-            'id',
-            ['id', 'name'],
-            [[10n, 'test']],
-          )
+          await seeder.load('users', 'id', ['id', 'name'], [[10n, 'test']])
 
           expect(mockPrismaClient.$executeRawUnsafe).not.toHaveBeenCalled()
         })
