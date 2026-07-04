@@ -1,5 +1,7 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest'
 
+import { PrismaClient } from '@prisma/client'
+
 import { Seeder } from './seeder'
 
 const mockPrismaClient = {
@@ -8,12 +10,11 @@ const mockPrismaClient = {
 }
 
 describe('Seeder', () => {
-  let seeder: Seeder
+  const seeder = new Seeder(mockPrismaClient as unknown as PrismaClient, {})
 
   beforeEach(() => {
     vi.clearAllMocks()
     vi.spyOn(console, 'info').mockImplementation(() => {})
-    seeder = new Seeder(mockPrismaClient as any, {})
   })
 
   describe('load', () => {
@@ -139,6 +140,27 @@ describe('Seeder', () => {
           )
 
           expect(mockPrismaClient.$executeRawUnsafe).not.toHaveBeenCalled()
+        })
+      })
+
+      describe('シチュエーション: 対象の主キーの行が存在し、DateカラムのみDB側と異なる場合', () => {
+        it('結果: UPDATE文を実行する', async () => {
+          mockPrismaClient.$queryRawUnsafe.mockResolvedValue([
+            { id: 1, published_at: new Date('2024-01-01T00:00:00.000Z') },
+          ])
+
+          await seeder.load(
+            'articles',
+            'id',
+            ['id', 'published_at'],
+            [[1, new Date('2024-06-01T00:00:00.000Z')]],
+          )
+
+          expect(mockPrismaClient.$executeRawUnsafe).toHaveBeenCalledWith(
+            'UPDATE `articles` SET `published_at` = $1 WHERE `id` = $2',
+            new Date('2024-06-01T00:00:00.000Z'),
+            1,
+          )
         })
       })
     })
