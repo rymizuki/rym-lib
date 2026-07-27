@@ -1,6 +1,10 @@
 import { SQLBuilderToSQLInputOptions } from 'coral-sql'
 
 import type { TransactionManager } from './transaction-manager'
+import type { UpsertConflict } from './upsert/upsert-conflict'
+import type { UpsertData } from './upsert/upsert-data'
+import type { UpsertOptions } from './upsert/upsert-options'
+import type { UpsertResult } from './upsert/upsert-result'
 
 export type WhereType = Record<string, unknown>
 
@@ -83,6 +87,12 @@ export interface DataBasePort {
     create: Record<string, unknown>,
     options?: DataBaseCommandOptionsPartial,
   ): Promise<void>
+  upsert<Row>(
+    table: string,
+    data: UpsertData,
+    conflict: UpsertConflict,
+    options?: UpsertOptions,
+  ): Promise<UpsertResult<Row>>
   txn<T>(
     fn: (db: DataBasePort) => Promise<T>,
     options?: TransactionOptions,
