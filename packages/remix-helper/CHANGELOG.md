@@ -1,5 +1,18 @@
 # @rym-lib/remix-helper
 
+## 1.8.0
+
+### Minor Changes
+
+- 全公開パッケージのバージョンを 1.8.0 に揃える
+
+  `@rym-lib/rdb-command` の 1.8.0 リリースに合わせ、他の公開パッケージも 1.7.1 → 1.8.0 に揃える（このリポジトリはモノレポ全体でバージョンを横並びに保つ運用のため）。機能変更はなくバージョン統一のための bump。
+
+### Patch Changes
+
+- Updated dependencies
+  - @rym-lib/utilities@1.8.0
+
 ## 1.7.1
 
 ### Patch Changes
