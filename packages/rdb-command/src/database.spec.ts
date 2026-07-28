@@ -6,6 +6,11 @@ import {
   DataBaseLogger,
   DataBasePort,
 } from './interfaces'
+import { cast } from './upsert/cast'
+import { isRawExpression } from './upsert/is-raw-expression'
+import { now } from './upsert/now'
+import { null_value } from './upsert/null-value'
+import { raw } from './upsert/raw'
 
 class DummyDataBaseLogger implements DataBaseLogger {
   debug(format: string, ...args: unknown[]): void {}
@@ -720,6 +725,358 @@ describe('db', () => {
           'DELETE FROM `users` WHERE (`id` = $1)',
           [1],
         )
+      })
+    })
+  })
+
+  describe('upsert', () => {
+    let conn: DataBaseConnectorPort
+    let db: DataBasePort
+    let execute_spy: MockInstance
+    let query_spy: MockInstance
+
+    beforeEach(() => {
+      conn = new TestConnector()
+      db = new DataBase(conn, new DummyDataBaseLogger(), {
+        placeholder: '$',
+        quote: '"',
+      })
+      execute_spy = vi.spyOn(conn, 'execute')
+      query_spy = vi.spyOn(conn, 'query')
+    })
+
+    describe('全カラムが通常値で、ON CONFLICT DO NOTHING・returning未指定の場合', () => {
+      it('execute で INSERT ... ON CONFLICT DO NOTHING を発行し、rows は空配列を返す', async () => {
+        const result = await db.upsert(
+          'users',
+          { id: 'u1', email: 'e', display_name: 'd' },
+          { target: ['id'], action: { type: 'nothing' } },
+        )
+
+        expect(execute_spy).toHaveBeenCalledWith(
+          'INSERT INTO "users" ("id","email","display_name") VALUES ($1,$2,$3) ON CONFLICT ("id") DO NOTHING',
+          ['u1', 'e', 'd'],
+        )
+        expect(query_spy).not.toHaveBeenCalled()
+        expect(result).toEqual({ rows: [] })
+      })
+    })
+
+    describe('cast() を含む値・複合 conflict target・returning 指定の場合', () => {
+      beforeEach(async () => {
+        query_spy.mockResolvedValue([{ id: 'trip1' }])
+        await db.upsert(
+          'trips',
+          {
+            user_id: 'u1',
+            client_trip_id: cast('c1', 'uuid'),
+            started_at: 's',
+            ended_at: 'e',
+            title: 't',
+            note: 'n',
+          },
+          { target: ['user_id', 'client_trip_id'], action: { type: 'nothing' } },
+          { returning: ['id'] },
+        )
+      })
+
+      it('query で発行し、cast のキャスト表記を保持したまま以降の採番が連番になる', () => {
+        expect(query_spy).toHaveBeenCalledWith(
+          'INSERT INTO "trips" ("user_id","client_trip_id","started_at","ended_at","title","note") VALUES ($1,$2::uuid,$3,$4,$5,$6) ON CONFLICT ("user_id","client_trip_id") DO NOTHING RETURNING "id"',
+          ['u1', 'c1', 's', 'e', 't', 'n'],
+        )
+        expect(execute_spy).not.toHaveBeenCalled()
+      })
+    })
+
+    describe('now() のようにバインドを持たない raw 式が末尾にあり、DO UPDATE SET が excluded 展開の場合', () => {
+      it('now() の直前までの採番が正しく閉じ、excluded 展開の SQL になる', async () => {
+        await db.upsert(
+          'monthly_stats',
+          {
+            user_id: 'u1',
+            year_month: cast('2024-01', 'date'),
+            trip_count: 3,
+            total_distance: 100,
+            meta: cast('{}', 'jsonb'),
+            updated_at: now(),
+          },
+          {
+            target: ['user_id', 'year_month'],
+            action: { type: 'update', set: ['trip_count', 'total_distance'] },
+          },
+        )
+
+        expect(execute_spy).toHaveBeenCalledWith(
+          'INSERT INTO "monthly_stats" ("user_id","year_month","trip_count","total_distance","meta","updated_at") VALUES ($1,$2::date,$3,$4,$5::jsonb,now()) ON CONFLICT ("user_id","year_month") DO UPDATE SET "trip_count" = excluded."trip_count", "total_distance" = excluded."total_distance"',
+          ['u1', '2024-01', 3, 100, '{}'],
+        )
+      })
+    })
+
+    describe('raw() の式内に複数バインド（?, ?）を含み、null_value() / now() が混在する場合', () => {
+      it('式内バインドが連番で採番され、null_value / now はバインドを消費しない', async () => {
+        query_spy.mockResolvedValue([{ id: 'place1' }])
+
+        await db.upsert(
+          'places',
+          {
+            user_id: 'u1',
+            name: 'home',
+            location: raw('ST_SetSRID(ST_MakePoint(?, ?), 4326)', 139.0, 35.0),
+            address: 'addr',
+            name_source: null_value(),
+            visit_count: 1,
+            created_at: now(),
+            updated_at: now(),
+          },
+          {
+            target: ['user_id'],
+            targetWhere: raw("name_source = 'home'"),
+            action: { type: 'nothing' },
+          },
+          { returning: ['id'] },
+        )
+
+        expect(query_spy).toHaveBeenCalledWith(
+          'INSERT INTO "places" ("user_id","name","location","address","name_source","visit_count","created_at","updated_at") VALUES ($1,$2,ST_SetSRID(ST_MakePoint($3, $4), 4326),$5,NULL,$6,now(),now()) ON CONFLICT ("user_id") WHERE name_source = \'home\' DO NOTHING RETURNING "id"',
+          ['u1', 'home', 139, 35, 'addr', 1],
+        )
+      })
+    })
+
+    describe('DO UPDATE の set に明示値（RawExpression によるインクリメント等）を渡す場合', () => {
+      it('明示値が採番されて replacements に積まれ、DO UPDATE SET に反映される', async () => {
+        await db.upsert(
+          'places',
+          { id: 'p1', visit_count: 1 },
+          {
+            target: ['id'],
+            action: {
+              type: 'update',
+              set: { visit_count: raw('places.visit_count + ?', 1) },
+            },
+          },
+        )
+
+        expect(execute_spy).toHaveBeenCalledWith(
+          'INSERT INTO "places" ("id","visit_count") VALUES ($1,$2) ON CONFLICT ("id") DO UPDATE SET "visit_count" = places.visit_count + $3',
+          ['p1', 1, 1],
+        )
+      })
+    })
+
+    describe('returning に "*" を指定する場合', () => {
+      it('RETURNING * を発行する', async () => {
+        query_spy.mockResolvedValue([{ id: 'u1', email: 'e' }])
+
+        await db.upsert(
+          'users',
+          { id: 'u1', email: 'e' },
+          { target: ['id'], action: { type: 'nothing' } },
+          { returning: '*' },
+        )
+
+        expect(query_spy).toHaveBeenCalledWith(
+          'INSERT INTO "users" ("id","email") VALUES ($1,$2) ON CONFLICT ("id") DO NOTHING RETURNING *',
+          ['u1', 'e'],
+        )
+      })
+    })
+
+    describe('returning の有無による execute / query の使い分けの場合', () => {
+      describe('returning 未指定の場合', () => {
+        it('execute を呼び、rows は空配列を返す', async () => {
+          const result = await db.upsert(
+            'users',
+            { id: 'u1' },
+            { target: ['id'], action: { type: 'nothing' } },
+          )
+
+          expect(execute_spy).toHaveBeenCalledTimes(1)
+          expect(query_spy).not.toHaveBeenCalled()
+          expect(result).toEqual({ rows: [] })
+        })
+      })
+
+      describe('returning 指定の場合', () => {
+        it('query を呼び、rows に結果が入る', async () => {
+          query_spy.mockResolvedValue([{ id: 'u1' }])
+
+          const result = await db.upsert(
+            'users',
+            { id: 'u1' },
+            { target: ['id'], action: { type: 'nothing' } },
+            { returning: ['id'] },
+          )
+
+          expect(query_spy).toHaveBeenCalledTimes(1)
+          expect(execute_spy).not.toHaveBeenCalled()
+          expect(result).toEqual({ rows: [{ id: 'u1' }] })
+        })
+      })
+    })
+
+    describe('raw 式内の ? の個数と bindings の長さが一致しない場合', () => {
+      it('placeholder count と bindings length を含む Error を throw する', async () => {
+        await expect(
+          db.upsert(
+            'x',
+            { a: raw('foo(?, ?)', 1) },
+            { target: ['a'], action: { type: 'nothing' } },
+          ),
+        ).rejects.toThrow(
+          'raw expression placeholder count (2) does not match bindings length (1): foo(?, ?)',
+        )
+      })
+    })
+
+    describe('MySQL（placeholder: "?"）で呼び出す場合', () => {
+      let mysqlConn: DataBaseConnectorPort
+      let mysqlDb: DataBasePort
+
+      beforeEach(() => {
+        mysqlConn = new TestConnector()
+        mysqlDb = new DataBase(mysqlConn, new DummyDataBaseLogger(), {
+          placeholder: '?',
+        })
+      })
+
+      it('サポート対象外である旨の Error を throw する', async () => {
+        await expect(
+          mysqlDb.upsert(
+            'users',
+            { id: 'u1' },
+            { target: ['id'], action: { type: 'nothing' } },
+          ),
+        ).rejects.toThrow(
+          'upsert supports PostgreSQL ($n placeholder) only; MySQL is not supported',
+        )
+      })
+    })
+
+    describe('data が空オブジェクトの場合', () => {
+      it('column が必要である旨の Error を throw する', async () => {
+        await expect(
+          db.upsert(
+            'users',
+            {},
+            { target: ['id'], action: { type: 'nothing' } },
+          ),
+        ).rejects.toThrow('upsert requires at least one column in data')
+      })
+    })
+
+    describe('conflict.target が空配列の場合', () => {
+      it('conflict target column が必要である旨の Error を throw する', async () => {
+        await expect(
+          db.upsert(
+            'users',
+            { id: 'u1' },
+            { target: [], action: { type: 'nothing' } },
+          ),
+        ).rejects.toThrow(
+          'upsert requires at least one conflict target column',
+        )
+      })
+    })
+
+    describe('DO UPDATE の set が空の場合', () => {
+      it('set が配列で空の場合、set column が必要である旨の Error を throw する', async () => {
+        await expect(
+          db.upsert(
+            'users',
+            { id: 'u1' },
+            {
+              target: ['id'],
+              action: { type: 'update', set: [] },
+            },
+          ),
+        ).rejects.toThrow(
+          'upsert DO UPDATE requires at least one column in set',
+        )
+      })
+
+      it('set がオブジェクトで空の場合、set column が必要である旨の Error を throw する', async () => {
+        await expect(
+          db.upsert(
+            'users',
+            { id: 'u1' },
+            {
+              target: ['id'],
+              action: { type: 'update', set: {} },
+            },
+          ),
+        ).rejects.toThrow(
+          'upsert DO UPDATE requires at least one column in set',
+        )
+      })
+    })
+
+    describe('returning が空配列の場合', () => {
+      it('列を含まない RETURNING を生成せず、column が必要である旨の Error を throw する', async () => {
+        await expect(
+          db.upsert(
+            'users',
+            { id: 'u1' },
+            {
+              target: ['id'],
+              action: { type: 'nothing' },
+            },
+            { returning: [] },
+          ),
+        ).rejects.toThrow('upsert RETURNING requires at least one column')
+      })
+    })
+  })
+
+  describe('upsert のヘルパー関数', () => {
+    describe('raw', () => {
+      it('sql と bindings を保持した RawExpression を返す', () => {
+        expect(raw('?::date', 'x')).toEqual({
+          __raw: true,
+          sql: '?::date',
+          bindings: ['x'],
+        })
+      })
+    })
+
+    describe('now', () => {
+      it('now() を表す RawExpression を返す', () => {
+        expect(now()).toEqual({ __raw: true, sql: 'now()', bindings: [] })
+      })
+    })
+
+    describe('null_value', () => {
+      it('NULL を表す RawExpression を返す', () => {
+        expect(null_value()).toEqual({
+          __raw: true,
+          sql: 'NULL',
+          bindings: [],
+        })
+      })
+    })
+
+    describe('cast', () => {
+      it('?::type 形式の RawExpression を返す', () => {
+        expect(cast('v', 'jsonb')).toEqual({
+          __raw: true,
+          sql: '?::jsonb',
+          bindings: ['v'],
+        })
+      })
+    })
+
+    describe('isRawExpression', () => {
+      it('raw() で作った値を RawExpression と判定する', () => {
+        expect(isRawExpression(raw('now()'))).toBe(true)
+      })
+
+      it('通常の値を RawExpression でないと判定する', () => {
+        expect(isRawExpression('plain')).toBe(false)
+        expect(isRawExpression(1)).toBe(false)
+        expect(isRawExpression(null)).toBe(false)
+        expect(isRawExpression({ sql: 'x' })).toBe(false)
       })
     })
   })

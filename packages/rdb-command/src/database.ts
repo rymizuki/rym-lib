@@ -18,6 +18,12 @@ import {
   WhereType,
 } from './interfaces'
 import { TransactionManager } from './transaction-manager'
+import { isRawExpression } from './upsert/is-raw-expression'
+import { UpsertConflict } from './upsert/upsert-conflict'
+import { UpsertData } from './upsert/upsert-data'
+import { UpsertOptions } from './upsert/upsert-options'
+import { UpsertResult } from './upsert/upsert-result'
+import { UpsertValue } from './upsert/upsert-value'
 
 function escape(value: string, options: { quote?: string | null } = {}) {
   const quote =
@@ -76,6 +82,14 @@ export class DataBase implements DataBasePort {
     return ret
   }
 
+  /**
+   * SELECT で存在確認し、無ければ create / 有れば update する。
+   *
+   * NOTE: これは非原子的な 2 ステップ（find → create/update）であり、同時実行下の
+   *       競合には無防備。一意制約に対する原子的な upsert が必要なら {@link upsert}
+   *       （INSERT ... ON CONFLICT）を使うこと。`updateOrCreate` は任意の where で
+   *       検索できる（一意制約を要さない）点が upsert と異なる。
+   */
   async updateOrCreate(
     table: string,
     where: Record<string, unknown>,
@@ -86,9 +100,71 @@ export class DataBase implements DataBasePort {
     const row = await this.find(table, where)
     if (!row) {
       await this.create(table, { ...create }, options)
-    } else {
-      await this.update(table, where, update, options)
+      return
     }
+    await this.update(table, where, update, options)
+  }
+
+  /**
+   * INSERT ... ON CONFLICT を発行する原子的 upsert。
+   *
+   * NOTE: **PostgreSQL 専用**（`ON CONFLICT` 構文と `$n` placeholder に依存）。
+   *       MySQL（`placeholder: '?'`）は `ON DUPLICATE KEY UPDATE` を要し採番方式も
+   *       異なるため、`?` placeholder で呼ばれた場合は例外にする。
+   * NOTE: `table` / `data` の列名 / `conflict.target` / `options.returning` の列名、
+   *       および `raw()` の `sql` ・ `cast()` の型名は、**識別子/式としてエスケープせず
+   *       埋め込む**（バインドされるのは値のみ）。これらには信頼できるリテラルのみを渡し、
+   *       ユーザー入力を渡さないこと（インジェクション防止）。バインド値（通常の
+   *       `UpsertValue`）は placeholder 経由で安全に渡る。
+   *
+   * @see updateOrCreate 非原子的 2 ステップ版（競合が問題にならない場合の代替）
+   */
+  async upsert<Row>(
+    table: string,
+    data: UpsertData,
+    conflict: UpsertConflict,
+    options: UpsertOptions = {},
+  ): Promise<UpsertResult<Row>> {
+    if ((this.toSqlOptions.placeholder || '$') === '?') {
+      throw new Error(
+        'upsert supports PostgreSQL ($n placeholder) only; MySQL is not supported',
+      )
+    }
+
+    const entries = Object.entries(this.parse(data))
+    if (entries.length === 0) {
+      throw new Error('upsert requires at least one column in data')
+    }
+    if (conflict.target.length === 0) {
+      throw new Error('upsert requires at least one conflict target column')
+    }
+
+    const replacements: unknown[] = []
+
+    const columnsSql = entries
+      .map(([prop]) => escape(prop, this.toSqlOptions))
+      .join(',')
+    const valuesSql = entries
+      .map(([, value]) => this.renderValue(value as UpsertValue, replacements))
+      .join(',')
+
+    const conflictSql = this.renderConflict(conflict, replacements)
+    const returningSql = this.renderReturning(options.returning)
+
+    const sql = `INSERT INTO ${escape(
+      table,
+      this.toSqlOptions,
+    )} (${columnsSql}) VALUES (${valuesSql})${conflictSql}${returningSql}`
+
+    this.context.logger.debug(`[DataBase] upsert: ${sql} `, { replacements })
+
+    if (options.returning !== undefined) {
+      const rows = await this.query<Row>(sql, replacements, options)
+      return { rows }
+    }
+
+    await this.execute(sql, replacements, options)
+    return { rows: [] }
   }
 
   async create(
@@ -277,6 +353,143 @@ export class DataBase implements DataBasePort {
       return '?'
     }
     return `${placeholder}${index + 1}`
+  }
+
+  /**
+   * upsert の値を SQL 片へ描画する。通常値は 1 プレースホルダを消費し
+   * `replacements` へ push、RawExpression は式内の `?` を採番置換して bindings を push。
+   *
+   * NOTE: 採番は `replacements.length` を index の基準にすることで、VALUES / SET /
+   *       WHERE をまたいで一貫した連番（`$1, $2, ...`）になる。now() のように
+   *       bindings を持たない式は `replacements` を増やさないため、後続の番号がずれない。
+   */
+  private renderValue(value: UpsertValue, replacements: unknown[]): string {
+    if (isRawExpression(value)) {
+      return this.renderRawSql(value.sql, value.bindings, replacements)
+    }
+    const sql = this.getPlaceholder(replacements.length)
+    replacements.push(value)
+    return sql
+  }
+
+  /**
+   * RawExpression の `sql` 内の各 `?` を採番済みプレースホルダへ置換し、
+   * bindings を順に `replacements` へ push する。
+   */
+  private renderRawSql(
+    rawSql: string,
+    bindings: unknown[],
+    replacements: unknown[],
+  ): string {
+    const placeholderCount = (rawSql.match(/\?/g) ?? []).length
+    if (placeholderCount !== bindings.length) {
+      throw new Error(
+        `raw expression placeholder count (${placeholderCount}) does not match bindings length (${bindings.length}): ${rawSql}`,
+      )
+    }
+
+    const rendered = bindings.reduce<string>((sql, binding) => {
+      const placeholder = this.getPlaceholder(replacements.length)
+      replacements.push(binding)
+      return sql.replace('?', placeholder)
+    }, rawSql)
+
+    return rendered
+  }
+
+  /**
+   * `ON CONFLICT (...) [WHERE ...] DO ...` 句を描画する。
+   * targetWhere（部分 index の predicate）と action の採番は VALUES と同じ
+   * `replacements` を共有し、連番が跨いで一貫するようにする。
+   */
+  private renderConflict(
+    conflict: UpsertConflict,
+    replacements: unknown[],
+  ): string {
+    const target = conflict.target
+      .map((prop) => escape(prop, this.toSqlOptions))
+      .join(',')
+    const targetWhere = conflict.targetWhere
+      ? ` WHERE ${this.renderRawSql(
+          conflict.targetWhere.sql,
+          conflict.targetWhere.bindings,
+          replacements,
+        )}`
+      : ''
+    const action = this.renderAction(conflict.action, replacements)
+    return ` ON CONFLICT (${target})${targetWhere} ${action}`
+  }
+
+  /**
+   * ON CONFLICT の action を描画する。`nothing` は `DO NOTHING`、`update` は
+   * `DO UPDATE SET ...`。空の set は不正 SQL になるため例外にする。
+   */
+  private renderAction(
+    action: UpsertConflict['action'],
+    replacements: unknown[],
+  ): string {
+    if (action.type === 'nothing') {
+      return 'DO NOTHING'
+    }
+    const setLength = Array.isArray(action.set)
+      ? action.set.length
+      : Object.keys(action.set).length
+    if (setLength === 0) {
+      throw new Error('upsert DO UPDATE requires at least one column in set')
+    }
+    const setSql = Array.isArray(action.set)
+      ? this.renderExcludedSet(action.set)
+      : this.renderExplicitSet(action.set, replacements)
+    return `DO UPDATE SET ${setSql}`
+  }
+
+  /**
+   * DO UPDATE SET を列名リストから `"col" = excluded."col"` へ展開する。
+   * INSERT しようとした値でそのまま洗い替える用途。バインドは追加しない。
+   */
+  private renderExcludedSet(columns: string[]): string {
+    return columns
+      .map((prop) => {
+        const col = escape(prop, this.toSqlOptions)
+        return `${col} = excluded.${col}`
+      })
+      .join(', ')
+  }
+
+  /**
+   * DO UPDATE SET を明示値マップから `"col" = <値/SQL式>` へ描画する。
+   * excluded 洗い替えでなく、インクリメント等の任意の更新式を書く用途。
+   */
+  private renderExplicitSet(
+    set: UpsertData,
+    replacements: unknown[],
+  ): string {
+    return Object.entries(set)
+      .map(([prop, value]) => {
+        const col = escape(prop, this.toSqlOptions)
+        return `${col} = ${this.renderValue(value, replacements)}`
+      })
+      .join(', ')
+  }
+
+  /**
+   * `RETURNING` 句を描画する。列名配列なら列を、`'*'` なら全列を返す。
+   * 未指定なら空文字（RETURNING なし）。
+   */
+  private renderReturning(returning: UpsertOptions['returning']): string {
+    if (returning === undefined) {
+      return ''
+    }
+    if (returning === '*') {
+      return ' RETURNING *'
+    }
+    if (returning.length === 0) {
+      throw new Error('upsert RETURNING requires at least one column')
+    }
+    const cols = returning
+      .map((prop) => escape(prop, this.toSqlOptions))
+      .join(',')
+    return ` RETURNING ${cols}`
   }
 
   private async getRecords<Row extends Record<string, unknown>>(
