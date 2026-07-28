@@ -775,7 +775,10 @@ describe('db', () => {
             title: 't',
             note: 'n',
           },
-          { target: ['user_id', 'client_trip_id'], action: { type: 'nothing' } },
+          {
+            target: ['user_id', 'client_trip_id'],
+            action: { type: 'nothing' },
+          },
           { returning: ['id'] },
         )
       })
@@ -975,9 +978,7 @@ describe('db', () => {
             { id: 'u1' },
             { target: [], action: { type: 'nothing' } },
           ),
-        ).rejects.toThrow(
-          'upsert requires at least one conflict target column',
-        )
+        ).rejects.toThrow('upsert requires at least one conflict target column')
       })
     })
 
