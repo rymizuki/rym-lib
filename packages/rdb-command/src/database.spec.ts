@@ -1012,6 +1012,22 @@ describe('db', () => {
         )
       })
     })
+
+    describe('returning が空配列の場合', () => {
+      it('列を含まない RETURNING を生成せず、column が必要である旨の Error を throw する', async () => {
+        await expect(
+          db.upsert(
+            'users',
+            { id: 'u1' },
+            {
+              target: ['id'],
+              action: { type: 'nothing' },
+            },
+            { returning: [] },
+          ),
+        ).rejects.toThrow('upsert RETURNING requires at least one column')
+      })
+    })
   })
 
   describe('upsert のヘルパー関数', () => {

@@ -483,6 +483,9 @@ export class DataBase implements DataBasePort {
     if (returning === '*') {
       return ' RETURNING *'
     }
+    if (returning.length === 0) {
+      throw new Error('upsert RETURNING requires at least one column')
+    }
     const cols = returning
       .map((prop) => escape(prop, this.toSqlOptions))
       .join(',')
