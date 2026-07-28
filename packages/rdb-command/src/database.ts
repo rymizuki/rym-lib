@@ -460,10 +460,7 @@ export class DataBase implements DataBasePort {
    * DO UPDATE SET を明示値マップから `"col" = <値/SQL式>` へ描画する。
    * excluded 洗い替えでなく、インクリメント等の任意の更新式を書く用途。
    */
-  private renderExplicitSet(
-    set: UpsertData,
-    replacements: unknown[],
-  ): string {
+  private renderExplicitSet(set: UpsertData, replacements: unknown[]): string {
     return Object.entries(set)
       .map(([prop, value]) => {
         const col = escape(prop, this.toSqlOptions)
