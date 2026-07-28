@@ -397,6 +397,11 @@ export class DataBase implements DataBasePort {
     return rendered
   }
 
+  /**
+   * `ON CONFLICT (...) [WHERE ...] DO ...` 句を描画する。
+   * targetWhere（部分 index の predicate）と action の採番は VALUES と同じ
+   * `replacements` を共有し、連番が跨いで一貫するようにする。
+   */
   private renderConflict(
     conflict: UpsertConflict,
     replacements: unknown[],
@@ -415,6 +420,10 @@ export class DataBase implements DataBasePort {
     return ` ON CONFLICT (${target})${targetWhere} ${action}`
   }
 
+  /**
+   * ON CONFLICT の action を描画する。`nothing` は `DO NOTHING`、`update` は
+   * `DO UPDATE SET ...`。空の set は不正 SQL になるため例外にする。
+   */
   private renderAction(
     action: UpsertConflict['action'],
     replacements: unknown[],
@@ -434,6 +443,10 @@ export class DataBase implements DataBasePort {
     return `DO UPDATE SET ${setSql}`
   }
 
+  /**
+   * DO UPDATE SET を列名リストから `"col" = excluded."col"` へ展開する。
+   * INSERT しようとした値でそのまま洗い替える用途。バインドは追加しない。
+   */
   private renderExcludedSet(columns: string[]): string {
     return columns
       .map((prop) => {
@@ -443,6 +456,10 @@ export class DataBase implements DataBasePort {
       .join(', ')
   }
 
+  /**
+   * DO UPDATE SET を明示値マップから `"col" = <値/SQL式>` へ描画する。
+   * excluded 洗い替えでなく、インクリメント等の任意の更新式を書く用途。
+   */
   private renderExplicitSet(
     set: UpsertData,
     replacements: unknown[],
@@ -455,6 +472,10 @@ export class DataBase implements DataBasePort {
       .join(', ')
   }
 
+  /**
+   * `RETURNING` 句を描画する。列名配列なら列を、`'*'` なら全列を返す。
+   * 未指定なら空文字（RETURNING なし）。
+   */
   private renderReturning(returning: UpsertOptions['returning']): string {
     if (returning === undefined) {
       return ''
