@@ -17,6 +17,36 @@ describe('Seeder', () => {
     vi.spyOn(console, 'info').mockImplementation(() => {})
   })
 
+  describe('ユースケース: PostgreSQL の設定（quote: ", placeholder: $）で null を含む値に更新する', () => {
+    const postgres_seeder = new Seeder(
+      mockPrismaClient as unknown as PrismaClient,
+      { quote: '"', placeholder: '$' },
+    )
+
+    beforeEach(() => {
+      mockPrismaClient.$queryRawUnsafe.mockResolvedValue([
+        { id: 'p1', name: 'old_name', hex: '#FFFFFF', release_date: null },
+      ])
+    })
+
+    it('結果: null の値もプレースホルダに対応させてUPDATE文を実行する', async () => {
+      await postgres_seeder.load(
+        'paints',
+        'id',
+        ['id', 'name', 'hex', 'release_date'],
+        [['p1', 'new_name', null, '2026-09-28']],
+      )
+
+      expect(mockPrismaClient.$executeRawUnsafe).toHaveBeenCalledWith(
+        'UPDATE "paints" SET "name" = $1, "hex" = $2, "release_date" = $3 WHERE "id" = $4',
+        'new_name',
+        null,
+        '2026-09-28',
+        'p1',
+      )
+    })
+  })
+
   describe('load', () => {
     describe('ユースケース: bigintを主キーに持つテーブルへレコードを投入する', () => {
       describe('シチュエーション: 対象の主キーの行が存在しない場合', () => {

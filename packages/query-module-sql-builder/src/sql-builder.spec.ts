@@ -751,6 +751,14 @@ describe('query-module-sql-builder', () => {
       expect(bindings).toStrictEqual([])
     })
 
+    it('should replace the columns selected by the source with COUNT(*)', () => {
+      const { sql } = executeCount(
+        createBuilder().from('example').column('id').column('name'),
+        {},
+      )
+      expect(sql).toBe('SELECT COUNT(*) AS count FROM `example`')
+    })
+
     it('should include WHERE filter conditions', () => {
       const { sql, bindings } = executeCount(builder, {
         filter: { name: { eq: 'alice' } },
