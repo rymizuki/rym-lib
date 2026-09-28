@@ -1,4 +1,4 @@
-# @rym-lib/nakadachi-interactor-mixin-validator
+# @rym-lib/seeder
 
 ## 1.8.1
 
