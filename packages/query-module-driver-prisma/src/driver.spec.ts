@@ -595,7 +595,7 @@ describe('query-module-driver-prisma .executeCount', () => {
     await driver.executeCount(new QueryCriteria({}, {}))
 
     expect(prismaMock.$queryRawUnsafe.mock.lastCall![0]).toBe(
-      'SELECT COUNT(*) AS `count`\nFROM\n  `example`',
+      'SELECT COUNT(*) AS count\nFROM\n  `example`',
     )
   })
 
@@ -640,7 +640,7 @@ describe('query-module-driver-prisma .executeCount', () => {
     )
 
     const lastCall = prismaMock.$queryRawUnsafe.mock.lastCall!
-    expect(lastCall[0]).toContain('SELECT COUNT(*) AS `count`')
+    expect(lastCall[0]).toContain('SELECT COUNT(*) AS count')
     expect(lastCall[0]).toContain('WHERE')
     expect(lastCall.slice(1)).toStrictEqual(['foo'])
   })

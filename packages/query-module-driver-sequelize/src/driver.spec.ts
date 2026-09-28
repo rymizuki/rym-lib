@@ -184,7 +184,7 @@ describe('query-module-driver-sequelize', () => {
 
       const lastCall = mockQuery.mock.lastCall
       expect(lastCall?.[0]).toBe(
-        'SELECT COUNT(*) AS `count`\nFROM\n  `example`',
+        'SELECT COUNT(*) AS count\nFROM\n  `example`',
       )
     })
 
@@ -234,7 +234,7 @@ describe('query-module-driver-sequelize', () => {
       )
 
       const lastCall = mockQuery.mock.lastCall
-      expect(lastCall?.[0]).toContain('SELECT COUNT(*) AS `count`')
+      expect(lastCall?.[0]).toContain('SELECT COUNT(*) AS count')
       expect(lastCall?.[0]).toContain('WHERE')
       expect(lastCall?.[1].replacements).toStrictEqual(['foo'])
     })

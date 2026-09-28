@@ -181,11 +181,7 @@ export function buildCountSQL(
   options: Partial<BuildSqlOptions> = {},
 ) {
   const o = { ...defaults, ...options }
-  // NOTE: coral-sql の select() に "SELECT " で始まる文字列を渡すと
-  // SELECT 句全体を上書きする挙動になる。これを利用して、source 関数で
-  // 組み立てられた column(...) 群を捨てて COUNT(*) クエリに差し替える。
-  // 結果セットのエイリアスは `count` 固定で、ドライバ側は row.count として参照する。
-  builder.select('SELECT COUNT(*) AS `count`')
+  builder.select('SELECT COUNT(*) AS count')
   applyFilters(builder, criteria, o, { skipHaving: true })
   return builder.toSQL()
 }

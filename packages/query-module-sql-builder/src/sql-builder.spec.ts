@@ -747,7 +747,7 @@ describe('query-module-sql-builder', () => {
 
     it('should produce SELECT COUNT(*) without filter', () => {
       const { sql, bindings } = executeCount(builder, {})
-      expect(sql).toBe('SELECT COUNT(*) AS `count` FROM `example`')
+      expect(sql).toBe('SELECT COUNT(*) AS count FROM `example`')
       expect(bindings).toStrictEqual([])
     })
 
@@ -756,7 +756,7 @@ describe('query-module-sql-builder', () => {
         filter: { name: { eq: 'alice' } },
       })
       expect(sql).toBe(
-        'SELECT COUNT(*) AS `count` FROM `example` WHERE (((`name` = ?)))',
+        'SELECT COUNT(*) AS count FROM `example` WHERE (((`name` = ?)))',
       )
       expect(bindings).toStrictEqual(['alice'])
     })
@@ -766,7 +766,7 @@ describe('query-module-sql-builder', () => {
         orderBy: 'name:desc',
       })
       expect(sql).not.toContain('ORDER BY')
-      expect(sql).toBe('SELECT COUNT(*) AS `count` FROM `example`')
+      expect(sql).toBe('SELECT COUNT(*) AS count FROM `example`')
     })
 
     it('should ignore take/skip', () => {
@@ -776,7 +776,7 @@ describe('query-module-sql-builder', () => {
       })
       expect(sql).not.toContain('LIMIT')
       expect(sql).not.toContain('OFFSET')
-      expect(sql).toBe('SELECT COUNT(*) AS `count` FROM `example`')
+      expect(sql).toBe('SELECT COUNT(*) AS count FROM `example`')
     })
 
     it('should ignore having: prefixed filters to avoid HAVING clause without GROUP BY', () => {
@@ -784,7 +784,7 @@ describe('query-module-sql-builder', () => {
         filter: { 'having:amount': { gt: 100 } },
       })
       expect(sql).not.toContain('HAVING')
-      expect(sql).toBe('SELECT COUNT(*) AS `count` FROM `example`')
+      expect(sql).toBe('SELECT COUNT(*) AS count FROM `example`')
     })
   })
 })
