@@ -17,6 +17,36 @@ describe('Seeder', () => {
     vi.spyOn(console, 'info').mockImplementation(() => {})
   })
 
+  describe('ユースケース: PostgreSQL の設定（quote: ", placeholder: $）で null を含む値に更新する', () => {
+    const postgres_seeder = new Seeder(
+      mockPrismaClient as unknown as PrismaClient,
+      { quote: '"', placeholder: '$' },
+    )
+
+    beforeEach(() => {
+      mockPrismaClient.$queryRawUnsafe.mockResolvedValue([
+        { id: 'p1', name: 'old_name', hex: '#FFFFFF', release_date: null },
+      ])
+    })
+
+    it('結果: null の値もプレースホルダに対応させてUPDATE文を実行する', async () => {
+      await postgres_seeder.load(
+        'paints',
+        'id',
+        ['id', 'name', 'hex', 'release_date'],
+        [['p1', 'new_name', null, '2026-09-28']],
+      )
+
+      expect(mockPrismaClient.$executeRawUnsafe).toHaveBeenCalledWith(
+        'UPDATE "paints" SET "name" = $1, "hex" = $2, "release_date" = $3 WHERE "id" = $4',
+        'new_name',
+        null,
+        '2026-09-28',
+        'p1',
+      )
+    })
+  })
+
   describe('load', () => {
     describe('ユースケース: bigintを主キーに持つテーブルへレコードを投入する', () => {
       describe('シチュエーション: 対象の主キーの行が存在しない場合', () => {
@@ -48,6 +78,31 @@ describe('Seeder', () => {
           expect(mockPrismaClient.$executeRawUnsafe).toHaveBeenCalledWith(
             'UPDATE `users` SET `name` = $1 WHERE `id` = $2',
             'new_name',
+            10n,
+          )
+        })
+      })
+
+      describe('シチュエーション: 対象の主キーの行が存在し、null を含む値で更新する場合', () => {
+        beforeEach(() => {
+          mockPrismaClient.$queryRawUnsafe.mockResolvedValue([
+            { id: 10n, name: 'old_name', nickname: 'old_nickname', memo: null },
+          ])
+        })
+
+        it('結果: null の値もプレースホルダに対応させてUPDATE文を実行する', async () => {
+          await seeder.load(
+            'users',
+            'id',
+            ['id', 'name', 'nickname', 'memo'],
+            [[10n, 'new_name', null, 'new_memo']],
+          )
+
+          expect(mockPrismaClient.$executeRawUnsafe).toHaveBeenCalledWith(
+            'UPDATE `users` SET `name` = $1, `nickname` = $2, `memo` = $3 WHERE `id` = $4',
+            'new_name',
+            null,
+            'new_memo',
             10n,
           )
         })

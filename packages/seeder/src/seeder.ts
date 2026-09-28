@@ -1,6 +1,6 @@
 import { PrismaClient } from '@prisma/client'
 
-type Value = string | number | bigint | Date | boolean
+type Value = string | number | bigint | Date | boolean | null
 
 export type SeederOptions = {
   created_at?: boolean
@@ -61,9 +61,9 @@ export class Seeder {
           .map(
             (prop) => `${this.escape(prop)} = ${this.getPlaceholder(index++)}`,
           )
-        const values = columns
-          .map((_, index) => (index === pk_index ? null : record[index]))
-          .filter((value) => value !== null)
+        const values = columns.flatMap((_, index) =>
+          index === pk_index ? [] : [record[index]],
+        )
         if (merged_options.updated_at) {
           setters.push(
             `${this.escape('updated_at')} = ${this.getPlaceholder(index++)}`,
