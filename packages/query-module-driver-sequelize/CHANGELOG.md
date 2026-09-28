@@ -1,5 +1,12 @@
 # @rym-lib/query-module-driver-sequelize
 
+## 1.8.1
+
+### Patch Changes
+
+- Updated dependencies [b2e3747]
+  - @rym-lib/query-module-sql-builder@1.8.1
+
 ## 1.8.0
 
 ### Minor Changes
