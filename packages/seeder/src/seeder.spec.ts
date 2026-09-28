@@ -53,6 +53,31 @@ describe('Seeder', () => {
         })
       })
 
+      describe('シチュエーション: 対象の主キーの行が存在し、null を含む値で更新する場合', () => {
+        beforeEach(() => {
+          mockPrismaClient.$queryRawUnsafe.mockResolvedValue([
+            { id: 10n, name: 'old_name', nickname: 'old_nickname', memo: null },
+          ])
+        })
+
+        it('結果: null の値もプレースホルダに対応させてUPDATE文を実行する', async () => {
+          await seeder.load(
+            'users',
+            'id',
+            ['id', 'name', 'nickname', 'memo'],
+            [[10n, 'new_name', null, 'new_memo']],
+          )
+
+          expect(mockPrismaClient.$executeRawUnsafe).toHaveBeenCalledWith(
+            'UPDATE `users` SET `name` = $1, `nickname` = $2, `memo` = $3 WHERE `id` = $4',
+            'new_name',
+            null,
+            'new_memo',
+            10n,
+          )
+        })
+      })
+
       describe('シチュエーション: 対象の主キーの行が存在し、DB側の値と同じ(変更なし)場合', () => {
         beforeEach(() => {
           mockPrismaClient.$queryRawUnsafe.mockResolvedValue([
