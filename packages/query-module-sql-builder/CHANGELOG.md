@@ -1,5 +1,13 @@
 # @rym-lib/query-module-sql-builder
 
+## 1.8.1
+
+### Patch Changes
+
+- b2e3747: PostgreSQL で使うときの不具合を修正
+
+  件数クエリ（`count()`）の別名がバッククォートで固定されていたため、PostgreSQL で構文エラーになっていた。別名を引用符なしの `count` にした
+
 ## 1.8.0
 
 ### Minor Changes

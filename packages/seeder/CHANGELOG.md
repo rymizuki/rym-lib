@@ -1,4 +1,12 @@
-# @rym-lib/nakadachi-interactor-mixin-validator
+# @rym-lib/seeder
+
+## 1.8.1
+
+### Patch Changes
+
+- b2e3747: PostgreSQL で使うときの不具合を修正
+
+  主キーの行が既にあり、null を含む値で更新するとき、UPDATE のプレースホルダと値の数がずれて失敗していた。null の値も正しく渡すようにし、`Value` 型に `null` を加えた
 
 ## 1.8.0
 
