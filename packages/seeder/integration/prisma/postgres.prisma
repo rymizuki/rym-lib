@@ -1,0 +1,13 @@
+generator client {
+  provider = "prisma-client-js"
+  output   = "../generated/postgres"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("SEEDER_TEST_POSTGRES_URL")
+}
+
+model Placeholder {
+  id Int @id
+}
