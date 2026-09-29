@@ -20,3 +20,51 @@ jobs:
       - run: npm run lint
       - run: npm run format
       - run: npm test
+
+  seeder-integration:
+    runs-on: ubuntu-latest
+
+    services:
+      postgres:
+        image: postgres:17
+        env:
+          POSTGRES_USER: seeder_test
+          POSTGRES_PASSWORD: seeder_test
+          POSTGRES_DB: seeder_test
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U seeder_test -d seeder_test"
+          --health-interval 2s
+          --health-timeout 3s
+          --health-retries 30
+      mysql:
+        image: mysql:8.0
+        env:
+          MYSQL_ROOT_PASSWORD: seeder_test
+          MYSQL_DATABASE: seeder_test
+          MYSQL_USER: seeder_test
+          MYSQL_PASSWORD: seeder_test
+        ports:
+          - 3306:3306
+        options: >-
+          --health-cmd "mysqladmin ping -h 127.0.0.1 -uroot -pseeder_test"
+          --health-interval 2s
+          --health-timeout 3s
+          --health-retries 60
+
+    env:
+      SEEDER_TEST_POSTGRES_URL: postgresql://seeder_test:seeder_test@127.0.0.1:5432/seeder_test
+      SEEDER_TEST_MYSQL_URL: mysql://seeder_test:seeder_test@127.0.0.1:3306/seeder_test
+
+    steps:
+      - name: checkout
+        uses: actions/checkout@v7
+      - name: setup node
+        uses: actions/setup-node@v6
+        with:
+          node-version: 24
+
+      - run: npm ci
+
+      - run: npm run test:integration -w @rym-lib/seeder
