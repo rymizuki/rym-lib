@@ -1,7 +1,7 @@
 import { PrismaClient } from '@prisma/client'
 
 import type { SeederSqlBuilder } from './seeder-sql-builder'
-import type { Row, Value } from './seeder-types'
+import type { BindValue, Row, Value } from './seeder-types'
 
 export class SeederTableGateway {
   constructor(
@@ -31,7 +31,7 @@ export class SeederTableGateway {
   async insertOne(
     table: string,
     columns: string[],
-    record: Value[],
+    record: BindValue[],
   ): Promise<void> {
     const { sql, values } = this.sql_builder.insert(table, columns, [record])
     try {
@@ -45,7 +45,7 @@ export class SeederTableGateway {
   async insertMany(
     table: string,
     columns: string[],
-    records: Value[][],
+    records: BindValue[][],
     pk_values: (Value | undefined)[],
   ): Promise<void> {
     const { sql, values } = this.sql_builder.insert(table, columns, records)
@@ -65,7 +65,7 @@ export class SeederTableGateway {
     table: string,
     pk: string,
     set_columns: string[],
-    set_values: Value[],
+    set_values: BindValue[],
     pk_value: Value | undefined,
   ): Promise<void> {
     const { sql, values } = this.sql_builder.update(

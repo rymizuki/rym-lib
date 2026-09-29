@@ -1,4 +1,4 @@
-import type { Statement, Value } from './seeder-types'
+import type { BindValue, Statement, Value } from './seeder-types'
 
 export class SeederSqlBuilder {
   constructor(
@@ -25,7 +25,7 @@ export class SeederSqlBuilder {
     }
   }
 
-  insert(table: string, columns: string[], rows: Value[][]): Statement {
+  insert(table: string, columns: string[], rows: BindValue[][]): Statement {
     const quoted_columns = columns.map((column) => this.quote(column))
     const row_placeholders = rows.map((_, row_index) => {
       const placeholders = columns.map((_, column_index) =>
@@ -43,7 +43,7 @@ export class SeederSqlBuilder {
     table: string,
     pk: string,
     set_columns: string[],
-    set_values: Value[],
+    set_values: BindValue[],
     pk_value: Value | undefined,
   ): Statement {
     const setters = set_columns.map(

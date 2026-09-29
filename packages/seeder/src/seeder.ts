@@ -4,7 +4,7 @@ import { PrimaryKeyMatcher } from './primary-key-matcher'
 import { RecordComparator } from './record-comparator'
 import { SeederSqlBuilder } from './seeder-sql-builder'
 import { SeederTableGateway } from './seeder-table-gateway'
-import type { Row, Value } from './seeder-types'
+import type { BindValue, Row, Value } from './seeder-types'
 
 export type SeederOptions = {
   created_at?: boolean
@@ -110,7 +110,7 @@ export class Seeder {
       await this.gateway.insertMany(
         table_name,
         [...columns, ...this.timestampColumns(merged_options)],
-        this.withTimestamps(insert_records, merged_options),
+        this.withTimestamps(columns, insert_records, merged_options),
         insert_records.map((record) => record[pk_index]),
       )
     }
@@ -162,7 +162,7 @@ export class Seeder {
         await this.gateway.insertOne(
           table_name,
           [...columns, ...this.timestampColumns(merged_options)],
-          this.withTimestamp(record, merged_options, new Date()),
+          this.withTimestamp(columns, record, merged_options, new Date()),
         )
         continue
       }
@@ -190,7 +190,9 @@ export class Seeder {
     if (merged_options.no_update) return
     if (this.comparator.isSameRow(row, columns, record)) return
     const set_columns = columns.filter((prop) => prop !== pk)
-    const set_values = record.filter((_, index) => index !== pk_index)
+    const set_values = columns.flatMap((_, index) =>
+      index === pk_index ? [] : [record[index]],
+    )
     if (merged_options.updated_at) {
       set_columns.push('updated_at')
       set_values.push(new Date())
@@ -209,21 +211,26 @@ export class Seeder {
   }
 
   private withTimestamps(
+    columns: string[],
     records: Value[][],
     merged_options: SeederOptions,
-  ): Value[][] {
+  ): BindValue[][] {
     const now = new Date()
     return records.map((record) =>
-      this.withTimestamp(record, merged_options, now),
+      this.withTimestamp(columns, record, merged_options, now),
     )
   }
 
   private withTimestamp(
+    columns: string[],
     record: Value[],
     merged_options: SeederOptions,
     now: Date,
-  ): Value[] {
-    return [...record, ...this.timestampColumns(merged_options).map(() => now)]
+  ): BindValue[] {
+    return [
+      ...columns.map((_, index) => record[index]),
+      ...this.timestampColumns(merged_options).map(() => now),
+    ]
   }
 
   private chunk<T>(items: T[], size: number): T[][] {
