@@ -64,10 +64,13 @@ describe('SeederSqlBuilder', () => {
   describe('プレースホルダーが ? の場合', () => {
     const builder = new SeederSqlBuilder('"', '?')
 
-    it('全位置を番号なしの ? にし、引用符を指定のものにする', () => {
+    it('select は全位置を番号なしの ? にし、引用符を指定のものにする', () => {
       expect(builder.selectByPks('users', 'id', [1, 2]).sql).toBe(
         'SELECT * FROM "users" WHERE "id" IN (?, ?)',
       )
+    })
+
+    it('insert は全位置を番号なしの ? にし、引用符を指定のものにする', () => {
       expect(
         builder.insert(
           'users',
@@ -78,6 +81,9 @@ describe('SeederSqlBuilder', () => {
           ],
         ).sql,
       ).toBe('INSERT INTO "users" ("id", "name") VALUES (?, ?), (?, ?)')
+    })
+
+    it('update は全位置を番号なしの ? にし、引用符を指定のものにする', () => {
       expect(builder.update('users', 'id', ['name'], ['a'], 1).sql).toBe(
         'UPDATE "users" SET "name" = ? WHERE "id" = ?',
       )
