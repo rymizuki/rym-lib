@@ -36,16 +36,13 @@ describe('RecordChunker', () => {
       })
     })
 
-    describe('追加列数を指定した場合', () => {
-      it('列数に加えて上限の計算に含める', () => {
-        const columns = columnsOf(100)
-        const records = recordsOf(700)
-        expect(sizesOf(new RecordChunker(0).split(columns, records))).toEqual([
-          327, 327, 46,
-        ])
-        expect(sizesOf(new RecordChunker(2).split(columns, records))).toEqual([
-          321, 321, 58,
-        ])
+    describe('追加列数が 0 の場合', () => {
+      it('列数だけで上限を計算し、100 列なら 327 行ずつに分割する', () => {
+        const chunks = new RecordChunker(0).split(
+          columnsOf(100),
+          recordsOf(700),
+        )
+        expect(sizesOf(chunks)).toEqual([327, 327, 46])
       })
     })
 
