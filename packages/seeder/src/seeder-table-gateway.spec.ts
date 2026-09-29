@@ -1,5 +1,6 @@
-import type { PrismaClient } from '@prisma/client'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
+
+import type { PrismaClient } from '@prisma/client'
 
 import { SeederSqlBuilder } from './seeder-sql-builder'
 import { SeederTableGateway } from './seeder-table-gateway'

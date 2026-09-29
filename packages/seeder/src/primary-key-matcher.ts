@@ -29,10 +29,7 @@ export class PrimaryKeyMatcher {
     return indexed
   }
 
-  find(
-    existing_rows: ExistingRows,
-    pk_value: BindValue,
-  ): Row | undefined {
+  find(existing_rows: ExistingRows, pk_value: BindValue): Row | undefined {
     if (pk_value === null || pk_value === undefined) return undefined
     return existing_rows.get(this.toMatchKey(pk_value))
   }
