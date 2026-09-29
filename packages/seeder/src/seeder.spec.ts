@@ -434,7 +434,8 @@ const createFakeDb = (options: FakeDbOptions) => {
       const found = rows.filter((row) =>
         values.some((value) => value !== null && equals(row.id, value)),
       )
-      return sql.includes('LIMIT 1') ? found.slice(0, 1) : found
+      const copies = found.map((row) => ({ ...row }))
+      return sql.includes('LIMIT 1') ? copies.slice(0, 1) : copies
     },
     $executeRawUnsafe: async (sql: string, ...values: Cell[]) => {
       statements.push(sql)
@@ -667,7 +668,7 @@ describe('Seeder（DBと同じ突き合わせをする疑似DBでの最終状態
   })
 
   describe('シチュエーション: 複数行INSERTが制約違反で失敗する場合', () => {
-    it('結果: 失敗した行の1つ前までは入り、その行で例外を投げて {sql, values} をログに出す', async () => {
+    it('結果: 元の例外を投げ、INSERT対象は1行も入らず、1行ずつのSELECTもしない', async () => {
       const db = createFakeDb({
         rows: [],
         validate: (row) => {
@@ -688,10 +689,12 @@ describe('Seeder（DBと同じ突き合わせをする疑似DBでの最終状態
         ),
       ).rejects.toThrow('constraint violation')
 
-      expect(db.rows).toEqual([{ id: 1, name: 'a' }])
+      expect(db.rows).toEqual([])
+      expect(db.statements.some((sql) => sql.includes('LIMIT 1'))).toBe(false)
       expect(console.info).toHaveBeenCalledWith({
-        sql: 'INSERT INTO `t` (`id`, `name`) VALUES (?, ?)',
-        values: [2, 'bad'],
+        table_name: 't',
+        row_count: 3,
+        pk_values: [1, 2, 3],
       })
     })
   })
@@ -745,37 +748,33 @@ describe('Seeder（一括処理を使わず1行ずつ処理するチャンク）
     const equals = (a: Cell, b: Cell) =>
       String(a).toLowerCase() === String(b).toLowerCase()
 
-    it('結果: 後のレコードの値で1行になる', async () => {
-      const db = createFakeDb({ rows: [{ id: 'abc', name: 'old' }], equals })
-
-      await newSeeder(db.client).load(
-        't',
-        'id',
-        ['id', 'name'],
-        [
+    it.each([
+      {
+        label: '既存行と同じ表記を先に渡す',
+        records: [
           ['abc', 'x'],
           ['ABC', 'y'],
         ],
-      )
-
-      expect(db.rows).toEqual([{ id: 'abc', name: 'y' }])
-    })
-
-    it('結果: 順序を逆にすると後のレコードの値で1行になる', async () => {
-      const db = createFakeDb({ rows: [{ id: 'abc', name: 'old' }], equals })
-
-      await newSeeder(db.client).load(
-        't',
-        'id',
-        ['id', 'name'],
-        [
+      },
+      {
+        label: '既存行と違う表記を先に渡す',
+        records: [
           ['ABC', 'y'],
           ['abc', 'x'],
         ],
-      )
+      },
+    ])(
+      '結果: $labelと、新規扱いになった行が重複キーの例外になり、DBは変わらない',
+      async ({ records }) => {
+        const db = createFakeDb({ rows: [{ id: 'abc', name: 'old' }], equals })
 
-      expect(db.rows).toEqual([{ id: 'abc', name: 'x' }])
-    })
+        await expect(
+          newSeeder(db.client).load('t', 'id', ['id', 'name'], records),
+        ).rejects.toThrow('Duplicate entry')
+
+        expect(db.rows).toEqual([{ id: 'abc', name: 'old' }])
+      },
+    )
   })
 
   describe('シチュエーション: 自己参照の外部キーを持つ空のテーブルに、同じ主キーを2回含むレコードを渡す場合', () => {
@@ -831,7 +830,7 @@ describe('Seeder（一括処理を使わず1行ずつ処理するチャンク）
   })
 
   describe('シチュエーション: 一括INSERTが失敗し、同じチャンクに既存行の更新も含まれる場合', () => {
-    it('結果: 失敗した行の手前までのINSERTと、その手前の既存行の更新は反映され、後ろの既存行は更新されない', async () => {
+    it('結果: 元の例外を投げ、INSERT対象は入らず、既存行は更新されず、1行ずつのSELECTもしない', async () => {
       const db = createFakeDb({
         rows: [
           { id: 1, name: 'old1' },
@@ -857,10 +856,55 @@ describe('Seeder（一括処理を使わず1行ずつ処理するチャンク）
       ).rejects.toThrow('constraint violation')
 
       expect(db.rows).toEqual([
-        { id: 1, name: 'new1' },
+        { id: 1, name: 'old1' },
         { id: 4, name: 'old4' },
-        { id: 2, name: 'a' },
       ])
+      expect(countStatements(db.statements, 'UPDATE')).toBe(0)
+      expect(db.statements.some((sql) => sql.includes('LIMIT 1'))).toBe(false)
+      expect(console.info).toHaveBeenCalledWith({
+        table_name: 't',
+        row_count: 2,
+        pk_values: [2, 3],
+      })
+    })
+
+    it('結果: 疑似DBが投げたエラーそのものを投げる', async () => {
+      const error = new Error('constraint violation')
+      const db = createFakeDb({
+        rows: [],
+        validate: () => {
+          throw error
+        },
+      })
+
+      await expect(
+        newSeeder(db.client).load('t', 'id', ['id', 'name'], [[1, 'a']]),
+      ).rejects.toBe(error)
+    })
+  })
+
+  describe('シチュエーション: created_at と updated_at を有効にして、同じ主キーを2回含むレコードを渡す場合', () => {
+    it('結果: 1行ずつのINSERTでも created_at と updated_at が同じ Date になる', async () => {
+      const db = createFakeDb({ rows: [] })
+
+      await new Seeder(db.client, {
+        placeholder: '?',
+        created_at: true,
+        updated_at: true,
+      }).load(
+        't',
+        'id',
+        ['id', 'name'],
+        [
+          [1, 'a'],
+          [2, 'b'],
+          [1, 'a'],
+        ],
+      )
+
+      const [row] = db.rows
+      expect(row.created_at).toBeInstanceOf(Date)
+      expect(row.updated_at).toBe(row.created_at)
     })
   })
 })

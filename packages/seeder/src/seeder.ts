@@ -13,6 +13,10 @@ export type SeederOptions = {
 export class Seeder {
   private static readonly DEFAULT_CHUNK_SIZE = 500
   private static readonly MAX_BIND_VALUES = 32767
+  private static readonly TIMESTAMP_COLUMNS = [
+    'created_at',
+    'updated_at',
+  ] as const
 
   constructor(
     private client: PrismaClient,
@@ -42,104 +46,116 @@ export class Seeder {
       1,
       Math.min(
         Seeder.DEFAULT_CHUNK_SIZE,
-        Math.floor(Seeder.MAX_BIND_VALUES / (columns.length + 2)),
+        Math.floor(
+          Seeder.MAX_BIND_VALUES /
+            (columns.length + Seeder.TIMESTAMP_COLUMNS.length),
+        ),
       ),
     )
     for (const chunk of this.chunk(records, chunk_size)) {
-      const known_pk_values = chunk
-        .map((record) => record[pk_index])
-        .filter((pk_value) => pk_value !== null)
-      const known_keys = new Set(
-        known_pk_values.map((pk_value) => this.toMatchKey(pk_value)),
+      const loaded = await this.loadChunkInBulk(
+        table_name,
+        pk,
+        pk_index,
+        columns,
+        chunk,
+        merged_options,
       )
-      if (known_keys.size !== known_pk_values.length) {
-        await this.loadOneByOne(
-          table_name,
-          pk,
-          pk_index,
-          columns,
-          chunk,
-          merged_options,
-        )
-        continue
-      }
-      const query_result =
-        known_pk_values.length === 0
-          ? []
-          : ((await this.client.$queryRawUnsafe(
-              `SELECT * FROM ${this.escape(table_name)} WHERE ${this.escape(
-                pk,
-              )} IN (${known_pk_values.map((_, index) => this.getPlaceholder(index)).join(', ')})`,
-              ...known_pk_values,
-            )) as Record<string, any>[])
-      const rows = new Map(
-        query_result.map((row) => [this.toMatchKey(row[pk]), row]),
+      if (loaded) continue
+      await this.loadOneByOne(
+        table_name,
+        pk,
+        pk_index,
+        columns,
+        chunk,
+        merged_options,
       )
-      if ([...rows.keys()].some((key) => !known_keys.has(key))) {
-        await this.loadOneByOne(
-          table_name,
-          pk,
-          pk_index,
-          columns,
-          chunk,
-          merged_options,
-        )
-        continue
-      }
-
-      const insert_records: Value[][] = []
-      const update_candidates: Value[][] = []
-      for (const record of chunk) {
-        const pk_value = record[pk_index]
-        if (pk_value !== null && rows.has(this.toMatchKey(pk_value))) {
-          update_candidates.push(record)
-          continue
-        }
-        insert_records.push(record)
-      }
-
-      if (insert_records.length > 0) {
-        try {
-          await this.insertMany(
-            table_name,
-            columns,
-            insert_records,
-            merged_options,
-          )
-        } catch {
-          await this.loadOneByOne(
-            table_name,
-            pk,
-            pk_index,
-            columns,
-            chunk,
-            merged_options,
-          )
-          continue
-        }
-      }
-
-      for (const record of update_candidates) {
-        if (merged_options.no_update) continue
-        const row = rows.get(this.toMatchKey(record[pk_index]))
-        if (
-          row &&
-          columns.every((prop, index) =>
-            this.isEqualValue(row[prop], record[index]),
-          )
-        )
-          continue
-        await this.updateRow(
-          table_name,
-          pk,
-          pk_index,
-          columns,
-          record,
-          merged_options,
-        )
-      }
     }
     console.info(`loading "${table_name}" done.`)
+  }
+
+  private async loadChunkInBulk(
+    table_name: string,
+    pk: string,
+    pk_index: number,
+    columns: string[],
+    chunk: Value[][],
+    merged_options: SeederOptions,
+  ): Promise<boolean> {
+    const existing_rows = await this.findRowsMatchedByPk(
+      table_name,
+      pk,
+      pk_index,
+      chunk,
+    )
+    if (!existing_rows) return false
+
+    const insert_records = chunk.filter(
+      (record) => !this.findExistingRow(existing_rows, record[pk_index]),
+    )
+    if (insert_records.length > 0) {
+      await this.insertMany(
+        table_name,
+        pk_index,
+        columns,
+        insert_records,
+        merged_options,
+      )
+    }
+
+    for (const record of chunk) {
+      const row = this.findExistingRow(existing_rows, record[pk_index])
+      if (!row) continue
+      await this.updateRowIfChanged(
+        table_name,
+        pk,
+        pk_index,
+        columns,
+        record,
+        row,
+        merged_options,
+      )
+    }
+    return true
+  }
+
+  private async findRowsMatchedByPk(
+    table_name: string,
+    pk: string,
+    pk_index: number,
+    chunk: Value[][],
+  ): Promise<Map<string, Record<string, any>> | null> {
+    const non_null_pk_values = chunk
+      .map((record) => record[pk_index])
+      .filter((pk_value) => pk_value !== null)
+    const requested_keys = new Set(
+      non_null_pk_values.map((pk_value) => this.toMatchKey(pk_value)),
+    )
+    if (requested_keys.size !== non_null_pk_values.length) return null
+
+    const query_result =
+      non_null_pk_values.length === 0
+        ? []
+        : ((await this.client.$queryRawUnsafe(
+            `SELECT * FROM ${this.escape(table_name)} WHERE ${this.escape(
+              pk,
+            )} IN (${non_null_pk_values.map((_, index) => this.getPlaceholder(index)).join(', ')})`,
+            ...non_null_pk_values,
+          )) as Record<string, any>[])
+    const existing_rows = new Map(
+      query_result.map((row) => [this.toMatchKey(row[pk]), row]),
+    )
+    if ([...existing_rows.keys()].some((key) => !requested_keys.has(key)))
+      return null
+    return existing_rows
+  }
+
+  private findExistingRow(
+    existing_rows: Map<string, Record<string, any>>,
+    pk_value: Value,
+  ): Record<string, any> | undefined {
+    if (pk_value === null) return undefined
+    return existing_rows.get(this.toMatchKey(pk_value))
   }
 
   private async loadOneByOne(
@@ -164,22 +180,42 @@ export class Seeder {
         await this.insertOne(table_name, columns, record, merged_options)
         continue
       }
-      if (merged_options.no_update) continue
-      if (
-        columns.every((prop, index) =>
-          this.isEqualValue(row[prop], record[index]),
-        )
-      )
-        continue
-      await this.updateRow(
+      await this.updateRowIfChanged(
         table_name,
         pk,
         pk_index,
         columns,
         record,
+        row,
         merged_options,
       )
     }
+  }
+
+  private async updateRowIfChanged(
+    table_name: string,
+    pk: string,
+    pk_index: number,
+    columns: string[],
+    record: Value[],
+    row: Record<string, any>,
+    merged_options: SeederOptions,
+  ): Promise<void> {
+    if (merged_options.no_update) return
+    if (
+      columns.every((prop, index) =>
+        this.isEqualValue(row[prop], record[index]),
+      )
+    )
+      return
+    await this.updateRow(
+      table_name,
+      pk,
+      pk_index,
+      columns,
+      record,
+      merged_options,
+    )
   }
 
   private async updateRow(
@@ -221,16 +257,15 @@ export class Seeder {
     record: Value[],
     merged_options: SeederOptions,
   ): Promise<void> {
-    const cols = [...columns].map((col) => `${this.escape(col)}`)
-    const values = columns.map((_, index) => record[index])
-    if (merged_options.created_at) {
-      cols.push(this.escape('created_at'))
-      values.push(new Date())
-    }
-    if (merged_options.updated_at) {
-      cols.push(this.escape('updated_at'))
-      values.push(new Date())
-    }
+    const timestamp_columns = this.timestampColumns(merged_options)
+    const now = new Date()
+    const cols = [...columns, ...timestamp_columns].map((col) =>
+      this.escape(col),
+    )
+    const values = [
+      ...columns.map((_, index) => record[index]),
+      ...timestamp_columns.map(() => now),
+    ]
     const sql = `INSERT INTO ${this.escape(table_name)} (${cols.join(
       ', ',
     )}) VALUES (${cols.map((_, index) => this.getPlaceholder(index)).join(', ')})`
@@ -244,24 +279,19 @@ export class Seeder {
 
   private async insertMany(
     table_name: string,
+    pk_index: number,
     columns: string[],
     records: Value[][],
     merged_options: SeederOptions,
   ): Promise<void> {
-    const cols = columns.map((col) => this.escape(col))
+    const timestamp_columns = this.timestampColumns(merged_options)
     const now = new Date()
-    const extra_values: Value[] = []
-    if (merged_options.created_at) {
-      cols.push(this.escape('created_at'))
-      extra_values.push(now)
-    }
-    if (merged_options.updated_at) {
-      cols.push(this.escape('updated_at'))
-      extra_values.push(now)
-    }
+    const cols = [...columns, ...timestamp_columns].map((col) =>
+      this.escape(col),
+    )
     const values = records.flatMap((record) => [
       ...columns.map((_, index) => record[index]),
-      ...extra_values,
+      ...timestamp_columns.map(() => now),
     ])
     const row_placeholders = records.map((_, row_index) => {
       const placeholders = cols.map((_, col_index) =>
@@ -272,7 +302,20 @@ export class Seeder {
     const sql = `INSERT INTO ${this.escape(table_name)} (${cols.join(
       ', ',
     )}) VALUES ${row_placeholders.join(', ')}`
-    await this.client.$executeRawUnsafe(sql, ...values)
+    try {
+      await this.client.$executeRawUnsafe(sql, ...values)
+    } catch (error) {
+      console.info({
+        table_name,
+        row_count: records.length,
+        pk_values: records.map((record) => record[pk_index]),
+      })
+      throw error
+    }
+  }
+
+  private timestampColumns(merged_options: SeederOptions): string[] {
+    return Seeder.TIMESTAMP_COLUMNS.filter((column) => merged_options[column])
   }
 
   private chunk<T>(items: T[], size: number): T[][] {
