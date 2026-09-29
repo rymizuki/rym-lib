@@ -26,6 +26,18 @@ describe('PrimaryKeyMatcher', () => {
       expect(matcher.bulkQueryableValues([1, null, 2])).toEqual([1, 2])
     })
 
+    it('値のない位置は除かずに返す', () => {
+      expect(matcher.bulkQueryableValues([1, undefined, 2])).toEqual([
+        1,
+        undefined,
+        2,
+      ])
+    })
+
+    it('値のない位置が複数あれば重複とみなして null を返す', () => {
+      expect(matcher.bulkQueryableValues([undefined, undefined])).toBeNull()
+    })
+
     it('match key が重複していれば null を返す', () => {
       expect(matcher.bulkQueryableValues([1, 2, 1])).toBeNull()
     })

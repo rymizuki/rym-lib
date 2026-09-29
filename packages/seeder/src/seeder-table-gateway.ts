@@ -22,7 +22,7 @@ export class SeederTableGateway {
   async selectMany(
     table: string,
     pk: string,
-    pk_values: Value[],
+    pk_values: BindValue[],
   ): Promise<Row[]> {
     const { sql, values } = this.sql_builder.selectByPks(table, pk, pk_values)
     return (await this.client.$queryRawUnsafe(sql, ...values)) as Row[]

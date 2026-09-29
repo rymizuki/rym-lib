@@ -17,7 +17,7 @@ export class SeederSqlBuilder {
     }
   }
 
-  selectByPks(table: string, pk: string, pk_values: Value[]): Statement {
+  selectByPks(table: string, pk: string, pk_values: BindValue[]): Statement {
     const placeholders = pk_values.map((_, index) => this.placeholder(index))
     return {
       sql: `SELECT * FROM ${this.quote(table)} WHERE ${this.quote(pk)} IN (${placeholders.join(', ')})`,
