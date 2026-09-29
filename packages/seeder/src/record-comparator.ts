@@ -10,7 +10,7 @@ export class RecordComparator {
   /**
    * DBから取得した値とシード対象の値が等価かどうかを判定する。
    * どちらか一方がbigintの場合のみ数値として正規化して比較し、Date同士は日時として比較する。
-   * bigintが関与しないnumber同士・string同士の比較は`===`に委ねる（ゼロ埋め文字列の誤同一視を避けるため）。
+   * bigintが関与しないnumber同士・string同士の比較は`===`に委ねる。
    */
   private isEqualValue(a: unknown, b: unknown): boolean {
     if (typeof a === 'bigint' || typeof b === 'bigint') {
