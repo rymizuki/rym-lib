@@ -1,11 +1,12 @@
 import { describe, expect, it } from 'vitest'
 
 import { RecordComparator } from './record-comparator'
+import type { Value } from './seeder-types'
 
 describe('RecordComparator', () => {
   const comparator = new RecordComparator()
-  const isSame = (db: unknown, seed: unknown) =>
-    comparator.isSameRow({ v: db }, ['v'], [seed as never])
+  const isSame = (db: unknown, seed: Value) =>
+    comparator.isSameRow({ v: db }, ['v'], [seed])
 
   describe('isSameRow', () => {
     describe('どちらかが bigint の場合', () => {
