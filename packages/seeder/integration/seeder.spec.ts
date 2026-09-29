@@ -353,16 +353,30 @@ describe.each(dialects)('Seeder.load ($name)', (dialect) => {
 
   describe('created_at / updated_at を有効にして新規 2 行を読み込む場合', () => {
     it('両列が入り、2 行で同じ値になる', async () => {
-      await seeder.load(
-        'items',
-        'id',
-        ['id', 'name'],
-        [
-          [1, 'a'],
-          [2, 'b'],
-        ],
-        { created_at: true, updated_at: true },
-      )
+      const RealDate = Date
+      let ticks = 0
+      class TickingDate extends RealDate {
+        constructor(...args: ConstructorParameters<typeof Date>) {
+          if (args.length > 0) super(...args)
+          else super(RealDate.UTC(2024, 0, 1) + ticks++)
+        }
+      }
+      vi.stubGlobal('Date', TickingDate)
+
+      try {
+        await seeder.load(
+          'items',
+          'id',
+          ['id', 'name'],
+          [
+            [1, 'a'],
+            [2, 'b'],
+          ],
+          { created_at: true, updated_at: true },
+        )
+      } finally {
+        vi.unstubAllGlobals()
+      }
 
       const rows = await selectItems()
       const times = rows.flatMap((row) => [
