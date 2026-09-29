@@ -152,9 +152,9 @@ export class Seeder {
 
   private findExistingRow(
     existing_rows: Map<string, Record<string, any>>,
-    pk_value: Value,
+    pk_value: Value | undefined,
   ): Record<string, any> | undefined {
-    if (pk_value === null) return undefined
+    if (pk_value === null || pk_value === undefined) return undefined
     return existing_rows.get(this.toMatchKey(pk_value))
   }
 

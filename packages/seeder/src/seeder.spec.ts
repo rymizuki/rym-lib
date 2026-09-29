@@ -390,7 +390,7 @@ describe('Seeder', () => {
         )
 
         const [sql, ...values] =
-          mockPrismaClient.$executeRawUnsafe.mock.calls[0]
+          mockPrismaClient.$executeRawUnsafe.mock.calls[0] ?? []
         expect(sql).toBe(
           'INSERT INTO `users` (`id`, `name`, `created_at`, `updated_at`) VALUES ($1, $2, $3, $4), ($5, $6, $7, $8)',
         )
@@ -432,7 +432,7 @@ const createFakeDb = (options: FakeDbOptions) => {
     $queryRawUnsafe: async (sql: string, ...values: Cell[]) => {
       statements.push(sql)
       const found = rows.filter((row) =>
-        values.some((value) => value !== null && equals(row.id, value)),
+        values.some((value) => value !== null && equals(row.id ?? null, value)),
       )
       const copies = found.map((row) => ({ ...row }))
       return sql.includes('LIMIT 1') ? copies.slice(0, 1) : copies
@@ -440,37 +440,44 @@ const createFakeDb = (options: FakeDbOptions) => {
     $executeRawUnsafe: async (sql: string, ...values: Cell[]) => {
       statements.push(sql)
       if (sql.startsWith('UPDATE')) {
-        const setters = sql
-          .match(/SET (.*) WHERE/)![1]
-          .split(', ')
-          .map((setter) =>
-            setter.split(' = ')[0].replace(/`/g, '').toLowerCase(),
-          )
+        const setters =
+          sql
+            .match(/SET (.*) WHERE/)?.[1]
+            ?.split(', ')
+            .map((setter) =>
+              (setter.split(' = ')[0] ?? '').replace(/`/g, '').toLowerCase(),
+            ) ?? []
         const target = rows.find((row) =>
-          equals(row.id, values[values.length - 1]),
+          equals(row.id ?? null, values[values.length - 1] ?? null),
         )
         if (!target) return
         const updated = { ...target }
         setters.forEach((column, index) => {
-          updated[column] = values[index]
+          updated[column] = values[index] ?? null
         })
         validate(updated, rows)
         Object.assign(target, updated)
         return
       }
       const columns = sql
-        .match(/\(([^)]*)\) VALUES/)![1]
-        .split(', ')
+        .match(/\(([^)]*)\) VALUES/)?.[1]
+        ?.split(', ')
         .map((column) => column.replace(/`/g, '').toLowerCase())
+      if (!columns) throw new Error(`Unexpected statement: ${sql}`)
       const staged: FakeRow[] = []
       for (let offset = 0; offset < values.length; offset += columns.length) {
         const row: FakeRow = Object.fromEntries(
-          columns.map((column, index) => [column, values[offset + index]]),
+          columns.map((column, index) => [
+            column,
+            values[offset + index] ?? null,
+          ]),
         )
         if (row.id === null && options.auto_increment) row.id = sequence++
         validate(row, [...rows, ...staged])
         if (
-          [...rows, ...staged].some((existing) => equals(existing.id, row.id))
+          [...rows, ...staged].some((existing) =>
+            equals(existing.id ?? null, row.id ?? null),
+          )
         )
           throw new Error(`Duplicate entry ${String(row.id)}`)
         staged.push(row)
@@ -902,9 +909,9 @@ describe('Seeder（一括処理を使わず1行ずつ処理するチャンク）
         ],
       )
 
-      const [row] = db.rows
-      expect(row.created_at).toBeInstanceOf(Date)
-      expect(row.updated_at).toBe(row.created_at)
+      const row = db.rows[0]
+      expect(row?.created_at).toBeInstanceOf(Date)
+      expect(row?.updated_at).toBe(row?.created_at)
     })
   })
 })
