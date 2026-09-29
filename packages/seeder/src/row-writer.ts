@@ -26,10 +26,11 @@ export class RowWriter {
   }
 
   async insertOne(target: SeedTarget, record: Value[]): Promise<void> {
-    const { columns, rows } = this.stamper.stampInsert(target, [record])
-    const [row] = rows
-    if (!row) return
-    await this.gateway.insertOne(target.table_name, columns, row)
+    await this.gateway.insertOne(
+      target.table_name,
+      this.stamper.insertColumns(target),
+      this.stamper.stampInsertRow(target, record, new Date()),
+    )
   }
 
   async updateIfChanged(

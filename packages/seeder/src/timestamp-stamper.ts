@@ -5,25 +5,32 @@ import type { BindValue, Value } from './seeder-types'
  * created_at / updated_at オプションに従い、INSERT / UPDATE の列と値に日時を付け足す。
  */
 export class TimestampStamper {
-  static readonly MAX_COLUMNS = 2
   private static readonly TIMESTAMP_COLUMNS = [
     'created_at',
     'updated_at',
   ] as const
+  static readonly MAX_COLUMNS = TimestampStamper.TIMESTAMP_COLUMNS.length
 
   stampInsert(
     target: SeedTarget,
     records: Value[][],
   ): { columns: string[]; rows: BindValue[][] } {
-    const enabled = this.enabledColumns(target)
     const now = new Date()
     return {
-      columns: [...target.columns, ...enabled],
-      rows: records.map((record) => [
-        ...target.columns.map((_, index) => record[index]),
-        ...enabled.map(() => now),
-      ]),
+      columns: this.insertColumns(target),
+      rows: records.map((record) => this.stampInsertRow(target, record, now)),
     }
+  }
+
+  insertColumns(target: SeedTarget): string[] {
+    return [...target.columns, ...this.enabledColumns(target)]
+  }
+
+  stampInsertRow(target: SeedTarget, record: Value[], now: Date): BindValue[] {
+    return [
+      ...target.columns.map((_, index) => record[index]),
+      ...this.enabledColumns(target).map(() => now),
+    ]
   }
 
   stampUpdate(
