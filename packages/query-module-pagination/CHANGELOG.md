@@ -1,5 +1,11 @@
 # @rym-lib/query-module-pagination
 
+## 1.9.0
+
+### Minor Changes
+
+- 全公開パッケージのバージョンを 1.9.0 に揃える（モノレポ全体のバージョン横並び運用のため。seeder 以外は機能変更なし）
+
 ## 1.8.1
 
 ### Patch Changes
