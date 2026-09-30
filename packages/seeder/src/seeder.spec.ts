@@ -917,3 +917,96 @@ describe('Seeder（一括処理を使わず1行ずつ処理するチャンク）
     })
   })
 })
+
+describe('Seeder（列情報の読み取り）', () => {
+  beforeEach(() => {
+    vi.clearAllMocks()
+    vi.spyOn(console, 'info').mockImplementation(() => {})
+  })
+
+  describe('ユースケース: 列情報の読み取り', () => {
+    const postgres_seeder = new Seeder(
+      mockPrismaClient as unknown as PrismaClient,
+      { quote: '"', placeholder: '$' },
+    )
+    const mysql_seeder = new Seeder(
+      mockPrismaClient as unknown as PrismaClient,
+      { quote: '`', placeholder: '?' },
+    )
+    const columns = [
+      { column_name: 'id', data_type: 'bigint', is_nullable: 'NO' },
+      { column_name: 'name', data_type: 'text', is_nullable: 'YES' },
+    ]
+    const schemaQueries = () =>
+      mockPrismaClient.$queryRawUnsafe.mock.calls.filter(([sql]) =>
+        String(sql).includes('information_schema'),
+      )
+
+    beforeEach(() => {
+      mockPrismaClient.$queryRawUnsafe.mockImplementation(async (sql) =>
+        String(sql).includes('information_schema') ? columns : [],
+      )
+    })
+
+    describe('シチュエーション: placeholder が $ で、数字の文字列も null の主キーも無い場合', () => {
+      it('結果: 列情報を読まない', async () => {
+        await postgres_seeder.load('t', 'id', ['id', 'name'], [[1, 'a']])
+
+        expect(schemaQueries()).toHaveLength(0)
+      })
+    })
+
+    describe('シチュエーション: placeholder が $ で、主キーが null の行を含む場合', () => {
+      it('結果: 列情報を 1 回読み、主キーが NOT NULL なら主キー列を外して INSERT する', async () => {
+        await postgres_seeder.load('t', 'id', ['id', 'name'], [[null, 'a']])
+
+        expect(schemaQueries()).toHaveLength(1)
+        expect(mockPrismaClient.$executeRawUnsafe).toHaveBeenCalledWith(
+          'INSERT INTO "t" ("name") VALUES ($1)',
+          'a',
+        )
+      })
+    })
+
+    describe('シチュエーション: 列情報を読めない場合', () => {
+      it('結果: 従来どおり主キー列に null を入れて INSERT する', async () => {
+        mockPrismaClient.$queryRawUnsafe.mockImplementation(async (sql) => {
+          if (String(sql).includes('information_schema'))
+            throw new Error('no information_schema')
+          return []
+        })
+
+        await postgres_seeder.load('t', 'id', ['id', 'name'], [[null, 'a']])
+
+        expect(mockPrismaClient.$executeRawUnsafe).toHaveBeenCalledWith(
+          'INSERT INTO "t" ("id", "name") VALUES ($1, $2)',
+          null,
+          'a',
+        )
+      })
+    })
+
+    describe('シチュエーション: placeholder が ? で、数字の文字列と null の主キーを含む場合', () => {
+      it('結果: 列情報を読まず、値も変えずに INSERT する', async () => {
+        await mysql_seeder.load(
+          't',
+          'id',
+          ['id', 'name'],
+          [
+            ['1', 'a'],
+            [null, 'b'],
+          ],
+        )
+
+        expect(schemaQueries()).toHaveLength(0)
+        expect(mockPrismaClient.$executeRawUnsafe).toHaveBeenCalledWith(
+          'INSERT INTO `t` (`id`, `name`) VALUES (?, ?), (?, ?)',
+          '1',
+          'a',
+          null,
+          'b',
+        )
+      })
+    })
+  })
+})

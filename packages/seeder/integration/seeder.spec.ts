@@ -1,5 +1,6 @@
 import {
   afterAll,
+  afterEach,
   beforeAll,
   beforeEach,
   describe,
@@ -242,27 +243,77 @@ describe.each(dialects)('Seeder.load ($name)', (dialect) => {
   })
 
   describe('自動採番の主キーに null を 2 行渡す場合', () => {
-    if (dialect.name === 'postgres')
-      it.todo(
-        '2 行入る（PostgreSQL は SERIAL でも明示した null を採番せず NOT NULL 違反になる。要確認）',
-      )
-    else
-      it('2 行入る', async () => {
-        await seeder.load(
-          'serials',
-          'id',
-          ['id', 'name'],
-          [
-            [null, 'a'],
-            [null, 'b'],
-          ],
-        )
-
-        const rows = await database.select<{ name: string }>(
+    const selectSerialNames = async () =>
+      (
+        await database.select<{ name: string }>(
           'SELECT name FROM serials ORDER BY id',
         )
-        expect(rows.map((row) => row.name)).toEqual(['a', 'b'])
-      })
+      ).map((row) => row.name)
+
+    it('2 行入る', async () => {
+      await seeder.load(
+        'serials',
+        'id',
+        ['id', 'name'],
+        [
+          [null, 'a'],
+          [null, 'b'],
+        ],
+      )
+
+      expect(await selectSerialNames()).toEqual(['a', 'b'])
+    })
+
+    it('null・明示した id・null の順で渡すと、1 行ずつ渡したときと同じ採番になる', async () => {
+      const records = [
+        [null, 'a'],
+        [5, 'b'],
+        [null, 'c'],
+      ]
+      for (const record of records)
+        await seeder.load('serials', 'id', ['id', 'name'], [record])
+      const one_by_one = await database.select<{ id: number; name: string }>(
+        'SELECT id, name FROM serials ORDER BY id',
+      )
+      await database.reset()
+
+      await seeder.load('serials', 'id', ['id', 'name'], records)
+
+      const together = await database.select<{ id: number; name: string }>(
+        'SELECT id, name FROM serials ORDER BY id',
+      )
+      expect(together).toEqual(one_by_one)
+    })
+  })
+
+  describe('主キーが NULL 可の一意列で、null の行を渡す場合', () => {
+    beforeEach(async () => {
+      await database.execute('DROP TABLE IF EXISTS nullable_keys')
+      await database.execute(
+        `CREATE TABLE nullable_keys (
+          code VARCHAR(50) NULL DEFAULT 'x' UNIQUE,
+          name TEXT NOT NULL
+        )`,
+      )
+    })
+
+    afterEach(async () => {
+      await database.execute('DROP TABLE IF EXISTS nullable_keys')
+    })
+
+    it('列を外さず、既定値ではなく NULL が入る', async () => {
+      await seeder.load(
+        'nullable_keys',
+        'code',
+        ['code', 'name'],
+        [[null, 'a']],
+      )
+
+      const rows = await database.select<{ code: string | null; name: string }>(
+        'SELECT code, name FROM nullable_keys',
+      )
+      expect(rows).toEqual([{ code: null, name: 'a' }])
+    })
   })
 
   describe('同じ主キーを 1 回の load で 2 回渡す場合（既存行なし）', () => {

@@ -11,3 +11,9 @@ export type SeederOptions = {
   placeholder?: '$' | '?'
   no_update?: boolean
 }
+
+export type ColumnInfo = {
+  name: string
+  data_type: string
+  is_nullable: boolean
+}

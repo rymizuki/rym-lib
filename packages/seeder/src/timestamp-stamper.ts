@@ -28,7 +28,7 @@ export class TimestampStamper {
 
   stampInsertRow(target: SeedTarget, record: Value[], now: Date): BindValue[] {
     return [
-      ...target.columns.map((_, index) => record[index]),
+      ...target.insertValuesOf(record),
       ...this.enabledColumns(target).map(() => now),
     ]
   }

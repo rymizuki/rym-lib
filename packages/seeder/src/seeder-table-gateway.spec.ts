@@ -72,4 +72,41 @@ describe('SeederTableGateway', () => {
       })
     })
   })
+
+  describe('selectSchema', () => {
+    const gatewayReturning = (query: ReturnType<typeof vi.fn>) =>
+      new SeederTableGateway(
+        { $queryRawUnsafe: query } as unknown as PrismaClient,
+        new SeederSqlBuilder('"', '$'),
+      )
+
+    describe('列情報が返る場合', () => {
+      const query = vi.fn().mockResolvedValue([
+        { column_name: 'id', data_type: 'integer', is_nullable: 'NO' },
+        { column_name: 'note', data_type: 'text', is_nullable: 'YES' },
+      ])
+
+      it('is_nullable の YES / NO を boolean にした TableSchema を返す', async () => {
+        const schema = await gatewayReturning(query).selectSchema('users')
+
+        expect(schema?.isNotNull('id')).toBe(true)
+        expect(schema?.isNotNull('note')).toBe(false)
+        expect(schema?.isIntegerColumn('id')).toBe(true)
+      })
+    })
+
+    describe('0 行の場合', () => {
+      it('null を返す', async () => {
+        const query = vi.fn().mockResolvedValue([])
+        expect(await gatewayReturning(query).selectSchema('users')).toBeNull()
+      })
+    })
+
+    describe('SELECT が失敗する場合', () => {
+      it('例外を投げず null を返す', async () => {
+        const query = vi.fn().mockRejectedValue(new Error('no such table'))
+        expect(await gatewayReturning(query).selectSchema('users')).toBeNull()
+      })
+    })
+  })
 })

@@ -143,4 +143,23 @@ describe('SeederSqlBuilder', () => {
       ).toBe('SELECT * FROM users WHERE id = $1 LIMIT 1')
     })
   })
+
+  describe('readsSchema', () => {
+    it('placeholder が $ なら true', () => {
+      expect(new SeederSqlBuilder('"', '$').readsSchema()).toBe(true)
+    })
+
+    it('placeholder が ? なら false', () => {
+      expect(new SeederSqlBuilder('`', '?').readsSchema()).toBe(false)
+    })
+  })
+
+  describe('columnsOf', () => {
+    it('現在のスキーマのテーブルの列情報を、テーブル名を束縛して読む', () => {
+      expect(new SeederSqlBuilder('"', '$').columnsOf('users')).toEqual({
+        sql: 'SELECT column_name, data_type, is_nullable FROM information_schema.columns WHERE table_schema = current_schema() AND table_name = $1',
+        values: ['users'],
+      })
+    })
+  })
 })

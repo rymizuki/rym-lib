@@ -2,12 +2,28 @@ import { PrismaClient } from '@prisma/client'
 
 import type { SeederSqlBuilder } from './seeder-sql-builder'
 import type { BindValue, Row, Value } from './seeder-types'
+import { TableSchema } from './table-schema'
+
+type ColumnRow = { column_name: string; data_type: string; is_nullable: string }
 
 export class SeederTableGateway {
   constructor(
     private readonly client: PrismaClient,
     private readonly sql_builder: SeederSqlBuilder,
   ) {}
+
+  async selectSchema(table: string): Promise<TableSchema | null> {
+    const { sql, values } = this.sql_builder.columnsOf(table)
+    const rows = await this.queryColumns(sql, values)
+    if (rows.length === 0) return null
+    return new TableSchema(
+      rows.map((row) => ({
+        name: row.column_name,
+        data_type: row.data_type,
+        is_nullable: row.is_nullable === 'YES',
+      })),
+    )
+  }
 
   async selectOne(
     table: string,
@@ -80,6 +96,17 @@ export class SeederTableGateway {
     } catch (error) {
       console.info({ sql, values: set_values, pk_value })
       throw error
+    }
+  }
+
+  private async queryColumns(
+    sql: string,
+    values: BindValue[],
+  ): Promise<ColumnRow[]> {
+    try {
+      return (await this.client.$queryRawUnsafe(sql, ...values)) as ColumnRow[]
+    } catch {
+      return []
     }
   }
 }
