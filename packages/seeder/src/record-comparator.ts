@@ -1,3 +1,4 @@
+import { isIntegerString } from './numeric-string'
 import type { Row, Value } from './seeder-types'
 
 export class RecordComparator {
@@ -38,7 +39,7 @@ export class RecordComparator {
       return Number.isInteger(value)
     }
     if (typeof value === 'string') {
-      return /^-?\d+$/.test(value)
+      return isIntegerString(value)
     }
     return false
   }
