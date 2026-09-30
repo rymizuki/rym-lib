@@ -956,6 +956,29 @@ describe('Seeder（列情報の読み取り）', () => {
       })
     })
 
+    describe('シチュエーション: placeholder が $ で、数字の文字列を含む場合', () => {
+      it('結果: 列情報を 1 回読み、整数型の列の文字列を bigint にして INSERT する', async () => {
+        await postgres_seeder.load(
+          't',
+          'id',
+          ['id', 'name'],
+          [
+            ['1', 'a'],
+            ['2', 'b'],
+          ],
+        )
+
+        expect(schemaQueries()).toHaveLength(1)
+        expect(mockPrismaClient.$executeRawUnsafe).toHaveBeenCalledWith(
+          'INSERT INTO "t" ("id", "name") VALUES ($1, $2), ($3, $4)',
+          1n,
+          'a',
+          2n,
+          'b',
+        )
+      })
+    })
+
     describe('シチュエーション: placeholder が $ で、主キーが null の行を含む場合', () => {
       it('結果: 列情報を 1 回読み、主キーが NOT NULL なら主キー列を外して INSERT する', async () => {
         await postgres_seeder.load('t', 'id', ['id', 'name'], [[null, 'a']])

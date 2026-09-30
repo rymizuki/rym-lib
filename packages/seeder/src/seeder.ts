@@ -2,6 +2,7 @@ import { PrismaClient } from '@prisma/client'
 
 import { BulkChunkLoader } from './bulk-chunk-loader'
 import { ChunkLoader } from './chunk-loader'
+import { IntegerStringCoercer } from './integer-string-coercer'
 import { PrimaryKeyMatcher } from './primary-key-matcher'
 import { RecordChunker } from './record-chunker'
 import { RecordComparator } from './record-comparator'
@@ -18,6 +19,7 @@ export type { SeederOptions } from './seeder-types'
 
 export class Seeder {
   private readonly chunker = new RecordChunker(TimestampStamper.MAX_COLUMNS)
+  private readonly coercer = new IntegerStringCoercer()
   private readonly chunk_loader: ChunkLoader
   private readonly gateway: SeederTableGateway
   private readonly sql_builder: SeederSqlBuilder
@@ -55,8 +57,11 @@ export class Seeder {
       ...options,
     })
     const schema = await this.schemaFor(target, records)
+    const seed_records = schema
+      ? this.coercer.coerce(target, records, schema)
+      : records
     const seed_target = target.withSchema(schema)
-    for (const chunk of this.chunker.split(columns, records))
+    for (const chunk of this.chunker.split(columns, seed_records))
       await this.chunk_loader.load(seed_target, chunk)
     console.info(`loading "${table_name}" done.`)
   }
@@ -71,9 +76,12 @@ export class Seeder {
   }
 
   private needsSchema(target: SeedTarget, records: Value[][]): boolean {
-    return records.some((record) => {
-      const pk_value = target.pkValueOf(record)
-      return pk_value === null || pk_value === undefined
-    })
+    return (
+      this.coercer.includesIntegerString(records) ||
+      records.some((record) => {
+        const pk_value = target.pkValueOf(record)
+        return pk_value === null || pk_value === undefined
+      })
+    )
   }
 }

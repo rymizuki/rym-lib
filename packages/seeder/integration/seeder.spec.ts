@@ -164,34 +164,47 @@ describe.each(dialects)('Seeder.load ($name)', (dialect) => {
       expect(rows.map((row) => row.updated_at.getTime())).toEqual([OLD_TIME])
     })
 
-    if (dialect.name === 'postgres')
-      it.todo(
-        '数字文字列で渡しても更新されない（PostgreSQL は "bigint = text" で SELECT が失敗する。要確認）',
+    it('数字文字列で渡しても更新されない', async () => {
+      await database.execute(
+        `INSERT INTO big_items (id, amount, updated_at) VALUES (9007199254740993, 9007199254740995, '${OLD_DATE}')`,
       )
-    else {
-      it('数字文字列で渡しても更新されない', async () => {
-        await database.execute(
-          `INSERT INTO big_items (id, amount, updated_at) VALUES (9007199254740993, 9007199254740995, '${OLD_DATE}')`,
-        )
 
-        await seeder.load(
-          'big_items',
-          'id',
-          ['id', 'amount'],
-          [
-            ['1', '100'],
-            ['9007199254740993', '9007199254740995'],
-          ],
-          { updated_at: true },
-        )
+      await seeder.load(
+        'big_items',
+        'id',
+        ['id', 'amount'],
+        [
+          ['1', '100'],
+          ['9007199254740993', '9007199254740995'],
+        ],
+        { updated_at: true },
+      )
 
-        const rows = await selectBigItems()
-        expect(rows.map((row) => row.updated_at.getTime())).toEqual([
-          OLD_TIME,
-          OLD_TIME,
-        ])
-      })
-    }
+      const rows = await selectBigItems()
+      expect(rows.map((row) => row.updated_at.getTime())).toEqual([
+        OLD_TIME,
+        OLD_TIME,
+      ])
+    })
+
+    it('数字文字列で新規行を入れられる', async () => {
+      await seeder.load(
+        'big_items',
+        'id',
+        ['id', 'amount'],
+        [
+          ['2', '-200'],
+          ['9007199254740993', '9007199254740995'],
+        ],
+      )
+
+      const rows = await selectBigItems()
+      expect(rows.map((row) => [String(row.id), String(row.amount)])).toEqual([
+        ['1', '100'],
+        ['2', '-200'],
+        ['9007199254740993', '9007199254740995'],
+      ])
+    })
 
     it('値が違えば更新される', async () => {
       await seeder.load('big_items', 'id', ['id', 'amount'], [[1, 101]], {
