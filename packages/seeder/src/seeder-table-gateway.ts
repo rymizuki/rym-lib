@@ -105,7 +105,8 @@ export class SeederTableGateway {
   ): Promise<ColumnRow[]> {
     try {
       return (await this.client.$queryRawUnsafe(sql, ...values)) as ColumnRow[]
-    } catch {
+    } catch (error) {
+      console.info({ sql, error })
       return []
     }
   }

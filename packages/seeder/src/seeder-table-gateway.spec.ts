@@ -109,4 +109,25 @@ describe('SeederTableGateway', () => {
       })
     })
   })
+
+  describe('selectSchema', () => {
+    describe('列情報の SELECT が失敗した場合', () => {
+      it('sql と error をログして null を返す', async () => {
+        const select_failure = new Error('no information_schema')
+        const select_client = {
+          $queryRawUnsafe: vi.fn().mockRejectedValue(select_failure),
+        } as unknown as PrismaClient
+        const select_gateway = new SeederTableGateway(
+          select_client,
+          new SeederSqlBuilder('`', '$'),
+        )
+
+        expect(await select_gateway.selectSchema('users')).toBeNull()
+        expect(info).toHaveBeenCalledWith({
+          sql: expect.stringContaining('information_schema.columns'),
+          error: select_failure,
+        })
+      })
+    })
+  })
 })
