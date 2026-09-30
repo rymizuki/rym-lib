@@ -12,7 +12,7 @@ export class SeederDatabase {
   }
 
   createSeeder(options: SeederOptions = this.dialect.options): Seeder {
-    // XXX: 生成先が方言ごとに異なる PrismaClient を、Seeder が受ける @prisma/client の型へ寄せる
+    // XXX: 20-type-safety の as 禁止に反する。方言ごとに生成先が違う PrismaClient は @prisma/client の型と互換がないため
     return new Seeder(this.client as unknown as SeederClient, options)
   }
 

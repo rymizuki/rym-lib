@@ -299,6 +299,40 @@ describe.each(dialects)('Seeder.load ($name)', (dialect) => {
     })
   })
 
+  describe('主キーが null の行と、同じチャンク内の主キー重複を渡す場合', () => {
+    it.runIf(dialect.name === 'postgres')(
+      'null の行は採番され、重複した主キーは後の値になる',
+      async () => {
+        await seeder.load(
+          'serials',
+          'id',
+          ['id', 'name'],
+          [
+            [null, 'a'],
+            [1, 'b'],
+            [1, 'c'],
+          ],
+        )
+
+        const rows = await database.select<{ id: number; name: string }>(
+          'SELECT id, name FROM serials ORDER BY id',
+        )
+        expect(rows).toEqual([{ id: 1, name: 'c' }])
+      },
+    )
+  })
+
+  describe('整数型でない列に数字の文字列を渡す場合', () => {
+    it('文字列のまま入る', async () => {
+      await seeder.load('keyed', 'code', ['code', 'name'], [['007', 'a']])
+
+      const rows = await database.select<{ code: string; name: string }>(
+        'SELECT code, name FROM keyed',
+      )
+      expect(rows).toEqual([{ code: '007', name: 'a' }])
+    })
+  })
+
   describe('主キーが NULL 可の一意列で、null の行を渡す場合', () => {
     beforeEach(async () => {
       await database.execute('DROP TABLE IF EXISTS nullable_keys')
@@ -413,16 +447,44 @@ describe.each(dialects)('Seeder.load ($name)', (dialect) => {
         { id: 2, parent_id: null },
       ])
     })
+
+    it('int4 列に数字の文字列を渡して INSERT と UPDATE ができる', async () => {
+      await seeder.load(
+        'nodes',
+        'id',
+        ['id', 'parent_id', 'name'],
+        [[2, '1', 'child']],
+      )
+      await seeder.load(
+        'nodes',
+        'id',
+        ['id', 'parent_id', 'name'],
+        [
+          [3, '1', 'other'],
+          [2, '3', 'child'],
+        ],
+      )
+
+      const rows = await database.select<{
+        id: number
+        parent_id: number | null
+      }>('SELECT id, parent_id FROM nodes ORDER BY id')
+      expect(rows).toEqual([
+        { id: 1, parent_id: null },
+        { id: 2, parent_id: 3 },
+        { id: 3, parent_id: 1 },
+      ])
+    })
   })
 
   describe('created_at / updated_at を有効にして新規 2 行を読み込む場合', () => {
     it('両列が入り、2 行で同じ値になる', async () => {
       const RealDate = Date
-      let ticks = 0
+      const clock = { ticks: 0 }
       class TickingDate extends RealDate {
         constructor(...args: ConstructorParameters<typeof Date>) {
           if (args.length > 0) super(...args)
-          else super(RealDate.UTC(2024, 0, 1) + ticks++)
+          else super(RealDate.UTC(2024, 0, 1) + clock.ticks++)
         }
       }
       vi.stubGlobal('Date', TickingDate)
