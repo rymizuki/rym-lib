@@ -1,0 +1,13 @@
+generator client {
+  provider = "prisma-client-js"
+  output   = "../generated/mysql"
+}
+
+datasource db {
+  provider = "mysql"
+  url      = env("SEEDER_TEST_MYSQL_URL")
+}
+
+model Placeholder {
+  id Int @id
+}
