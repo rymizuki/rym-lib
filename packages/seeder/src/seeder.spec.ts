@@ -10,7 +10,9 @@ const mockPrismaClient = {
 }
 
 describe('Seeder', () => {
-  const seeder = new Seeder(mockPrismaClient as unknown as PrismaClient, {})
+  const seeder = new Seeder(mockPrismaClient as unknown as PrismaClient, {
+    placeholder: '$',
+  })
 
   beforeEach(() => {
     vi.clearAllMocks()

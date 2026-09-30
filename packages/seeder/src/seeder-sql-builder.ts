@@ -1,6 +1,13 @@
-import type { BindValue, Statement, Value } from './seeder-types'
+import type { BindValue, SeederOptions, Statement, Value } from './seeder-types'
 
 export class SeederSqlBuilder {
+  static fromOptions(options: SeederOptions): SeederSqlBuilder {
+    const quote_char = options.quote ?? '`'
+    const placeholder_char =
+      options.placeholder || (quote_char === '`' ? '?' : '$')
+    return new SeederSqlBuilder(quote_char, placeholder_char)
+  }
+
   constructor(
     private readonly quote_char: '`' | '"' | '',
     private readonly placeholder_char: '$' | '?',

@@ -25,7 +25,7 @@ export class Seeder {
   ) {
     const gateway = new SeederTableGateway(
       client,
-      new SeederSqlBuilder(options.quote ?? '`', options.placeholder || '$'),
+      SeederSqlBuilder.fromOptions(options),
     )
     const writer = new RowWriter(
       gateway,

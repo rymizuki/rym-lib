@@ -3,6 +3,52 @@ import { describe, expect, it } from 'vitest'
 import { SeederSqlBuilder } from './seeder-sql-builder'
 
 describe('SeederSqlBuilder', () => {
+  describe('fromOptions', () => {
+    const placeholderOf = (
+      options: Parameters<typeof SeederSqlBuilder.fromOptions>[0],
+    ) => SeederSqlBuilder.fromOptions(options).selectByPk('t', 'id', 1).sql
+
+    describe('placeholder を指定しない場合', () => {
+      it('quote も未指定なら ` と ? で組み立てる', () => {
+        expect(placeholderOf({})).toBe(
+          'SELECT * FROM `t` WHERE `id` = ? LIMIT 1',
+        )
+      })
+
+      it('quote が ` なら ? で組み立てる', () => {
+        expect(placeholderOf({ quote: '`' })).toBe(
+          'SELECT * FROM `t` WHERE `id` = ? LIMIT 1',
+        )
+      })
+
+      it('quote が " なら $ で組み立てる', () => {
+        expect(placeholderOf({ quote: '"' })).toBe(
+          'SELECT * FROM "t" WHERE "id" = $1 LIMIT 1',
+        )
+      })
+
+      it('quote が空なら $ で組み立てる', () => {
+        expect(placeholderOf({ quote: '' })).toBe(
+          'SELECT * FROM t WHERE id = $1 LIMIT 1',
+        )
+      })
+    })
+
+    describe('placeholder を指定した場合', () => {
+      it('quote が ` でも指定した $ を使う', () => {
+        expect(placeholderOf({ quote: '`', placeholder: '$' })).toBe(
+          'SELECT * FROM `t` WHERE `id` = $1 LIMIT 1',
+        )
+      })
+
+      it('quote が " でも指定した ? を使う', () => {
+        expect(placeholderOf({ quote: '"', placeholder: '?' })).toBe(
+          'SELECT * FROM "t" WHERE "id" = ? LIMIT 1',
+        )
+      })
+    })
+  })
+
   describe('プレースホルダーが $ の場合', () => {
     const builder = new SeederSqlBuilder('`', '$')
 

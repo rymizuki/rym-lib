@@ -422,7 +422,41 @@ describe.each(dialects)('Seeder.load ($name)', (dialect) => {
 })
 
 describe('Seeder.load 既定の options (mysql)', () => {
-  it.todo(
-    'options が空でも MySQL に新規行を入れられる（placeholder の既定が "$" で MySQL に "$1" が流れて失敗する。要確認）',
-  )
+  const dialect = dialects.find(({ name }) => name === 'mysql')
+  if (!dialect) throw new Error('mysql dialect is not defined')
+  const database = new SeederDatabase(dialect)
+  const seeder = database.createSeeder({})
+
+  beforeAll(() => {
+    vi.spyOn(console, 'info').mockImplementation(() => undefined)
+  })
+
+  beforeEach(async () => {
+    await database.reset()
+  })
+
+  afterAll(async () => {
+    await database.disconnect()
+  })
+
+  it('options が空でも新規行を入れ、既存行を更新できる', async () => {
+    await seeder.load(
+      'items',
+      'id',
+      ['id', 'name'],
+      [
+        [1, 'a'],
+        [2, 'b'],
+      ],
+    )
+    await seeder.load('items', 'id', ['id', 'name'], [[1, 'A']])
+
+    const rows = await database.select<{ id: number; name: string }>(
+      'SELECT id, name FROM items ORDER BY id',
+    )
+    expect(rows.map((row) => [row.id, row.name])).toEqual([
+      [1, 'A'],
+      [2, 'b'],
+    ])
+  })
 })
