@@ -51,7 +51,7 @@
     "vitest": "^2.0.5"
   },
   "dependencies": {
-    "qs": "^6.13.0"
+    "qs": "^6.16.1"
   },
   "peerDependencies": {
     "@remix-run/node": "^2.11",
