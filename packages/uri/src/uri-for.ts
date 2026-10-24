@@ -6,7 +6,7 @@ export function uriFor(
 ) {
   const data = { ...params }
   const path = pathTemplate
-    .replace(/\{(.+?)\}/g, (_match, prop) => {
+    .replace(/\{([^{}]+)\}/g, (_match, prop) => {
       const value = data[prop]
       delete data[prop]
       return value ?? ''
