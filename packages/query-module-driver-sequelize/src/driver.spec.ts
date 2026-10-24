@@ -21,9 +21,9 @@ const createLogger = () => ({
 vi.mock('sequelize', () => {
   const mockQuery = vi.fn()
   return {
-    Sequelize: vi.fn().mockImplementation(() => ({
-      query: mockQuery,
-    })),
+    Sequelize: vi.fn().mockImplementation(function () {
+      return { query: mockQuery }
+    }),
     QueryTypes: {
       SELECT: 'SELECT',
     },

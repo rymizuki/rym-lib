@@ -52,7 +52,7 @@
     "react-dom": "^18.3.1",
     "tsup": "^8.3.5",
     "vite-tsconfig-paths": "^5.1.2",
-    "vitest": "^2.1.5"
+    "vitest": "^4.1.12"
   },
   "peerDependencies": {
     "@remix-run/react": ">=2.0.0",
