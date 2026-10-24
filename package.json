@@ -31,7 +31,6 @@
     "npm-check-updates": "^17.0.6",
     "prettier": "3.3.3",
     "turbo": "^2.0.14",
-    "vite": "^6.4.5",
     "vitest": "^4.1.12"
   },
   "optionalDependencies": {
