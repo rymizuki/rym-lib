@@ -44,7 +44,7 @@
     "npm-check-updates": "^17.1.11",
     "qs": "^6.16.1",
     "tsup": "^8.3.5",
-    "vitest": "^2.1.5"
+    "vitest": "^4.1.12"
   },
   "peerDependencies": {
     "qs": ">=6.0.0"
