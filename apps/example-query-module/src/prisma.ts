@@ -1,3 +1,4 @@
+import { PrismaPg } from '@prisma/adapter-pg'
 import {
   defineQuery,
   QueryLoggerInterface,
@@ -36,7 +37,9 @@ type Params = QueryRunnerCriteria<
   }
 >
 
-const prisma = new PrismaClient().$extends({
+const prisma = new PrismaClient({
+  adapter: new PrismaPg({ connectionString: process.env.DATABASE_URL }),
+}).$extends({
   query: {
     $queryRawUnsafe: async ({ args }: { args: any[] }) => {
       const sql = args.shift()
