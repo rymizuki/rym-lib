@@ -15,6 +15,7 @@ jobs:
           node-version-file: .node-version
 
       - run: npm ci
+      - run: npm audit --omit=dev --audit-level=high
 
       - run: npm run build
       - run: npm run lint
