@@ -1,4 +1,4 @@
-import { Link as RemixLink } from '@remix-run/react'
+import { Link as RouterLink } from 'react-router'
 
 import { LinkFeatureProps, ChildrenProps } from './types'
 
@@ -6,5 +6,5 @@ export const LinkFeature = ({
   children,
   ...props
 }: LinkFeatureProps & ChildrenProps) => {
-  return <RemixLink {...props}>{children}</RemixLink>
+  return <RouterLink {...props}>{children}</RouterLink>
 }

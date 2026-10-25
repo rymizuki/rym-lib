@@ -46,10 +46,6 @@
     "browserslist": "^4.28.7",
     "postcss-selector-parser": "^7.1.6",
     "uuid": "^11.1.1",
-    "@remix-run/router": "1.23.4",
-    "@remix-run/react": {
-      "react-router": "6.30.6",
-      "react-router-dom": "6.30.6"
-    }
+    "@remix-run/router": "1.23.4"
   }
 }

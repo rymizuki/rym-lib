@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react'
 
-import { useLocation, useNavigate } from '@remix-run/react'
+import { useLocation, useNavigate } from 'react-router'
 
 export function useFlashMessage() {
   const [message, setMessage] = useState<string | null>(null)
