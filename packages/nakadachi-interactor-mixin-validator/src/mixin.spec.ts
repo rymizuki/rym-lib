@@ -79,7 +79,9 @@ describe('ValidatorMixin', () => {
         })
 
         it('例外の data に渡した params が入る', () => {
-          const error = catchError(() => interactor.runWith(invalidInput, rules))
+          const error = catchError(() =>
+            interactor.runWith(invalidInput, rules),
+          )
 
           expect((error as InvalidParameterRequestException).data).toEqual({
             id: 1,
@@ -87,11 +89,53 @@ describe('ValidatorMixin', () => {
         })
 
         it('例外の issues が失敗したフィールドの path を指す', () => {
-          const error = catchError(() => interactor.runWith(invalidInput, rules))
+          const error = catchError(() =>
+            interactor.runWith(invalidInput, rules),
+          )
 
           expect(
             (error as InvalidParameterRequestException).issues[0]?.path,
           ).toEqual(['id'])
+        })
+      })
+    })
+
+    describe('params に z.object 以外のスキーマを指定した場合', () => {
+      describe('z.array のとき', () => {
+        it('検証済みの配列を返し、配列の出力型が付く', () => {
+          const result = interactor.runWith(
+            buildInput({ params: ['a', 'b'] as never }),
+            { params: z.array(z.string()) },
+          )
+
+          expect(result.params).toEqual(['a', 'b'])
+          expectTypeOf(result.params).toEqualTypeOf<string[]>()
+        })
+      })
+
+      describe('z.record のとき', () => {
+        it('検証済みのレコードを返し、レコードの出力型が付く', () => {
+          const result = interactor.runWith(
+            buildInput({ params: { a: 1 } as never }),
+            { params: z.record(z.string(), z.number()) },
+          )
+
+          expect(result.params).toEqual({ a: 1 })
+          expectTypeOf(result.params).toEqualTypeOf<Record<string, number>>()
+        })
+      })
+    })
+
+    describe('queries のスキーマを指定した場合', () => {
+      describe('スキーマに合う queries のとき', () => {
+        it('検証済みの queries を返し、出力型が付く', () => {
+          const result = interactor.runWith(
+            buildInput({ queries: { page: '1' } }),
+            { queries: z.object({ page: z.string() }) },
+          )
+
+          expect(result.queries).toEqual({ page: '1' })
+          expectTypeOf(result.queries).toExtend<{ page: string }>()
         })
       })
     })
