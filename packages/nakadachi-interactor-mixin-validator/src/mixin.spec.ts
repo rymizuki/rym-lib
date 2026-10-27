@@ -166,6 +166,17 @@ describe('ValidatorMixin', () => {
         })
       })
 
+      describe('入力と出力の型が異なるスキーマのとき', () => {
+        it('変換後の値を返し、出力側の型が付く', () => {
+          const result = interactor.runWith(buildInput({ body: { n: '1' } }), {
+            body: z.object({ n: z.string().transform(Number) }),
+          })
+
+          expect(result.body).toEqual({ n: 1 })
+          expectTypeOf(result.body).toEqualTypeOf<{ n: number }>()
+        })
+      })
+
       describe('input.body が undefined のとき', () => {
         it('{} を検証し、必須フィールドがあれば例外を投げる', () => {
           expect(() =>
