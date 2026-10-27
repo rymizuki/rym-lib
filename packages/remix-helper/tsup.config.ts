@@ -9,5 +9,5 @@ export default defineConfig({
   sourcemap: true,
   outDir: 'build',
   format: ['cjs', 'esm'],
-  external: ['react', 'react-dom', '@remix-run/react', 'qs'],
+  external: ['react', 'react-dom', 'react-router', 'qs'],
 })
