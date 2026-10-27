@@ -1,9 +1,11 @@
 # @rym-lib/remix-helper
 
+Helpers for [React Router 7](https://reactrouter.com/).
+
 ## Installation
 
 ```
-npm i @rym-lib/remix-helper
+npm i @rym-lib/remix-helper react-router
 ```
 
 ## Features
@@ -11,6 +13,8 @@ npm i @rym-lib/remix-helper
 ### useBreadcrumbs()
 
 ```tsx:root.tsx
+import { Links, Meta, Outlet, Scripts, ScrollRestoration } from 'react-router'
+
 import { useBreadcrumbs } from '@rym-lib/remix-helper'
 import { Breadcrumb } from '~/components/breadcrumbs'
 
@@ -30,7 +34,6 @@ export default function App() {
         </div>
         <ScrollRestoration />
         <Scripts />
-        <LiveReload />
       </body>
     </html>
   )

@@ -1,8 +1,8 @@
 import { ReactElement, ButtonHTMLAttributes } from 'react'
 
-import { Link as RemixLink } from '@remix-run/react'
+import { Link as RouterLink } from 'react-router'
 
-type RemixLinkProps = Parameters<typeof RemixLink>[0]
+type RouterLinkProps = Parameters<typeof RouterLink>[0]
 
 export type ChildrenProps = {
   children: string | ReactElement
@@ -11,4 +11,4 @@ export type ButtonFeatureProps = Omit<
   ButtonHTMLAttributes<HTMLButtonElement>,
   'children'
 >
-export type LinkFeatureProps = Omit<RemixLinkProps, 'children' | 'ref'>
+export type LinkFeatureProps = Omit<RouterLinkProps, 'children' | 'ref'>

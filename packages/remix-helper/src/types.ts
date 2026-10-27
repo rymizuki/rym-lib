@@ -1,4 +1,4 @@
-import { UIMatch } from '@remix-run/react'
+import { UIMatch } from 'react-router'
 
 export type RouteHandle<
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
