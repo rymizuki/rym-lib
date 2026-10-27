@@ -12,7 +12,7 @@ export default defineConfig({
   sourcemap: true,
   outDir: 'build',
   format: ['esm', 'cjs'],
-  external: ['react', 'react-dom', '@remix-run/react'],
+  external: ['react', 'react-dom', 'react-router'],
   esbuildPlugins: [
     esbuildPluginAlias({
       '~/*': path.resolve(__dirname, 'src'),

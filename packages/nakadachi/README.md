@@ -35,4 +35,4 @@ const onError: ErrorHandler = (error, input, context, response) => {
 
 ## Adapters
 
-- [Remix](https://www.npmjs.com/package/@rym-lib/nakadachi-adapter-remix)
+- [React Router](https://www.npmjs.com/package/@rym-lib/nakadachi-adapter-react-router)
