@@ -98,6 +98,18 @@ describe('ValidatorMixin', () => {
           ).toEqual(['id'])
         })
       })
+
+      describe('入力と出力の型が異なるスキーマのとき', () => {
+        it('変換後の値を返し、出力側の型が付く', () => {
+          const result = interactor.runWith(
+            buildInput({ params: { id: '1' } }),
+            { params: z.object({ id: z.string().transform(Number) }) },
+          )
+
+          expect(result.params).toEqual({ id: 1 })
+          expectTypeOf(result.params).toEqualTypeOf<{ id: number }>()
+        })
+      })
     })
 
     describe('params に z.object 以外のスキーマを指定した場合', () => {
@@ -136,6 +148,18 @@ describe('ValidatorMixin', () => {
 
           expect(result.queries).toEqual({ page: '1' })
           expectTypeOf(result.queries).toExtend<{ page: string }>()
+        })
+      })
+
+      describe('入力と出力の型が異なるスキーマのとき', () => {
+        it('変換後の値を返し、出力側の型が付く', () => {
+          const result = interactor.runWith(
+            buildInput({ queries: { page: '1' } }),
+            { queries: z.object({ page: z.string().transform(Number) }) },
+          )
+
+          expect(result.queries).toEqual({ page: 1 })
+          expectTypeOf(result.queries).toEqualTypeOf<{ page: number }>()
         })
       })
     })
