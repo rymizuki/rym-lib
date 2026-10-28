@@ -30,7 +30,7 @@
   "scripts": {
     "build": "tsup",
     "test": "vitest run",
-    "lint": "eslint --max-warnings 0 .",
+    "lint": "eslint --max-warnings 0 . && tsc --noEmit && prettier --check \"src/**/*.{ts,js,json}\"",
     "format": "prettier -w './**/*.{ts,tsx,js,json,css}' --check",
     "ncu": "npm-check-updates"
   },
@@ -43,10 +43,10 @@
     "npm-check-updates": "^17.0.6",
     "tsup": "^8.2.4",
     "vitest": "^4.1.12",
-    "zod": "^3.23.8"
+    "zod": "^4.6.7"
   },
   "peerDependencies": {
-    "zod": ">=3.0.0",
+    "zod": ">=4.6.6",
     "@rym-lib/exception": ">=1.7.1",
     "@rym-lib/inversify-bundler": ">=1.7.1",
     "@rym-lib/nakadachi": ">=1.7.1"

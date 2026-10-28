@@ -1,16 +1,26 @@
-import { ZodSchema, z } from 'zod'
+import { ZodType, z } from 'zod'
 
 import { injectable } from '@rym-lib/inversify-bundler'
 import { InputPort } from '@rym-lib/nakadachi'
 
 import { InvalidParameterRequestException } from './exceptions'
 
+type Validated<
+  Params extends ZodType,
+  Queries extends ZodType,
+  Body extends ZodType,
+> = {
+  params: z.output<Params>
+  queries: z.output<Queries>
+  body: z.output<Body>
+}
+
 @injectable()
 abstract class ValidatorMixin {
   protected validate<
-    Params extends ZodSchema = ZodSchema<object>,
-    Queries extends ZodSchema = ZodSchema<object>,
-    Body extends ZodSchema = ZodSchema<object>,
+    Params extends ZodType = ZodType<object>,
+    Queries extends ZodType = ZodType<object>,
+    Body extends ZodType = ZodType<object>,
   >(
     input: InputPort,
     rules: {
@@ -18,20 +28,8 @@ abstract class ValidatorMixin {
       queries?: Queries
       body?: Body
     },
-  ) {
-    const validators = Object.assign(
-      {
-        params: z.object({}),
-        queries: z.object({}),
-        body: z.object({}),
-      },
-      rules,
-    )
-
-    const validate = <Schema extends ZodSchema>(
-      data: unknown,
-      validator: Schema,
-    ): ReturnType<Schema['parse']> => {
+  ): Validated<Params, Queries, Body> {
+    const validate = (data: unknown, validator: ZodType) => {
       const ret = validator.safeParse(data)
       if (!ret.success) {
         throw new InvalidParameterRequestException(data, ret.error.issues)
@@ -40,10 +38,10 @@ abstract class ValidatorMixin {
     }
 
     return {
-      params: validate(input.params, validators.params),
-      queries: validate(input.queries, validators.queries),
-      body: validate(input.body || {}, validators.body),
-    }
+      params: validate(input.params, rules.params ?? z.object({})),
+      queries: validate(input.queries, rules.queries ?? z.object({})),
+      body: validate(input.body || {}, rules.body ?? z.object({})),
+    } as Validated<Params, Queries, Body>
   }
 }
 
