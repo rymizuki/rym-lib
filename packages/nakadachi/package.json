@@ -20,6 +20,11 @@
     "name": "mizuki_r",
     "email": "ry.mizuki@gmail.com"
   },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/rymizuki/rym-lib.git",
+    "directory": "packages/nakadachi"
+  },
   "license": "MIT",
   "description": "",
   "publishConfig": {
