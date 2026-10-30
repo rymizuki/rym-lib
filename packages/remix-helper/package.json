@@ -1,7 +1,7 @@
 {
   "name": "@rym-lib/remix-helper",
   "type": "module",
-  "version": "1.9.0",
+  "version": "2.1.0",
   "private": false,
   "author": {
     "name": "mizuki_r",
@@ -39,7 +39,7 @@
     "ncu": "npm-check-updates"
   },
   "dependencies": {
-    "@rym-lib/utilities": "^1.9.0"
+    "@rym-lib/utilities": "^2.1.0"
   },
   "devDependencies": {
     "@rym-lib/dev-config": "*",
