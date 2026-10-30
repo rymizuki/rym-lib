@@ -33,6 +33,15 @@ class Bundler implements BundlerPort {
 
     return modules
   }
+
+  exclude(...inputs: ModuleInput[]): Bundler {
+    const excluded = new Set(
+      new Bundler(...inputs).resolve().map((module) => module.name),
+    )
+    return new Bundler(
+      ...this.resolve().filter((module) => !excluded.has(module.name)),
+    )
+  }
 }
 
 export { Bundler }

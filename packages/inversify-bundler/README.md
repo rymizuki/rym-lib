@@ -95,3 +95,21 @@ const container = new Container()
 
 container.load(...bundler.resolve())
 ```
+
+## exclude modules
+
+`exclude(...modules)` returns a new `Bundler` without the modules whose names are resolved from the given modules.
+Use it to load into a child container only the modules its parent does not have, so that singletons bound in the parent are shared instead of being created again in the child.
+
+```ts
+import { Bundler, Container } from '@rym-lib/inversify-bundler'
+
+import { RootModule } from '~/root-module'
+import { UserModule } from '~/user'
+
+const root = new Container()
+root.load(...RootModule.resolve())
+
+const child = new Container({ parent: root })
+child.load(...new Bundler(UserModule).exclude(RootModule).resolve())
+```
