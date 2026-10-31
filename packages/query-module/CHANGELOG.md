@@ -1,5 +1,13 @@
 # @rym-lib/query-module
 
+## 2.1.0
+
+### Patch Changes
+
+- 全パッケージのバージョンを 2.1.0 にそろえた。このパッケージ自体に機能の変更はない。
+- Updated dependencies
+  - @rym-lib/exception@2.1.0
+
 ## 1.9.0
 
 ### Minor Changes

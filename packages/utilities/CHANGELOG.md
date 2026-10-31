@@ -1,5 +1,11 @@
 # @rym-lib/utilities
 
+## 2.1.0
+
+### Patch Changes
+
+- 全パッケージのバージョンを 2.1.0 にそろえた。このパッケージ自体に機能の変更はない。
+
 ## 1.9.0
 
 ### Minor Changes
