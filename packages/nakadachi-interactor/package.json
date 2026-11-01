@@ -6,6 +6,11 @@
     "name": "mizuki_r",
     "email": "rymizuki.lib@gmail.com"
   },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/rymizuki/rym-lib.git",
+    "directory": "packages/nakadachi-interactor"
+  },
   "license": "MIT",
   "description": "",
   "publishConfig": {
