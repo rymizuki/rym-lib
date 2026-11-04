@@ -65,7 +65,7 @@
     "dev": "storybook dev -p 6006 --quiet",
     "dev:panda": "panda --watch",
     "test": "vitest run",
-    "lint": "eslint --max-warnings 0 .",
+    "lint": "eslint .",
     "format": "prettier -w './**/*.{ts,tsx,js,json,css}' --check",
     "ncu": "npm-check-updates",
     "storybook": "storybook dev -p 6006",

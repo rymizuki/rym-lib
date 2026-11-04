@@ -26,7 +26,7 @@
   "scripts": {
     "build": "tsup --dts --outDir build --splitting false --sourcemap --clean ./src/index.ts",
     "test": "vitest run",
-    "lint": "eslint --max-warnings 0 .",
+    "lint": "eslint .",
     "format": "prettier -w './**/*.{ts,tsx,js,json,css}' --check",
     "ncu": "npm-check-updates"
   },

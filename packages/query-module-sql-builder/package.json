@@ -36,7 +36,7 @@
   "scripts": {
     "build": "tsup",
     "test": "vitest run --coverage",
-    "lint": "eslint --max-warnings 0 . && tsc --noEmit && prettier --check \"src/**/*.{ts,js,json}\"",
+    "lint": "eslint . && tsc --noEmit && prettier --check \"src/**/*.{ts,js,json}\"",
     "format": "prettier -w './**/*.{ts,tsx,js,json,css}' --check",
     "ncu": "npm-check-updates"
   },

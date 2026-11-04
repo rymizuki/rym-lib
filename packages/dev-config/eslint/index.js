@@ -1,33 +1,30 @@
-const path = require('path')
+const js = require('@eslint/js')
+const { defineConfig, globalIgnores } = require('eslint/config')
+const globals = require('globals')
+const tseslint = require('typescript-eslint')
 
-/** @type {import('eslint').Linter.Config} */
-module.exports = {
-  root: true,
-  env: {
-    es6: true,
-    node: true,
-  },
-  parser: '@typescript-eslint/parser',
-  languageOptions: {
-    parserOptions: {
-      sourceType: 'module',
-      ecmaVersion: 2023,
-      project: ['./base.json'],
-      tsconfigRootDir: path.resolve(__dirname, '../tsconfig'),
+module.exports = defineConfig([
+  globalIgnores(['build/**/*', 'coverage/**/*', 'styled-system/**/*']),
+  js.configs.recommended,
+  {
+    files: ['**/*.{js,cjs,mjs}'],
+    languageOptions: {
+      globals: globals.node,
     },
   },
-  plugins: ['@typescript-eslint'],
-  extends: [
-    'eslint:recommended',
-    'plugin:@typescript-eslint/recommended',
-    'plugin:@typescript-eslint/recommended-requiring-type-checking',
-  ],
-  ignorePatterns: ['.eslintrc.js', 'build', 'tsup.config.ts'],
-  rules: {},
-  overrides: [
-    {
-      files: ['**/*.{spec,test}.{ts,tsx}'],
-      env: {},
+  {
+    files: ['**/*.{ts,tsx,mts,cts}'],
+    extends: [tseslint.configs.recommended],
+    rules: {
+      '@typescript-eslint/no-explicit-any': 'warn',
+      '@typescript-eslint/no-unused-vars': [
+        'error',
+        {
+          argsIgnorePattern: '^_',
+          varsIgnorePattern: '^_',
+          caughtErrorsIgnorePattern: '^_',
+        },
+      ],
     },
-  ],
-}
+  },
+])

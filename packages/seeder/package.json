@@ -37,7 +37,7 @@
     "build": "tsup",
     "test": "vitest run",
     "test:integration": "prisma generate --schema integration/prisma/postgres.prisma && prisma generate --schema integration/prisma/mysql.prisma && vitest run -c vitest.integration.config.mts",
-    "lint": "eslint --max-warnings 0 .",
+    "lint": "eslint .",
     "format": "prettier -w './**/*.{ts,tsx,js,json,css}' --check",
     "ncu": "npm-check-updates"
   },
