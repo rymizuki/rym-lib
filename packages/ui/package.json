@@ -84,7 +84,7 @@
     "@storybook/test": "^8.4.4",
     "@types/react": "^18.3.1",
     "@types/react-dom": "^18.3.1",
-    "dayjs": "^1.11.13",
+    "dayjs": "^1.11.23",
     "esbuild-plugin-alias": "^0.2.1",
     "fontawesome-free": "^1.0.4",
     "npm-check-updates": "^17.1.11",

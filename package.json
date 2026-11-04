@@ -29,8 +29,8 @@
     "@changesets/cli": "^2.27.7",
     "@rym-lib/dev-config": "*",
     "npm-check-updates": "^17.0.6",
-    "prettier": "3.3.3",
-    "turbo": "^2.0.14",
+    "prettier": "3.9.10",
+    "turbo": "^2.11.10",
     "vitest": "^4.1.12"
   },
   "optionalDependencies": {

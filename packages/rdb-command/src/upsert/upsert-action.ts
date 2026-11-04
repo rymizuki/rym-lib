@@ -9,5 +9,4 @@ import { UpsertData } from './upsert-data'
  *   - `set: UpsertData`: `"col" = <明示値/SQL式>` を採番して出力（インクリメント等）
  */
 export type UpsertAction =
-  | { type: 'nothing' }
-  | { type: 'update'; set: string[] | UpsertData }
+  { type: 'nothing' } | { type: 'update'; set: string[] | UpsertData }

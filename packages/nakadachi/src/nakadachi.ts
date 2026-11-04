@@ -39,9 +39,9 @@ export function nakadachi<OutputPort = any>(
   return new Nakadachi<OutputPort>(adapter, options)
 }
 
-export class Nakadachi<OutputPort = any>
-  implements NakadachiInterface<OutputPort>
-{
+export class Nakadachi<
+  OutputPort = any,
+> implements NakadachiInterface<OutputPort> {
   private options: NakadachiOption
   private events: EventEmitter<Events<OutputPort>>
   private middlewares: NakadachiMiddleware[] = []

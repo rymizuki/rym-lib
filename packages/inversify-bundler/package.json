@@ -42,7 +42,7 @@
   },
   "devDependencies": {
     "@rym-lib/dev-config": "*",
-    "@types/node": "^22.4.1",
+    "@types/node": "^22.20.5",
     "inversify": "^7.0.0",
     "npm-check-updates": "^17.0.6",
     "tsup": "^8.2.4",

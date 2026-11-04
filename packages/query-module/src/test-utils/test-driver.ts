@@ -1,8 +1,8 @@
 import { QueryCriteriaInterface, QueryDriverInterface } from '../interfaces'
 
-class TestDriver<Data extends Record<string, any> = Record<string, any>>
-  implements QueryDriverInterface
-{
+class TestDriver<
+  Data extends Record<string, any> = Record<string, any>,
+> implements QueryDriverInterface {
   private initial: Data[] = []
   private data: null | Data[] = null
   private sourceFunction: (() => Data[]) | null = null

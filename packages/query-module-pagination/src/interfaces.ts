@@ -7,8 +7,9 @@ export interface QueryResultListWithPage<Data> extends QueryResultList<Data> {
     hasNext: boolean
   }
 }
-export interface QueryRunnerCriteriaWithPage<Data>
-  extends QueryRunnerCriteria<Data> {
+export interface QueryRunnerCriteriaWithPage<
+  Data,
+> extends QueryRunnerCriteria<Data> {
   page?: number
   rows?: number
   noPagination?: boolean

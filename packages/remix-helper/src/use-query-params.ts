@@ -1,6 +1,5 @@
 import qs from 'qs'
 import { useMemo } from 'react'
-
 import { useSearchParams } from 'react-router'
 
 export function useQueryParams<T = Record<string, unknown>>() {
