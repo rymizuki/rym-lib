@@ -13,11 +13,11 @@ import { null_value } from './upsert/null-value'
 import { raw } from './upsert/raw'
 
 class DummyDataBaseLogger implements DataBaseLogger {
-  debug(format: string, ...args: unknown[]): void {}
-  info(format: string, ...args: unknown[]): void {}
-  warning(format: string, ...args: unknown[]): void {}
-  error(format: string, ...args: unknown[]): void {}
-  critical(format: string, ...args: unknown[]): void {}
+  debug(_format: string, ..._args: unknown[]): void {}
+  info(_format: string, ..._args: unknown[]): void {}
+  warning(_format: string, ..._args: unknown[]): void {}
+  error(_format: string, ..._args: unknown[]): void {}
+  critical(_format: string, ..._args: unknown[]): void {}
 }
 
 describe('db', () => {

@@ -1,12 +1,4 @@
-import {
-  describe,
-  it,
-  expect,
-  beforeEach,
-  afterEach,
-  vi,
-  type MockInstance,
-} from 'vitest'
+import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest'
 
 import { DataBase } from './database'
 import {
@@ -34,7 +26,7 @@ class TestConnector implements DataBaseConnectorPort {
     this.executeCalls.push({ sql, replacements })
   }
 
-  async query<T>(sql: string, replacements: unknown[]): Promise<T[]> {
+  async query<T>(_sql: string, _replacements: unknown[]): Promise<T[]> {
     return []
   }
 
@@ -129,7 +121,7 @@ describe('TransactionManager', () => {
         await transactionManager.runInTransaction(db1, async (db2) => {
           level2 = true
 
-          await transactionManager.runInTransaction(db2, async (db3) => {
+          await transactionManager.runInTransaction(db2, async (_db3) => {
             level3 = true
           })
         })
@@ -248,7 +240,7 @@ describe('TransactionManager', () => {
     it('should work with DataBase.txn method', async () => {
       let executed = false
 
-      const result = await db.txn(async (txDb) => {
+      const result = await db.txn(async (_txDb) => {
         executed = true
         return 'db-txn-result'
       })

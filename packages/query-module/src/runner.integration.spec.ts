@@ -1,7 +1,7 @@
 import { describe, it, expect, beforeEach } from 'vitest'
 
 import { defineQuery } from './functions/define-query'
-import { QueryResultList, QueryRunnerInterface } from './interfaces'
+import { QueryRunnerInterface } from './interfaces'
 import { createDriver, TestDriver } from './test-utils/test-driver'
 
 type TestData = {

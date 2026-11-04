@@ -1,12 +1,8 @@
 import { Sequelize } from 'sequelize'
 import { describe, it, expect, beforeEach, vi } from 'vitest'
 
-import { QueryCriteria, QueryLoggerInterface } from '@rym-lib/query-module'
-import {
-  SQLBuilder,
-  SQLBuilderPort,
-  exists,
-} from '@rym-lib/query-module-sql-builder'
+import { QueryCriteria } from '@rym-lib/query-module'
+import { SQLBuilderPort, exists } from '@rym-lib/query-module-sql-builder'
 
 import { QueryDriverSequelize } from './driver'
 

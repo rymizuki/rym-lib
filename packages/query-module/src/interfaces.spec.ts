@@ -1,5 +1,6 @@
+// eslint-disable-next-line @typescript-eslint/ban-ts-comment -- 型チェックを通すと TestData に無いキー（having:* や deep.nested.* 等）で型エラーが出るため
 // @ts-nocheck
-import { describe, it, expect, expectTypeOf } from 'vitest'
+import { describe, it, expect } from 'vitest'
 
 import type {
   QueryFilter,

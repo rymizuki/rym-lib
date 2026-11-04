@@ -183,7 +183,7 @@ async function legacyExample() {
     await db.txn(async (outerDb) => {
       console.log('従来の外側トランザクション')
 
-      await outerDb.txn(async (innerDb) => {
+      await outerDb.txn(async (_innerDb) => {
         console.log(
           '従来の内側トランザクション（別のPrismaトランザクションが開始される）',
         )

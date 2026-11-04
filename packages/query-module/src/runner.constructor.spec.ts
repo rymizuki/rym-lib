@@ -4,7 +4,6 @@ import { defineQuery } from './functions/define-query'
 import { QueryRunnerInterface } from './interfaces'
 import { QueryRunner } from './runner'
 import { createDriver, TestDriver } from './test-utils/test-driver'
-import { createLogger } from './test-utils/test-mock-logger'
 
 type TestData = {
   id: number

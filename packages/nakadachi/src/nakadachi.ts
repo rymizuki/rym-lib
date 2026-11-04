@@ -101,6 +101,7 @@ export class Nakadachi<
       })
 
       result = await timer(async () => {
+        // eslint-disable-next-line no-async-promise-executor -- 書き換えは例外時の挙動を変えるため別対応
         return await new Promise(async (resolve, reject) => {
           const done: DoneFunction<Data> = (ret) => {
             resolve(ret)
@@ -165,6 +166,7 @@ export class Nakadachi<
 }
 
 async function timer<T>(fn: () => Promise<T>, timeoutMs: number): Promise<T> {
+  // eslint-disable-next-line no-async-promise-executor -- 書き換えは例外時の挙動を変えるため別対応
   return await new Promise<T>(async (resolve, reject) => {
     const timeout = setTimeout(() => {
       reject(new NakadachiTimeoutException())

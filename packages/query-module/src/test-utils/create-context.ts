@@ -1,9 +1,9 @@
 import { QueryLoggerInterface, QueryRunnerContext } from '../'
 
 class DummyLogger implements QueryLoggerInterface {
-  verbose(message: string, payload?: any): void {}
-  info(message: string, payload?: any): void {}
-  error(message: string, error: Error): void {}
+  verbose(_message: string, _payload?: any): void {}
+  info(_message: string, _payload?: any): void {}
+  error(_message: string, _error: Error): void {}
 }
 
 export const createRunnerContext = () => {

@@ -11,7 +11,8 @@ export function builder<T>(fn: (context: ResolutionContext) => T) {
   return new ModuleBuilder<T>(fn)
 }
 
-export function createModule<Port, Context = {}>(
+// eslint-disable-next-line @typescript-eslint/no-empty-object-type -- 公開型の既定値を変えると利用側の型推論が変わるため
+export function createModule<Port, _Context = {}>(
   name: string,
   Module: Newable<Port> | ModuleBuilder<Port>,
   modules: ModuleInput[] = [],

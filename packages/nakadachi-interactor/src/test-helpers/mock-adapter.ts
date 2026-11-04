@@ -26,7 +26,7 @@ export class MockAdapter implements NakadachiAdapterInterface<any> {
     }
   }
 
-  createContext(context: Partial<NakadachiContext>): NakadachiContext {
+  createContext(_context: Partial<NakadachiContext>): NakadachiContext {
     return {
       container: this.container,
       options: {
@@ -37,9 +37,9 @@ export class MockAdapter implements NakadachiAdapterInterface<any> {
 
   async createResponse(
     result: NakadachiResult,
-    input: InputPort,
-    context: NakadachiContext,
-    response: NakadachiResponse,
+    _input: InputPort,
+    _context: NakadachiContext,
+    _response: NakadachiResponse,
   ): Promise<any> {
     return result
   }

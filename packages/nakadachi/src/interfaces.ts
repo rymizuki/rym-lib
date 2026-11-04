@@ -65,6 +65,7 @@ export interface NakadachiMiddleware {
   ): Promise<void>
 }
 
+// eslint-disable-next-line @typescript-eslint/no-empty-object-type -- 公開型の既定値を変えると利用側の型推論が変わるため
 export interface NakadachiInterface<OutputPort, E extends Events = {}> {
   on<Name extends keyof E, Prop extends E[Name]>(
     name: Name,

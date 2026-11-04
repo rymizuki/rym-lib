@@ -40,6 +40,7 @@ export type QueryCriteriaSkip = number | undefined
  */
 export interface QueryRunnerCriteria<
   Data extends QueryResultData,
+  // eslint-disable-next-line @typescript-eslint/no-empty-object-type -- 公開型の既定値を変えると利用側の型推論が変わるため
   DataExtra extends Partial<Record<string, any>> = {},
 > {
   filter?: QueryFilter<Data & DataExtra> | QueryFilter<Data & DataExtra>[]
@@ -53,7 +54,7 @@ export interface QueryRunnerCriteria<
  * Used by QueryCriteria class to represent processed filter rules
  */
 export type QueryCriteriaFilter<
-  Data extends QueryResultData = any,
+  _Data extends QueryResultData = any,
   Driver extends QueryDriverInterface = any,
 > = Partial<
   Record<
@@ -137,7 +138,7 @@ export interface QueryDriverWithCountInterface extends QueryDriverInterface {
 }
 
 interface QuerySourceInterface<
-  Data extends QueryResultData,
+  _Data extends QueryResultData,
   Driver extends QueryDriverInterface,
   SourceFn extends Parameters<Driver['source']>[0] = Parameters<
     Driver['source']

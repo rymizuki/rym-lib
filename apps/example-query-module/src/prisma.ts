@@ -62,9 +62,9 @@ const prisma = new PrismaClient({
 })
 
 const logger: QueryLoggerInterface = {
-  verbose(message: string) {},
-  info(message, payload) {},
-  error(message, error) {},
+  verbose(_message: string) {},
+  info(_message, _payload) {},
+  error(_message, _error) {},
 }
 
 const driver = new QueryDriverPrisma(prisma, { logger })
