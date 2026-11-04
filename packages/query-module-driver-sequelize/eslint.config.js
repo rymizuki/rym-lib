@@ -1,4 +1,4 @@
-/** @type {import('eslint').Linter.Config} */
+/** @type {import('eslint').Linter.Config[]} */
 module.exports = [
   {
     languageOptions: {
@@ -9,6 +9,6 @@ module.exports = [
     },
   },
   {
-    ignores: ['coverage/**/*'],
+    ignores: ['build/**/*', 'coverage/**/*'],
   },
 ]
