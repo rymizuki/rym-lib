@@ -71,7 +71,7 @@
   "devDependencies": {
     "@rym-lib/dev-config": "*",
     "@rym-lib/utilities": "2.1.0",
-    "@types/node": "^22.4.1",
+    "@types/node": "^22.20.5",
     "@vitest/coverage-v8": "^4.1.12",
     "npm-check-updates": "^17.0.6",
     "tsup": "^8.2.4",

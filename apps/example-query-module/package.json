@@ -14,11 +14,11 @@
     "@rym-lib/dev-config": "*",
     "@rym-lib/query-module": "*",
     "@rym-lib/query-module-driver-prisma": "*",
-    "@types/node": "^24.3.0",
-    "coral-sql": "^1.8.0",
+    "@types/node": "^24.19.2",
+    "coral-sql": "^1.8.1",
     "eslint": "^9.34.0",
     "prisma": "^7.10.1",
-    "tsx": "^4.20.5",
+    "tsx": "^4.23.15",
     "typescript": "^5.9.2",
     "vitest": "^4.1.12"
   }

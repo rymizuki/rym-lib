@@ -50,8 +50,8 @@
   },
   "devDependencies": {
     "@rym-lib/dev-config": "*",
-    "@types/node": "^22.4.1",
-    "coral-sql": "^1.8.0",
+    "@types/node": "^22.20.5",
+    "coral-sql": "^1.8.1",
     "npm-check-updates": "^17.0.6",
     "tsup": "^8.2.4",
     "vitest": "^4.1.12"
