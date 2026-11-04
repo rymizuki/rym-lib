@@ -9,6 +9,6 @@ module.exports = [
     },
   },
   {
-    ignores: ['coverage/**/*'],
+    ignores: ['build/**/*', 'coverage/**/*'],
   },
 ]

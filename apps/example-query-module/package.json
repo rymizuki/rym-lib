@@ -16,7 +16,7 @@
     "@rym-lib/query-module-driver-prisma": "*",
     "@types/node": "^24.19.2",
     "coral-sql": "^1.8.1",
-    "eslint": "^9.34.0",
+    "eslint": "^10.14.0",
     "prisma": "^7.10.1",
     "tsx": "^4.23.15",
     "typescript": "^5.9.2",

@@ -7,12 +7,12 @@
     "format": "prettier -w './**/*.{ts,tsx,js,json,css}' --check"
   },
   "devDependencies": {
+    "@trivago/prettier-plugin-sort-imports": "^4.3.0",
     "@typescript-eslint/eslint-plugin": "^8.72.1",
-    "eslint": "^9.9.0",
+    "eslint": "^10.14.0",
     "npm-check-updates": "^17.0.6",
     "prettier": "^3.9.10",
-    "typescript": "^5.5.4",
-    "@trivago/prettier-plugin-sort-imports": "^4.3.0"
+    "typescript": "^5.5.4"
   },
   "files": [
     "prettier/index.js",
