@@ -5,6 +5,11 @@ const tseslint = require('typescript-eslint')
 
 module.exports = defineConfig([
   globalIgnores(['build/**/*', 'coverage/**/*', 'styled-system/**/*']),
+  {
+    linterOptions: {
+      reportUnusedDisableDirectives: 'error',
+    },
+  },
   js.configs.recommended,
   {
     files: ['**/*.{js,cjs,mjs}'],
