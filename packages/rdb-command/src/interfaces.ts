@@ -29,8 +29,7 @@ export type DataBaseMiddlewarePreparePayload = {
   replacements: unknown[]
 }
 export type DataBaseMiddlewarePrepareResult =
-  | DataBaseMiddlewarePreparePayload
-  | Promise<DataBaseMiddlewarePreparePayload>
+  DataBaseMiddlewarePreparePayload | Promise<DataBaseMiddlewarePreparePayload>
 export interface DataBaseMiddleware {
   preprocess(
     payload: DataBaseMiddlewarePreparePayload,

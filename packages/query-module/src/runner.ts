@@ -19,8 +19,7 @@ export class QueryRunner<
   Driver extends QueryDriverInterface,
   List extends QueryResultList<Data> = QueryResultList<Data>,
   Params extends QueryRunnerCriteria<Data> = QueryRunnerCriteria<Data>,
-> implements QueryRunnerWithCount<Data, List, Params>
-{
+> implements QueryRunnerWithCount<Data, List, Params> {
   constructor(
     private driver: Driver,
     private spec: QuerySpecification<Data, Driver, List, Params>,

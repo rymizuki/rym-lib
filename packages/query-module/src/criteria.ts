@@ -9,9 +9,9 @@ import {
   QuerySpecification,
 } from './interfaces'
 
-export class QueryCriteria<Data extends QueryResultData>
-  implements QueryCriteriaInterface<Data>
-{
+export class QueryCriteria<
+  Data extends QueryResultData,
+> implements QueryCriteriaInterface<Data> {
   private attr: {
     filter: QueryCriteriaFilter<Data> | QueryCriteriaFilter<Data>[]
     orderBy: QueryCriteriaOrderBy<Data>

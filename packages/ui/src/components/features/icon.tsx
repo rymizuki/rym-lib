@@ -1,10 +1,5 @@
 export type IconName =
-  | 'caret-down'
-  | 'xmark'
-  | 'chevron-up'
-  | 'chevron-down'
-  | 'trash'
-  | 'plus'
+  'caret-down' | 'xmark' | 'chevron-up' | 'chevron-down' | 'trash' | 'plus'
 
 type Props = {
   name: IconName
