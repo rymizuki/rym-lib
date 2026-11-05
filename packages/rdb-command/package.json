@@ -54,7 +54,7 @@
     "coral-sql": "^1.8.1",
     "npm-check-updates": "^17.0.6",
     "tsup": "^8.2.4",
-    "vitest": "^4.1.12"
+    "vitest": "^5.1.0"
   },
   "peerDependencies": {
     "coral-sql": "^1.8.0"

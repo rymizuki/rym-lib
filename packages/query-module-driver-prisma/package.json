@@ -48,11 +48,11 @@
     "@rym-lib/dev-config": "*",
     "@rym-lib/query-module": "2.1.0",
     "@types/node": "^22.20.5",
-    "@vitest/coverage-v8": "^4.1.12",
+    "@vitest/coverage-v8": "^5.1.0",
     "npm-check-updates": "^17.0.6",
     "prisma": "^5.22.0",
     "tsup": "^8.2.4",
-    "vitest": "^4.1.12",
+    "vitest": "^5.1.0",
     "vitest-mock-extended": "^5.1.1"
   },
   "peerDependencies": {
