@@ -43,7 +43,7 @@
     "@types/node": "^22.20.5",
     "express": "^4.21.1",
     "npm-check-updates": "^17.1.11",
-    "tsup": "^8.3.5",
+    "tsup": "^9.0.0",
     "vitest": "^5.1.0"
   },
   "peerDependencies": {
