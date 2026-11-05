@@ -101,16 +101,12 @@ export class Nakadachi<
       })
 
       result = await timer(async () => {
-        // eslint-disable-next-line no-async-promise-executor -- 書き換えは例外時の挙動を変えるため別対応
-        return await new Promise(async (resolve, reject) => {
+        return await new Promise((resolve, reject) => {
           const done: DoneFunction<Data> = (ret) => {
             resolve(ret)
           }
-          try {
-            await handler(done, input, context)
-          } catch (error) {
-            reject(error)
-          }
+          const run = async () => await handler(done, input, context)
+          run().catch(reject)
         })
       }, this.options.timeout)
       await this.events.emit('resolve', {
@@ -166,18 +162,14 @@ export class Nakadachi<
 }
 
 async function timer<T>(fn: () => Promise<T>, timeoutMs: number): Promise<T> {
-  // eslint-disable-next-line no-async-promise-executor -- 書き換えは例外時の挙動を変えるため別対応
-  return await new Promise<T>(async (resolve, reject) => {
+  return await new Promise<T>((resolve, reject) => {
     const timeout = setTimeout(() => {
       reject(new NakadachiTimeoutException())
     }, timeoutMs)
 
-    try {
-      resolve(await fn())
-    } catch (error) {
-      reject(error)
-    } finally {
-      clearTimeout(timeout)
-    }
+    const run = async () => await fn()
+    run()
+      .then(resolve, reject)
+      .finally(() => clearTimeout(timeout))
   })
 }
