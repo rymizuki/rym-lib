@@ -180,7 +180,7 @@ async function legacyExample() {
     await db.txn(async (outerDb) => {
       console.log('Legacy outer transaction')
 
-      await outerDb.txn(async (innerDb) => {
+      await outerDb.txn(async (_innerDb) => {
         console.log(
           'Legacy inner transaction (separate Prisma transaction will be started)',
         )

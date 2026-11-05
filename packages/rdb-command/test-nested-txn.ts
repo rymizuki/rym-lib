@@ -19,7 +19,7 @@ async function testNestedTransaction() {
       if ('$transaction' in tx) {
         console.log('\nテスト2: ネストされたトランザクションを実行')
         try {
-          await (tx as any).$transaction(async (nestedTx: any) => {
+          await (tx as any).$transaction(async (_nestedTx: any) => {
             console.log('内側のトランザクション実行')
           })
           console.log('ネストされたトランザクション成功')

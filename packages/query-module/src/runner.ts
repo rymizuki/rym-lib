@@ -4,8 +4,6 @@ import { QueryCriteria } from './criteria'
 import { QueryRunnerResourceNotFoundException } from './exceptions'
 import {
   QueryDriverInterface,
-  QueryFilter,
-  QueryFilterOperator,
   QueryResultData,
   QueryResultList,
   QueryRunnerContext,

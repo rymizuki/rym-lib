@@ -156,7 +156,7 @@ describe('QueryRunner - Method: count(params?)', () => {
       })
 
       // @ts-expect-error - count is not available on runners from defineQuery
-      runner.count
+      const _count = runner.count
     })
   })
 

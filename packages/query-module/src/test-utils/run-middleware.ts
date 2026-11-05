@@ -11,17 +11,17 @@ import {
 import { createRunnerContext } from './create-context'
 
 class DummyDriver implements QueryDriverInterface {
-  source(setup: (...args: any[]) => any): this {
+  source(_setup: (...args: any[]) => any): this {
     return this
   }
 
   async execute<D>(
-    criteria: QueryCriteriaInterface<D>,
+    _criteria: QueryCriteriaInterface<D>,
   ): Promise<Record<string, any>[]> {
     return []
   }
 
-  async executeCount<D>(criteria: QueryCriteriaInterface<D>): Promise<number> {
+  async executeCount<D>(_criteria: QueryCriteriaInterface<D>): Promise<number> {
     return 0
   }
 }

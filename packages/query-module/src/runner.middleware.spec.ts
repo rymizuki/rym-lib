@@ -1,11 +1,7 @@
 import { describe, it, expect, beforeEach, vi } from 'vitest'
 
 import { defineQuery } from './functions/define-query'
-import {
-  QueryResultList,
-  QueryRunnerInterface,
-  QueryRunnerMiddleware,
-} from './interfaces'
+import { QueryRunnerInterface, QueryRunnerMiddleware } from './interfaces'
 import { createDriver, TestDriver } from './test-utils/test-driver'
 
 type TestData = {
@@ -48,7 +44,7 @@ describe('QueryRunner - Middleware with many()', () => {
     describe('Middleware effects on results', () => {
       it('should return QueryResultList<TestData> with preprocess middleware criteria modifications applied', async () => {
         const preprocessMiddleware: QueryRunnerMiddleware<TestData> = {
-          preprocess: vi.fn().mockImplementation((params, context) => {
+          preprocess: vi.fn().mockImplementation((params, _context) => {
             // paramsにdefault filterを追加
             if (!params.filter) {
               params.filter = {}
@@ -78,15 +74,17 @@ describe('QueryRunner - Middleware with many()', () => {
 
       it('should return QueryResultList<TestData> with postprocess middleware result modifications applied', async () => {
         const postprocessMiddleware: QueryRunnerMiddleware<TestData> = {
-          postprocess: vi.fn().mockImplementation((result, params, context) => {
-            // 結果にメタ情報を追加
-            result.metadata = { processed: true }
-            // データを変換
-            result.items = (result.items as any).map((item: any) => ({
-              ...item,
-              processed: true,
-            }))
-          }),
+          postprocess: vi
+            .fn()
+            .mockImplementation((result, _params, _context) => {
+              // 結果にメタ情報を追加
+              result.metadata = { processed: true }
+              // データを変換
+              result.items = (result.items as any).map((item: any) => ({
+                ...item,
+                processed: true,
+              }))
+            }),
         }
 
         runner = defineQuery<TestData>(driver, {
@@ -105,13 +103,13 @@ describe('QueryRunner - Middleware with many()', () => {
 
       it('should handle async middleware operations transparently', async () => {
         const asyncMiddleware: QueryRunnerMiddleware<TestData> = {
-          preprocess: vi.fn().mockImplementation(async (params, context) => {
+          preprocess: vi.fn().mockImplementation(async (params, _context) => {
             await new Promise((resolve) => setTimeout(resolve, 10))
             params.processedByAsync = true
           }),
           postprocess: vi
             .fn()
-            .mockImplementation(async (result, params, context) => {
+            .mockImplementation(async (result, _params, _context) => {
               await new Promise((resolve) => setTimeout(resolve, 10))
               result.asyncProcessed = true
             }),

@@ -1,5 +1,3 @@
-import { ClickableProps } from './components/features'
-
 export interface MenuModel {
   label: string
   to?: string

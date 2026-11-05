@@ -1,4 +1,4 @@
-import { cloneElement, isValidElement, ReactElement, useState } from 'react'
+import { cloneElement, ReactElement, useState } from 'react'
 import { createPortal } from 'react-dom'
 
 interface DialogCloseFunction {

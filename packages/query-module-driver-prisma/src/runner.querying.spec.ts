@@ -1,6 +1,6 @@
 import { QueryDriverPrisma } from './'
 
-import { describe, it, beforeEach, expect } from 'vitest'
+import { describe, it, beforeEach } from 'vitest'
 
 import { createLogger } from '@rym-lib/query-module/test-utils'
 

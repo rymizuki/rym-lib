@@ -6,7 +6,6 @@ import {
   QueryRunnerCriteria,
 } from '@rym-lib/query-module'
 
-import prisma from '../test-utils/prisma'
 import { prismaMock } from '../test-utils/prisma-mock'
 
 export async function expectQuery<

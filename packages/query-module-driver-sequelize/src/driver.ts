@@ -39,7 +39,6 @@ export class QueryDriverSequelize implements QueryDriverInterface {
       throw new Error('QueryDriver must be required source.')
     }
 
-    const builder = this
     const [sql, replacements] = buildSQL(
       this.setup(this.builderSetup()),
       criteria,

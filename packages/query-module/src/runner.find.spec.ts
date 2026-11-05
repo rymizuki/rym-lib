@@ -2,7 +2,7 @@ import { describe, it, expect, beforeEach } from 'vitest'
 
 import { QueryRunnerResourceNotFoundException } from './exceptions'
 import { defineQuery } from './functions/define-query'
-import { QueryRunnerCriteria, QueryRunnerInterface } from './interfaces'
+import { QueryRunnerInterface } from './interfaces'
 import { createDriver, TestDriver } from './test-utils/test-driver'
 
 type TestData = {

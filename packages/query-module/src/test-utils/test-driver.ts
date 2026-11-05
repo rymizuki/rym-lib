@@ -67,7 +67,7 @@ class TestDriver<
       : [criteria.filter]
 
     for (const filter of filters) {
-      for (const [field, filterData] of Object.entries(filter)) {
+      for (const [field] of Object.entries(filter)) {
         // Apply smart filtering if the field looks like a CASE-WHEN field
         if (
           field.includes('status_display') ||

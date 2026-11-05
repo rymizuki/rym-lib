@@ -11,7 +11,7 @@ export function builder<T>(fn: (context: ResolutionContext) => T) {
   return new ModuleBuilder<T>(fn)
 }
 
-export function createModule<Port, Context = {}>(
+export function createModule<Port, _Context = unknown>(
   name: string,
   Module: Newable<Port> | ModuleBuilder<Port>,
   modules: ModuleInput[] = [],

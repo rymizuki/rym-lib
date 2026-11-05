@@ -1,6 +1,5 @@
 import { beforeEach, describe, expect, it, type MockInstance, vi } from 'vitest'
 
-import { QueryCriteria } from './criteria'
 import { QueryRunnerResourceNotFoundException } from './exceptions'
 import { defineQuery } from './functions/define-query'
 import {
@@ -267,9 +266,8 @@ describe('QueryRunner', () => {
         })
       })
 
-      let result: any
       beforeEach(async () => {
-        result = await runner.many({
+        await runner.many({
           filter: {
             index: { eq: 0 },
           },

@@ -1,12 +1,9 @@
+// eslint-disable-next-line @typescript-eslint/ban-ts-comment -- 型チェックを通すと TestData に無い metadata.* キーと QueryResultList の型引数で型エラーが出るため
 // @ts-nocheck
 import { describe, it, expect, beforeEach } from 'vitest'
 
 import { defineQuery } from './functions/define-query'
-import {
-  QueryResultList,
-  QueryRunnerCriteria,
-  QueryRunnerInterface,
-} from './interfaces'
+import { QueryRunnerInterface } from './interfaces'
 import { createDriver, TestDriver } from './test-utils/test-driver'
 
 type TestData = {

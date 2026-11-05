@@ -33,7 +33,6 @@ export function deflate<D, C extends Column<D> = Column<D>>(
 
               if (targets.includes(column as keyof D)) {
                 if (operator === 'in' && Array.isArray(value)) {
-                  // eslint-disable-next-line @typescript-eslint/no-explicit-any
                   if (filterData?.value) {
                     filterData.value[operator] = value.map((v) => iteratee(v))
                   } else {
@@ -42,7 +41,6 @@ export function deflate<D, C extends Column<D> = Column<D>>(
                     )
                   }
                 } else {
-                  // eslint-disable-next-line @typescript-eslint/no-explicit-any
                   if (filterData?.value) {
                     filterData.value[operator] = iteratee(value)
                   } else {

@@ -146,7 +146,7 @@ function applyFilters(
   builder.having(whole_having)
 }
 
-export function buildSQL<Driver extends QueryDriverInterface>(
+export function buildSQL<_Driver extends QueryDriverInterface>(
   builder: SQLBuilderPort,
   criteria: QueryCriteriaInterface,
   options: Partial<BuildSqlOptions> = {},
@@ -186,16 +186,6 @@ export function buildCountSQL(
   return builder.toSQL()
 }
 
-type FilterValue = {
-  value:
-    | string
-    | string[]
-    | null
-    | ((
-        op: SQLBuilderOperator,
-        value: string | string[],
-      ) => SQLBuilderPort | SQLBuilderConditionExpressionPort)
-}
 function createCond(
   cond: SQLBuilderConditionsPort,
   name: string | SQLBuilderPort,

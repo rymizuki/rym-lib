@@ -85,8 +85,8 @@ type MockInteractionData = {
 class MockInteractor implements InteractionPort<MockInteractionData> {
   async interact(
     done: DoneFunction<MockInteractionData>,
-    input: InputPort,
-    context: NakadachiContext,
+    _input: InputPort,
+    _context: NakadachiContext,
   ): Promise<void> {
     done({
       data: {

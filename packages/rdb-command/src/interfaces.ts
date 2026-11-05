@@ -21,6 +21,7 @@ export interface DataBaseLogger {
 export interface DataBaseContext {
   logger: DataBaseLogger
 }
+// eslint-disable-next-line @typescript-eslint/no-empty-object-type -- 利用側の declaration merging で拡張する口のため
 export interface DataBaseCommandOptions {}
 export type DataBaseCommandOptionsPartial = Partial<DataBaseCommandOptions>
 
