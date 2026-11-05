@@ -60,9 +60,9 @@ describe('Nakadachi', () => {
     describe('handler が同期的に例外を投げた場合', () => {
       it('投げた error をそのまま error として返す', async () => {
         const thrown = new Error('sync boom')
-        const handler = (() => {
+        const handler: NakadachiRequestHandler = () => {
           throw thrown
-        }) as unknown as NakadachiRequestHandler
+        }
         const result = await buildTarget().interact(handler)
         expect(result).toHaveProperty('error', thrown)
       })
@@ -73,10 +73,9 @@ describe('Nakadachi', () => {
         const pending = buildTarget().interact(async () => {})
         await vi.advanceTimersByTimeAsync(TIMEOUT_MS)
         const result = await pending
-        expect(result).toHaveProperty('error')
-        expect((result as { error: unknown }).error).toBeInstanceOf(
-          NakadachiTimeoutException,
-        )
+        expect(result).toEqual({
+          error: expect.any(NakadachiTimeoutException),
+        })
       })
     })
 
