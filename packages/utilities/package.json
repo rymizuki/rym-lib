@@ -61,7 +61,7 @@
   "devDependencies": {
     "@rym-lib/dev-config": "*",
     "npm-check-updates": "^17.1.11",
-    "tsup": "^8.3.5",
+    "tsup": "^9.0.0",
     "vite-tsconfig-paths": "^5.1.2",
     "vitest": "^5.1.0"
   }

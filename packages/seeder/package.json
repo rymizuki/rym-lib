@@ -47,7 +47,7 @@
     "@types/node": "^22.20.5",
     "npm-check-updates": "^17.0.6",
     "prisma": "^5.22.0",
-    "tsup": "^8.2.4",
+    "tsup": "^9.0.0",
     "vitest": "^5.1.0"
   },
   "peerDependencies": {
