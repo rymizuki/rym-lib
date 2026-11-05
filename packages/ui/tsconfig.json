@@ -3,8 +3,8 @@
   "extends": ["@rym-lib/dev-config/tsconfig/base.json"],
   "compilerOptions": {
     "jsx": "react-jsx",
-    "module": "CommonJS",
-    "moduleResolution": "Node",
+    "module": "ESNext",
+    "moduleResolution": "Bundler",
     "baseUrl": ".",
     "paths": {
       "~/*": ["./src/*"],
