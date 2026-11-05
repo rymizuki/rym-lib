@@ -7,7 +7,7 @@
       "outputs": []
     },
     "lint": {
-      "dependsOn": ["^lint"]
+      "dependsOn": ["^build"]
     },
     "format": {
       "dependsOn": ["^format"]
@@ -17,7 +17,7 @@
       "persistent": true
     },
     "test": {
-      "dependsOn": ["^test"],
+      "dependsOn": ["^build"],
       "outputs": []
     },
     "ncu": {
