@@ -44,7 +44,7 @@
     "express": "^4.21.1",
     "npm-check-updates": "^17.1.11",
     "tsup": "^8.3.5",
-    "vitest": "^4.1.12"
+    "vitest": "^5.1.0"
   },
   "peerDependencies": {
     "@rym-lib/inversify-bundler": ">=1.7.1",
