@@ -9,7 +9,7 @@
   },
   "license": "MIT",
   "description": "",
-  "packageManager": "npm@10.8.2",
+  "packageManager": "npm@11.19.1",
   "workspaces": [
     "apps/*",
     "packages/*"
@@ -26,7 +26,7 @@
     "publish": "changeset publish"
   },
   "devDependencies": {
-    "@changesets/cli": "^2.27.7",
+    "@changesets/cli": "^3.0.3",
     "@rym-lib/dev-config": "*",
     "npm-check-updates": "^17.0.6",
     "prettier": "3.9.10",
